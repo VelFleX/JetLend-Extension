@@ -1,6 +1,18 @@
-let cached = false;
+let cached = true;
+let loadCache = false;
+
+chrome.storage.local.get("settings", function (data) {
+  if (data.settings) {
+    loadCache = data.settings.saveCache;
+  }
+})
 
 window.addEventListener("load", function() {
+  chrome.storage.local.get("settings", function (data) {
+    if (data.settings) {
+      loadCache = data.settings.saveCache;
+    }
+  })
 
   // Загрузка данных
 chrome.storage.local.get("cacheJetlend", function (result) {
@@ -14,7 +26,7 @@ chrome.storage.local.get("cacheJetlend", function (result) {
   const incomeBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[2];           //Блок доходов
   const incomePercentBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[3];    //Блок доходности в процентах
 
-  if (data) {
+  if (data&&loadCache) {
     const updateTime = data.updateTime;
   
     const date = new Date(updateTime);
@@ -46,23 +58,23 @@ function statUpdate(cached) {
   );
 
   const arr = tippy.querySelectorAll("p");
-  const allAssetsBlock = document.querySelector('.block_header__title__text__g9kpM');       //Заголовок "Все активы" 
-  const balanceTitleBlock = document.querySelector(".propertyItem_title__XLj0y");           //Заголовок активов
-  let balanceBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[0];            //Блок баланса
-  const collectionIncomeBlock = document.querySelectorAll('.propertyItem_value__ZHL6p')[1]; //Значение ставки на сборе
-  const incomeTitleBlock = document.querySelector(".dashboard_income-title__ly2bD");        //Заголовок доходов
-  let incomeBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[2];             //Блок доходов
-  const incomePercentBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[3];    //Блок доходности в процентах
+  const allAssetsBlock = document.querySelector('.block_header__title__text__g9kpM');                  //Заголовок "Все активы" 
+  const balanceTitleBlock = document.querySelector(".propertyItem_title__XLj0y");                      //Заголовок активов
+  let balanceBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[0].querySelector('span'); //Блок баланса
+  const collectionIncomeBlock = document.querySelectorAll('.propertyItem_value__ZHL6p')[1];            //Значение ставки на сборе
+  const incomeTitleBlock = document.querySelector(".dashboard_income-title__ly2bD");                   //Заголовок доходов
+  let incomeBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[2].querySelector('span');  //Блок доходов
+  const incomePercentBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[3];      //Блок доходности в процентах
 
   const balanceInnerBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[0];
   const incomeInnerBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[2];
 
-  const actualBalance = document.querySelectorAll('.chartBlockHeader_value__DuZg7')[2]; //Баланс с НПД (правильный)
+  const actualBalance = document.querySelectorAll('.chartBlockHeader_value__DuZg7')[2];     //Баланс с НПД (правильный)
 
-  if (cached) {
-    balanceBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[0].querySelector('span');
-    incomeBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[2].querySelector('span');
-  }
+  // if (cached) {
+  //   balanceBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[0].querySelector('span');
+  //   incomeBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[2].querySelector('span');
+  // }
 
   const [
     percentIncome,
@@ -107,7 +119,7 @@ function statUpdate(cached) {
     element.toLocaleString("ru-RU", { style: "currency", currency: "RUB" });
 
   const cleanBalance = () => toCurrencyFormat(parseFloat(actualBalance.textContent.replace(",", ".").replace(/\s/g, "")) - futureNpdNum);
-  const income = () => toCurrencyFormat(cleanIncomeNum + bonusNum + peniNum + refBonusNum + secondaryMarketNum);
+  const income = () => toCurrencyFormat(percentIncomeNum + peniNum + bonusNum + refBonusNum + secondaryMarketNum + lossesNum);
   const netIncome = () => toCurrencyFormat(cleanIncomeNum - futureNpdNum - futureNdflNum);
   // const netIncome = () => toCurrencyFormat(cleanIncomeNum - futureNdflNum);
 
@@ -157,11 +169,16 @@ const observer = new MutationObserver((mutationsList, observer) => {
     );
     if (addedNode) {
       statUpdate(cached);
-      // observer.disconnect();
+      // if (!cached) {
+      //   observer.disconnect();
+      // }
     }
   }
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
+
+
+
 
 
