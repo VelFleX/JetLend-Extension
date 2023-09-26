@@ -43,7 +43,7 @@ chrome.storage.local.get("cacheJetlend", function (result) {
     allAssetsBlock.innerHTML += `<span style="font-weight: 300;"> (${formattedDateTime})</span>`;
     balanceTitleBlock.textContent = data.balanceTitle;
     balanceBlock.innerHTML = data.balanceInner;
-    incomeTitleBlock.textContent = data.incomeTitle;
+    incomeTitleBlock.textContent += `(${data.incomeTitle.split('(')[1]}`;
     incomeBlock.innerHTML = data.incomeInner;
     cached = true;
   } else {
@@ -125,7 +125,8 @@ function statUpdate(cached) {
 
   allAssetsBlock.innerHTML = `Все активы<span style="font-weight: 300;"> (Обновлено в ${getTime()})</span>`;
   balanceTitleBlock.textContent = "Активы / Активы без НПД";
-  incomeTitleBlock.innerHTML = `${incomeTitleBlock.textContent.replace(' (без НПД / чистый доход без НПД)', '')} (без НПД / чистый доход без НПД)`;
+  // incomeTitleBlock.innerHTML = `${incomeTitleBlock.textContent.replace(' (без НПД / чистый доход без НПД)', '')} (без НПД / чистый доход без НПД)`;
+  incomeTitleBlock.textContent += incomeTitleBlock.textContent.includes('(без НПД / чистый доход без НПД)') ? '' : ' (без НПД / чистый доход без НПД)';
 
   if (cached) {
     balanceInnerBlock.innerHTML = `<span>${toCurrencyFormat(tagToNum(actualBalance, false))}</span> <span>/</span> <span>${cleanBalance()}</span>`;
