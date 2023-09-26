@@ -1,5 +1,3 @@
-
-
 // Загрузка данных
 chrome.storage.local.get("cacheJetlend", function (result) {
   const data = result.cacheJetlend;
@@ -18,10 +16,10 @@ chrome.storage.local.get("cacheJetlend", function (result) {
     const formattedDateTime = `Обновлено${currentTime - 86_400_000 > updateTime ? ` ${day}.${month}.${year}` : ""} в ${hours}:${minutes}`;
   
     const lastUpdateDateTag = document.querySelector('.lastUpdateDate'); //Тэг последнего обновления данных
-    const balanceTitle = document.querySelector('.balance__title'); //Заголовок баланса
-    const balanceTag = document.querySelector('.balance__value'); //Тэг баланса
-    const incomeTitle = document.querySelector('.income__title'); //Заголовок дохода
-    const incomeTag = document.querySelector('.income__value'); //Тэг дохода
+    const balanceTitle = document.querySelector('.balance__title');      //Заголовок баланса
+    const balanceTag = document.querySelector('.balance__value');        //Тэг баланса
+    const incomeTitle = document.querySelector('.income__title');        //Заголовок дохода
+    const incomeTag = document.querySelector('.income__value');          //Тэг дохода
   
     lastUpdateDateTag.innerHTML = `Все активы <span>(${formattedDateTime})</span>`;
     balanceTitle.innerHTML = `${data.balanceTitle} <span>Ставка на сборе</span>`;
@@ -32,44 +30,18 @@ chrome.storage.local.get("cacheJetlend", function (result) {
   }
 });
 
-// // Загрузка данных из хранилища при загрузке попапа
-// chrome.storage.local.get("info", function (data) {
-//   if (data.info) {
-//     document.getElementById("infoInput").value = data.info;
-//   }
-// });
+// Загрузка данных из хранилища при загрузке попапа
+chrome.storage.local.get("settings", function (data) {
+  if (data.settings) {
+    document.getElementById("cacheCheckbox").checked = data.settings.saveCache;
+  }
+});
 
-
-
-// // Добавление обработчика на кнопку сохранения
-// document.getElementById("saveBtn").addEventListener("click", function () {
-//   const info = document.getElementById("infoInput").value;
-//   // Сохранение информации в локальное хранилище
-//   chrome.storage.local.set({ info: info });
-
-// function calculateFormula(formula, values) {
-//   // Разделяем формулу на отдельные операнды и операции
-//   const operands = formula.replace(/\s/g,'').toLowerCase().split(/[+-]/);
-//   const operations = formula.match(/[+-]/g);
-
-//   // Вычисляем результат формулы
-//   let result = parseFloat(values[operands[0]]);
-
-//   for (let i = 1; i < operands.length; i++) {
-//     let operandValue = parseFloat(values[operands[i]]);
-
-//     if (operations[i-1] === '+') {
-//       result += operandValue;
-//     } else {
-//       result -= operandValue;
-//     }
-//   }
-
-//   return result;
-// }
-
-// // Пример использования функции
-// let formula = "a + B-c+d";
-// let values = { a: 5, b: 3, c: 2, d: 1 };
-// let result = calculateFormula(formula, values);
-// console.log(result);
+document.getElementById("cacheCheckbox").addEventListener("click", function (){ 
+  let cacheCheckbox = document.getElementById("cacheCheckbox");
+  let extensionSettings = {
+    saveCache: cacheCheckbox.checked
+  }
+  // Сохранение информации в локальное хранилище
+  chrome.storage.local.set({ settings: extensionSettings });
+});
