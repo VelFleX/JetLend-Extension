@@ -8,27 +8,32 @@
   </head>
   <body>
     <div class="container">
-      <div class="lastUpdateDate">Все активы<span title="Посетите Jetlend чтобы обновить данные" style="color: #E1BB45; cursor: pointer;"> (Не обновлено)</span></div>
+      <div class="lastUpdateDate">
+        Все активы<span
+          title="Посетите Jetlend чтобы обновить данные"
+          style="color: #e1bb45; cursor: pointer">
+          (Не обновлено)</span>
+      </div>
+      <div class="settings" title="Включает/отключает кэш на сайте">
+        <input type="checkbox" id="cacheCheckbox" name="cacheChechbox" />
+        <label for="cacheCheckbox" style="cursor: pointer; user-select: none">Кэшировать данные?</label>
+      </div>
       <div class="main-section">
         <div class="balance">
           <div class="balance__title">Активы<span>Ставка на сборе</span></div>
-          <div class="balance__value">-<span style="float: right;">-</span></div>
+          <div class="balance__value">-<span style="float: right">-</span></div>
         </div>
         <div class="income">
           <div class="income__title">Доход<span>Доходность</span></div>
-          <div class="income__value">&nbsp<span style="color: #1e2021; float: left;">-</span><span style="color: #1e2021; float: right;">-</span></div>
+          <div class="income__value">
+            &nbsp<span style="color: var(--var-fontColor); float: left">-</span
+            ><span style="color: var(--var-fontColor); float: right">-</span>
+          </div>
         </div>
       </div>
-      <a
-        class="linkToSite"
-        href="https://jetlend.ru/invest/v3/?state=login"
-        target="»_blank"
-        >Перейти в Jetlend</a
-      >
+      <a class="linkToSite" href="https://jetlend.ru/invest/v3/?state=login" target="»_blank">Перейти в Jetlend</a>
     </div>
-
-    <!-- <input type="text" id="infoInput" />
-    <button id="saveBtn">Сохранить настройки</button> -->
     <script src="/js/popup.js"></script>
   </body>
 </html>
+
