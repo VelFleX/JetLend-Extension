@@ -52,6 +52,24 @@
   font-weight: 900;
 } */
 
+:root {
+  --var-bgColor: #fff;
+  --var-fontColor: #1e2021;
+  --var-buttonColor: #1e2021;
+  --var-buttonHoverColor: #363a3c;
+  --var-buttonTextColor: #fff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --var-bgColor: #333;
+    --var-fontColor: #fff;
+    --var-buttonColor: #186251;
+    --var-buttonHoverColor: #1E3431;
+    --var-buttonTextColor: #fff;
+  }
+}
+
 *,
 *::after,
 *::before {
@@ -65,7 +83,8 @@ body {
   height: 240px;
   font-family: SF Pro Display, sans-serif, currencies, auto;
   font-size: 24px;
-  color: #1e2021;
+  color: var(--var-fontColor);
+  background-color: var(--var-bgColor);
 }
 
 a {
@@ -124,8 +143,8 @@ a {
 
 .linkToSite {
   display: block;
-  background: #1e2021;
-  color: #fff;
+  background: var(--var-buttonColor);
+  color: var(--var-buttonTextColor);
   border: 1px solid transparent;
   border-radius: 12px;
   cursor: pointer;
@@ -141,5 +160,5 @@ a {
 }
 
 .linkToSite:hover {
-  background: #363a3c;
+  background: var(--var-buttonHoverColor);
 }
