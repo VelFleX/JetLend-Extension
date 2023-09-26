@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "version": "0.4.0",
+  "action": {
+    "default_popup": "html/popup.html"
+  },
+  "icons": {
+    "16": "./img/icons/icon16.png",
+    "32": "./img/icons/icon32.png",
+    "48": "./img/icons/icon48.png"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "name": "Расширение Jetlend",
+  "description": "Убирает НПД из статистики, показывает чистую доходность.",
+  "content_scripts": [
+    {
+      "matches": ["https://jetlend.ru/invest/*"],
+      "js": ["js/main.js"]
+    }
+  ]
+}
