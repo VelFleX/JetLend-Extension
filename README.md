@@ -14,6 +14,10 @@
 6. В окне для выбора файла перейдите в распакованную папку, которую вы создали на шаге 2, и выберите ее.
 7. Расширение должно быть успешно установлено. Если требуется, обновите страницу в браузере.
 
+## GitHub
+
+Репозиторий проекта на GitHub: https://github.com/VelFleX/Jetlend-Extension
+
 ## License
 
 See the [LICENSE](LICENSE) file for license rights and limitations (GNU GPL v3.0).
