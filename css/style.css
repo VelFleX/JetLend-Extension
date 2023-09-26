@@ -52,6 +52,7 @@
   font-weight: 900;
 } */
 
+
 :root {
   --var-bgColor: #fff;
   --var-fontColor: #1e2021;
@@ -65,7 +66,7 @@
     --var-bgColor: #333;
     --var-fontColor: #fff;
     --var-buttonColor: #186251;
-    --var-buttonHoverColor: #1E3431;
+    --var-buttonHoverColor: #1e3431;
     --var-buttonTextColor: #fff;
   }
 }
@@ -99,6 +100,7 @@ a {
 }
 
 .lastUpdateDate {
+  display: inline-block;
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.3px;
@@ -109,6 +111,15 @@ a {
 .lastUpdateDate span {
   font-size: 14px;
   font-weight: 300;
+}
+
+.settings {
+  float: right;
+  font-size: 14px;
+  font-weight: 300;
+  letter-spacing: 0.3px;
+  line-height: 21px;
+  margin-top: 10px;
 }
 
 .balance__title span, .income__title span {
