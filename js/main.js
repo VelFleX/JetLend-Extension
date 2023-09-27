@@ -43,9 +43,10 @@ chrome.storage.local.get("cacheJetlend", function (result) {
     allAssetsBlock.innerHTML += `<span style="font-weight: 300;"> (${formattedDateTime})</span>`;
     balanceTitleBlock.textContent = data.balanceTitle;
     balanceBlock.innerHTML = data.balanceInner;
-    incomeTitleBlock.textContent += `(${data.incomeTitle.split('(')[1]}`;
+    // incomeTitleBlock.textContent += `(${data.incomeTitle.split('(')[1]}`;
+    incomeTitleBlock.textContent += `(без НПД / чистый доход без НПД)`;
     incomeBlock.innerHTML = data.incomeInner;
-    cached = true;
+    // cached = true;
   } else {
     allAssetsBlock.innerHTML += `<span title='Наведите курсор на "Доходы" для обновления' style="color: #E1BB45; font-weight: 300; cursor: pointer;"> (Не обновлено)</span>`;
   }
@@ -115,12 +116,12 @@ function statUpdate(cached) {
     return `${hours}:${minutes}`;
   }
 
-  const toCurrencyFormat = (element) =>
-    element.toLocaleString("ru-RU", { style: "currency", currency: "RUB" });
+  const toCurrencyFormat = (element) => element.toLocaleString("ru-RU", { style: "currency", currency: "RUB" });
 
   const cleanBalance = () => toCurrencyFormat(parseFloat(actualBalance.textContent.replace(",", ".").replace(/\s/g, "")) - futureNpdNum);
-  const income = () => toCurrencyFormat(percentIncomeNum + peniNum + bonusNum + refBonusNum + secondaryMarketNum + lossesNum);
-  const netIncome = () => toCurrencyFormat(cleanIncomeNum - futureNpdNum - futureNdflNum);
+  const income = () => toCurrencyFormat(percentIncomeNum + peniNum + bonusNum + refBonusNum + secondaryMarketNum + lossesNum - 0.01);
+  // const netIncome = () => toCurrencyFormat(cleanIncomeNum - futureNpdNum - futureNdflNum);
+  const netIncome = () => toCurrencyFormat(percentIncomeNum + peniNum + bonusNum + refBonusNum + secondaryMarketNum + lossesNum + ndflNum);
   // const netIncome = () => toCurrencyFormat(cleanIncomeNum - futureNdflNum);
 
   allAssetsBlock.innerHTML = `Все активы<span style="font-weight: 300;"> (Обновлено в ${getTime()})</span>`;
@@ -178,8 +179,3 @@ const observer = new MutationObserver((mutationsList, observer) => {
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
-
-
-
-
-
