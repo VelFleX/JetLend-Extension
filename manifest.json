@@ -17,7 +17,7 @@
     "service_worker": "js/background.js"
   },
   "name": "Расширение Jetlend",
-  "description": "Убирает НПД из статистики, показывает чистую доходность.",
+  "description": "Позволяет быстро распределить средства, убирает НПД из статистики, показывает чистую доходность, считает XIRR.",
   "content_scripts": [
     {
       "matches": ["https://jetlend.ru/invest/*"],
