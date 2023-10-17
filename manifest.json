@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "0.5.0",
+  "version": "0.6.0",
   "action": {
     "default_popup": "html/popup.html"
   },
@@ -10,8 +10,12 @@
     "48": "./img/icons/icon48.png"
   },
   "permissions": [
-    "storage"
+    "storage", "declarativeNetRequest", "activeTab", "tabs", "notifications"
+
   ],
+   "background": {
+    "service_worker": "js/background.js"
+  },
   "name": "Расширение Jetlend",
   "description": "Убирает НПД из статистики, показывает чистую доходность.",
   "content_scripts": [

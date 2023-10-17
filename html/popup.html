@@ -7,33 +7,90 @@
     <title>Jetlend</title>
   </head>
   <body>
+
+
     <div class="container">
       <div class="lastUpdateDate">
-        Все активы<span
-          title="Посетите Jetlend чтобы обновить данные"
-          style="color: #e1bb45; cursor: pointer">
-          (Не обновлено)</span>
+        Все активы
+        <span title="Посетите Jetlend чтобы обновить данные" style="color: #e1bb45; cursor: pointer">(Не обновлено)</span>
       </div>
-      <div class="settings" title="Включает/отключает кэш на сайте">
-        <input type="checkbox" id="cacheCheckbox" name="cacheChechbox" />
-        <label for="cacheCheckbox" style="cursor: pointer; user-select: none">Кэшировать данные?</label>
+      <div class="settings">
+        <span>Отображать данные за <span class="settings__swap">всё время</span></span>
       </div>
       <div class="main-section">
         <div class="balance">
-          <div class="balance__title">Активы<span>Ставка на сборе</span></div>
-          <div class="balance__value">-<span style="float: right">-</span></div>
+          <div class="balance__title">
+            <span>Активы</span>
+            <span>Ставка на сборе</span>
+          </div>
+          <div class="balance__value">
+            <span>-</span>
+            <span>-</span>
+          </div>
         </div>
         <div class="income">
-          <div class="income__title">Доход<span>Доходность</span></div>
+          <div class="income__title">
+            <span>Доход</span>
+            <span>Доходность</span>
+          </div>
           <div class="income__value">
-            &nbsp<span style="color: var(--var-fontColor); float: left">-</span
-            ><span style="color: var(--var-fontColor); float: right">-</span>
+            <span style="color: var(--var-fontColor);">-</span>
+            <span style="color: var(--var-fontColor);">-</span>
           </div>
         </div>
       </div>
-      <a class="linkToSite" href="https://jetlend.ru/invest/v3/?state=login" target="»_blank">Перейти в Jetlend</a>
-    </div>
+      <div class="buttons-section">
+        <a class="btn" href="https://jetlend.ru/invest/v3/?state=login" target="»_blank">Перейти в Jetlend</a>
+        <div class="btn invest-section__btn-open">Распределение средств</div>
+      </div>
+      
+      <section class="support-section display-none">
+        <div class="support-section__title">
+          <h5>Поддержать разработку</h5><span class="support-section__btn-close">×</span>
+        </div>
+        <br>
+        <div>Есть несколько способов поддержать разработку:</div>
+        <div style="padding: 10px 0 0 20px;">        
+          <ol>
+            <li>Предложить свои идеи можно отправив личное сообщение JSON'у в телеграме или в группе "JetLend Неофициальный чат".</li>
+            <br>
+            <li>Можно посетить репозиторий на GitHub по <a style="text-decoration: underline; color: #8888e6;" href="https://github.com/VelFleX/Jetlend-Extension" target="»_blank">ссылке</a>, чтобы ознакомиться с проектом и внести свой вклад.</li>
+            <br>
+            <li>Финансовую поддержку можно осуществить, переводом по номеру карты: 
+              <p>2200 7001 4467 7803</p><!--  или перейдя по <a style="text-decoration: underline; color: #8888e6;" href="" target="»_blank">ссылке</a>.</p>  -->
+              <p>Ваше пожертвование будет очень ценным и поможет продолжить разработку. Благодарим вас за вашу поддержку!</p></li>
+          </ol>
+      </div>
+
+      </section>
+
+
+    <section class="invest-section">
+      <div class="container">
+        <div class="invest-section__title">
+          <h5>Распределение средств <span class="invest-section__title-sum">(Загрузка...)</span></h5>
+          <span class="invest-section__btn-close">×</span>
+        </div>
+        <div class="invest-section__input-title">Срок займа в днях (от / до):</div>
+        <input class="invest-section__input" id="invest-days-from" type="number" min="0" max="5000" step="50" value="0"> / <input class="invest-section__input" id="invest-days-to" type="number" min="0" max="5000" step="50" value="2000">
+        <div class="invest-section__input-title">Ставка (от / до):</div>
+        <input class="invest-section__input" id="rate-from" type="number" min="0" max="200" value="0"> / <input class="invest-section__input" id="rate-to" type="number" min="0" max="200" value="100">
+        <div class="invest-section__input-title">Количество займов у заёмщика (от / до):</div>
+        <input class="invest-section__input" id="loans-from" type="number" min="1" max="100" value="1"> / <input class="invest-section__input" id="loans-to" type="number" min="1" max="100" value="100">
+        <div class="invest-section__input-title">Сумма (в один займ / всего):</div>
+        <input class="invest-section__input" id="invest-sum" type="number" min="100" step="100" value="100"> / <input class="invest-section__input" id="invest-sum-all" type="number" min="100" step="100" value="100">
+        <div>
+          <span style="font-size: 16px;" id="numOfSortedCompany">Загрузка...</span><span class="invest-section__btn-update display-none">(Обновить)</span>
+        </div>
+        <label style="display: block; font-size: 12px; margin: 10px 0; user-select: none; cursor: pointer;"><input style="margin-right: 5px;" id="investAgree" type="checkbox" checked>Подтверждаю, что ознакомился с <a style="text-decoration: underline; color: #8888e6;" href="https://jetlend.ru/doc-view/rules" target="»_blank">правилами</a> и принимаю риски, связанные с инвестициями, а также, что сумма инвестиций с начала текущего года на всех инвестиционных платформах не превышает 600 000 ₽. Кроме того, я не предъявляю никаких претензий к разработчикам данного расширения и несу ответственность за все свои инвестиционные операции, выполненные с использованием данного расширения.</label>
+        <button id="investSubmit" class="btn">Распределить средства</button>
+      </div>
+    </section>
+
+    <section class="stats-section"">
+      <p>Загрузка...</p>
+    </section>
+    <span class="swap display-none">всё время</span>
     <script src="/js/popup.js"></script>
   </body>
 </html>
-
