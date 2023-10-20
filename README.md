@@ -1,4 +1,4 @@
-# Jetlend-Extension
+# JetLend-Extension
 Браузерное расширение для JetLend'а.
 
 Что делает: 
