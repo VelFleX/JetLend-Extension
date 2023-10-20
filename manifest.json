@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "0.6.0",
+  "version": "0.6.1",
   "action": {
     "default_popup": "html/popup.html"
   },
@@ -10,7 +10,7 @@
     "48": "./img/icons/icon48.png"
   },
   "permissions": [
-    "storage", "declarativeNetRequest", "activeTab", "tabs", "notifications"
+    "storage", "declarativeNetRequest", "activeTab", "tabs", "notifications", "declarativeContent"
 
   ],
    "background": {
@@ -20,8 +20,8 @@
   "description": "Позволяет быстро распределить средства, убирает НПД из статистики, показывает чистую доходность, считает XIRR.",
   "content_scripts": [
     {
-      "matches": ["https://jetlend.ru/invest/*"],
-      "js": ["js/main.js"]
+      "matches": ["*://*/*"],
+      "js": ["js/global/functions.js", "js/content.js"]
     }
   ]
 }

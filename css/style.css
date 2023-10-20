@@ -256,3 +256,25 @@ a {
   cursor: pointer;
   user-select: none;
 }
+
+.notification {
+  position: fixed;
+  background: green;
+  color: white;
+  width: 200px;
+  height: 100px;
+  margin: 10px;
+  right: 0;
+  bottom: 0;
+  z-index: 999999999999;
+}
+
+.notification__title {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.notification__text {
+  font-size: 16px;
+  font-weight: 300;
+}
