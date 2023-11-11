@@ -1,47 +1,72 @@
+const darkTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+// Минимальное число из двух
+const getMin = (n1, n2) => (n1 > n2 ? n2 : n1);
+
 // Фетч для попапа (исправляет проблемы)
 function fetchData(url) {
   return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage(
-      {
-        action: "fetchData",
-        url: url,
-      },
-      (response) => {
-        resolve(response);
-      }
-    );
+    if (chrome.runtime && chrome.runtime.sendMessage) {
+      chrome.runtime.sendMessage(
+        {
+          action: "fetchData",
+          url: url,
+        },
+        (response) => {
+          resolve(response);
+        }
+      );
+    }
   });
 }
 
-// Функуия обновления настроек инвестирования
+// Функция изменения текста на значке расширения
+function setBadge(text, bgColor = false) {
+  let color = bgColor;
+  if (darkTheme && !color) {
+    color = "#333";
+  } else if (!darkTheme && !color) {
+    color = "#fff";
+  }
+  if (chrome.runtime && chrome.runtime.sendMessage) {
+    chrome.runtime.sendMessage({
+      action: "setBadge",
+      text: text,
+      color: color,
+    });
+  }
+}
+
+// Функция обновления настроек инвестирования
 function updateInvestSettings() {
   const newSettings = {
-    daysFrom: daysFrom.value,
-    daysTo: daysTo.value,
-    rateFrom: rateFrom.value,
-    rateTo: rateTo.value,
-    loansFrom: loansFrom.value,
-    loansTo: loansTo.value,
-    investSum: investSum.value,
+    fmDaysFrom: fmDaysFrom.value,
+    fmDaysTo: fmDaysTo.value,
+    fmRateFrom: fmRateFrom.value,
+    fmRateTo: fmRateTo.value,
+    fmLoansFrom: fmLoansFrom.value,
+    fmLoansTo: fmLoansTo.value,
+    fmInvestSum: fmInvestSum.value,
+    // Вторичка
+    smDaysFrom: smDaysFrom.value,
+    smDaysTo: smDaysTo.value,
+    smRateFrom: smRateFrom.value,
+    smRateTo: smRateTo.value,
+    smFdFrom: smFdFrom.value,
+    smFdTo: smFdTo.value,
+    smProgressFrom: smProgressFrom.value,
+    smProgressTo: smProgressTo.value,
+    smPriceFrom: smPriceFrom.value,
+    smPriceTo: smPriceTo.value,
+    smInvestSum: smInvestSum.value,
   };
   chrome.storage.local.set({ investSettings: newSettings });
-}
-
-// Функция отправки браузерных уведомления
-function sendNotification(title, text) {
-  const image =
-    "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxjbGlwUGF0aCBjbGlwUGF0aFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgaWQ9ImEiPgogICAgICA8cGF0aCBkPSJNMCA2NzYuNDQ3aDE2MzAuNzk3VjBIMHY2NzYuNDQ3eiIvPgogICAgPC9jbGlwUGF0aD4KICA8L2RlZnM+CiAgPGcgY2xhc3M9ImxheWVyIj4KICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEuMzMzMzMgMCAwIC0xLjMzMzMzIDAgOTAxLjkzKSIgY2xpcC1wYXRoPSJ1cmwoI2EpIj4KICAgICAgPHBhdGggZmlsbD0iIzBhZDE5NCIgZD0iTTEyMC45NTIgNjc2LjEzMkwwIDY0MS4xMjZsNTAuNDcxLTUwLjQ3IDM3Ljg4OC0zNi4xNiAzMi41OTMgMTIxLjYzNnoiLz4KICAgIDwvZz4KICA8L2c+Cjwvc3ZnPg==";
-  let notification = new Notification(title, {
-    body: text,
-    icon: image,
-  });
-  return notification;
 }
 
 // Функция открытия инвест страницы
 function openInvestPage() {
   document.querySelector(".invest-section").style.top = "0";
-  document.body.style.height = "470px";
+  document.body.style.height = "510px";
   if (document.body.classList.contains("bigBody")) {
     document.body.classList.remove("bigBody");
   }
@@ -92,7 +117,7 @@ function formatReadableDate(dateString) {
   return date.toLocaleDateString(undefined, options);
 }
 
-// Функция отображения времени последнего обноления
+// Функция отображения времени последнего обновления
 function getUpdateTime(unixTime) {
   const date = new Date(unixTime);
   const year = date.getFullYear();
@@ -128,3 +153,80 @@ function getCookie(name) {
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(";").shift();
 }
+
+// Функция отправки уведомлений
+function sendNotification(title, text) {
+  if (!document.body.contains(id("notificationContainer"))) {
+    const notificationContainer = document.createElement("div");
+    notificationContainer.id = "notificationContainer";
+    Object.assign(notificationContainer.style, {
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "space-between",
+      position: "fixed",
+      right: "0",
+      bottom: "0",
+      boxSizing: "border-box",
+      zIndex: "999999999999",
+    });
+    document.body.appendChild(notificationContainer);
+  }
+  const notificationContainer = id("notificationContainer");
+  let color = "#1e2021";
+  let bgColor = "#fff";
+  if (darkTheme) {
+    color = "#fff";
+    bgColor = "#333";
+  }
+
+  const message = `
+  <div style="display: flex;
+  justify-content: space-between;
+  background: ${bgColor};
+  color: ${color};
+  width: 300px;
+  margin: 10px;
+  padding: 5px 10px;
+  line-height: 1.5; 
+  font-family: 'Open Sans';
+  box-sizing: border-box;">
+    <img style="float: left; margin: 10px 10px 10px 0; width: 60px; height: 60px; filter: none;" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxjbGlwUGF0aCBjbGlwUGF0aFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgaWQ9ImEiPgogICAgICA8cGF0aCBkPSJNMCA2NzYuNDQ3aDE2MzAuNzk3VjBIMHY2NzYuNDQ3eiIvPgogICAgPC9jbGlwUGF0aD4KICA8L2RlZnM+CiAgPGcgY2xhc3M9ImxheWVyIj4KICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEuMzMzMzMgMCAwIC0xLjMzMzMzIDAgOTAxLjkzKSIgY2xpcC1wYXRoPSJ1cmwoI2EpIj4KICAgICAgPHBhdGggZmlsbD0iIzBhZDE5NCIgZD0iTTEyMC45NTIgNjc2LjEzMkwwIDY0MS4xMjZsNTAuNDcxLTUwLjQ3IDM3Ljg4OC0zNi4xNiAzMi41OTMgMTIxLjYzNnoiLz4KICAgIDwvZz4KICA8L2c+Cjwvc3ZnPg==">
+    <div style="flex: 1">
+      <span style="font-size: 18px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; white-space: normal;">
+        ${title}
+        <span class="close-notification" style="cursor: pointer; font-size: 30px; user-select: none">×</span>
+      </span>
+      <div style="font-size: 14px; font-weight: 300; margin-top: -5px">${text}</div>
+      <div style="font-size: 12px; font-weight: 300; color: gray; float: right; margin-top: 5px;">Расширение JetLend</div>
+    </div>
+  </div>
+  `;
+  notificationContainer.innerHTML += message;
+}
+
+// Функция свапа рынков на распределении средств
+function marketSwap() {
+  if (id("marketMode").textContent === "Первичный рынок") {
+    id("marketMode").textContent = "Вторичный рынок";
+    id("firstMarket").classList.add("display-none");
+    id("secondMarket").classList.remove("display-none");
+    document.body.style.height = "590px";
+    fmCompanyUpdate = false;
+    smCompanyUpdate = true;
+    updateSecondMarket();
+  } else {
+    id("marketMode").textContent = "Первичный рынок";
+    id("secondMarket").classList.add("display-none");
+    id("firstMarket").classList.remove("display-none");
+    document.body.style.height = "510px";
+    fmCompanyUpdate = true;
+    smCompanyUpdate = false;
+  }
+}
+
+// Удаление уведомлений
+document.addEventListener("click", function (event) {
+  if (event.target.classList.contains("close-notification")) {
+    event.target.parentNode.parentNode.parentNode.remove();
+  }
+});

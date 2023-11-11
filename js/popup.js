@@ -1,23 +1,26 @@
 let timePeriod = "";
 
-let investCompanyArray = [];
+let fmInvestCompanyArray = [];
+let smInvestCompanyArray = [];
 let freeBalance = 0;
 
-daysFrom.addEventListener('change', updateInvestSettings);
-daysTo.addEventListener('change', updateInvestSettings);
-rateFrom.addEventListener('change', updateInvestSettings);
-rateTo.addEventListener('change', updateInvestSettings);
-loansFrom.addEventListener('change', updateInvestSettings);
-loansTo.addEventListener('change', updateInvestSettings);
-investSum.addEventListener('change', updateInvestSettings);
+const formsElements =[fmDaysFrom, fmDaysTo, fmRateFrom, fmRateTo, fmLoansFrom, fmLoansTo, fmInvestSum,
+  smDaysFrom, smDaysTo, smRateFrom, smRateTo, smFdFrom, smFdTo, smProgressFrom,
+  smProgressTo, smPriceFrom, smPriceTo, smInvestSum];
 
+formsElements.forEach(element => element.addEventListener('change', updateInvestSettings))
 btnInvestOpen.addEventListener('click', openInvestPage);
 btnInvestClose.addEventListener('click', closeInvestPage);
 
-$('.invest-section__btn-update').addEventListener('click', updateCompanyList)
-$(".support-section__btn-close").addEventListener("click", closeSupportPage);
+id('fm-btn-update').addEventListener('click', updateFirstMarket);
+id('fm-btn-stop').addEventListener('click', function() {fmCompanyUpdate = false});
 
-// Загрузка данных из хранилища при загрузке попапа
+id('sm-btn-update').addEventListener('click', updateSecondMarket);
+id('sm-btn-stop').addEventListener('click', function() {smCompanyUpdate = false});
+$(".support-section__btn-close").addEventListener("click", closeSupportPage);
+id('marketMode').addEventListener('click', marketSwap);
+
+
 chrome.storage.local.get("settings", function (data) {
   if (data.settings) {
     settingsBtn.textContent = data.settings.timePeriod;
@@ -28,35 +31,68 @@ chrome.storage.local.get("settings", function (data) {
       timePeriod = "year";
     }
 
-  } else if (!data.settings || data.settings.timePeriod == undefined) {
+  } else if (!data.settings || data.settings.timePeriod == undefined || investDays() <= 365) {
     settingsBtn.textContent = 'всё время';
     timePeriod = "allTime";
   }
 });
 
-
 chrome.storage.local.get("investSettings", function(data) {
   if (data.investSettings) {
-    if (data.investSettings.daysFrom) {
-      daysFrom.value = data.investSettings.daysFrom;
+    if (data.investSettings.fmDaysFrom) {
+      fmDaysFrom.value = data.investSettings.fmDaysFrom;
     }
-    if (data.investSettings.daysTo) {
-      daysTo.value = data.investSettings.daysTo
+    if (data.investSettings.fmDaysTo) {
+      fmDaysTo.value = data.investSettings.fmDaysTo
     }
-    if (data.investSettings.rateFrom) {
-      rateFrom.value = data.investSettings.rateFrom
+    if (data.investSettings.fmRateFrom) {
+      fmRateFrom.value = data.investSettings.fmRateFrom
     }
-    if (data.investSettings.rateTo) {
-      rateTo.value = data.investSettings.rateTo
+    if (data.investSettings.fmRateTo) {
+      fmRateTo.value = data.investSettings.fmRateTo
     }
-    if (data.investSettings.loansFrom) {
-      loansFrom.value = data.investSettings.loansFrom
+    if (data.investSettings.fmLoansFrom) {
+      fmLoansFrom.value = data.investSettings.fmLoansFrom
     }
-    if (data.investSettings.loansTo) {
-      loansTo.value = data.investSettings.loansTo
+    if (data.investSettings.fmLoansTo) {
+      fmLoansTo.value = data.investSettings.fmLoansTo
     }
-    if (data.investSettings.investSum) {
-      investSum.value = data.investSettings.investSum
+    if (data.investSettings.fmInvestSum) {
+      fmInvestSum.value = data.investSettings.fmInvestSum
+    }
+    // Вторичка
+    if (data.investSettings.smDaysFrom) {
+      smDaysFrom.value = data.investSettings.smDaysFrom
+    }
+    if (data.investSettings.smDaysTo) {
+      smDaysTo.value = data.investSettings.smDaysTo
+    }
+    if (data.investSettings.smRateFrom) {
+      smRateFrom.value = data.investSettings.smRateFrom
+    }
+    if (data.investSettings.smRateTo) {
+      smRateTo.value = data.investSettings.smRateTo
+    }
+    if (data.investSettings.smFdFrom ) {
+      smFdFrom.value = data.investSettings.smFdFrom 
+    }
+    if (data.investSettings.smFdTo) {
+      smFdTo.value = data.investSettings.smFdTo
+    }
+    if (data.investSettings.smProgressFrom) {
+      smProgressFrom.value = data.investSettings.smProgressFrom
+    }
+    if (data.investSettings.smProgressTo) {
+      smProgressTo.value = data.investSettings.smProgressTo
+    }
+    if (data.investSettings.smPriceFrom) {
+      smPriceFrom.value = data.investSettings.smPriceFrom
+    }
+    if (data.investSettings.smPriceTo ) {
+      smPriceTo.value = data.investSettings.smPriceTo 
+    }
+    if (data.investSettings.smInvestSum) {
+      smInvestSum.value = data.investSettings.smInvestSum
     }
   }
 })
@@ -105,7 +141,23 @@ async function mainUpdateFunction() {
       },
       get profitWithoutNdfl() {                       // Доход без НДФЛ за всё время
         return this.cleanProfit + balanceStats.nkd;
-      } 
+      },
+      xirr: function(type) {
+        let cashFlows = [];
+        let dates = [];
+        if (type === 'npd') {
+          type = balance;
+        } else if (type === 'clean') {
+          type = cleanBalance;
+        }
+        for (element of xirrData.data.data) {
+          cashFlows.push(element.amount);
+          dates.push(new Date(element.date));
+        }
+        cashFlows.push(-type);
+        dates.push(new Date());
+        return calculateXIRR(cashFlows, dates);
+      }
     }
 
     const yearTime = {
@@ -125,33 +177,49 @@ async function mainUpdateFunction() {
       },
       get profitWithoutNdfl() {                       // Доход без НДФЛ за год
         return this.cleanProfit + balanceStats.nkd;
-      } 
+      },
+      xirr: function(type) {
+        const timeYearAgo = new Date().getTime()-31536000000; // Время в unix год назад
+        let cashFlows = [];
+        let dates = [];
+        let sumYear = 0;
+        if (type === 'npd') {
+          type = this.cleanProfit + balanceStats.nkd;
+        } else if (type === 'clean') {
+          type = this.cleanProfit;
+        }
+        for (element of xirrData.data.data) {
+          if (timeYearAgo < new Date(element.date).getTime()) {
+            sumYear += element.amount;
+            cashFlows.push(element.amount);
+            dates.push(new Date(element.date));
+          }
+        }
+        cashFlows.push(-(sumYear + type));
+        dates.push(new Date());
+        return calculateXIRR(cashFlows, dates);
+      }
     }
 
     // Функция подсчёта дней инвестирования 
-    function getInvestDays() {
+    function investDays() {
       const investStartDate = new Date(statAllTime.start_date).getTime();      // Дата начала инвестирования в unix
       const timeDiff = Math.abs(new Date().getTime() - investStartDate);       // Разница между сегодняшним днем и началом инвестирования в unix
       const days = (diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24)));      // Количество дней инвестирования
-      const text = days === 1 ? ' день' : days >=2 && days <= 4 ? ' дня' : ' дней';
+      return days;
+    }
+
+    // Функция подсчёта дней инвестирования + склонение слова "день"
+    function getInvestDays() {
+      const days = investDays();
+      const lastTwoDigits = days % 100;
+      const text = days === 1 ? ' день' : (lastTwoDigits >= 11 && lastTwoDigits <= 14) ? ' дней' : (lastTwoDigits % 10 === 1) ? ' день' : (lastTwoDigits % 10 >= 2 && lastTwoDigits % 10 <= 4) ? ' дня' : ' дней';
       return days + text;
     }
 
-    // Функция пуша данных для подсчёта XIRR
-    (function() {
-      const arr = xirrData.data.data;
-      for (let i = 0; i < arr.length; i++) {
-        cashFlows.push(arr[i].amount);
-        dates.push(new Date(arr[i].date));
-      }
-      cashFlowsWithNpd = [...cashFlows, -balance];   
-      cashFlows.push(-cleanBalance); 
-      dates.push(new Date());
-    })();
-
     if (!settingsBtn.clickListenerAdded) {
       settingsBtn.addEventListener("click", function () {
-        if (settingsBtn.textContent == 'всё время') {
+        if (settingsBtn.textContent == 'всё время' && investDays() >= 365) {
           settingsBtn.textContent = 'год';
           timePeriod = "year";
           updateProfit();
@@ -169,12 +237,10 @@ async function mainUpdateFunction() {
     }
 
     $('.invest-section__title-sum').textContent = `(Свободно: ${toCurrencyFormat(balanceStats.free)})`;
-    investSumAll.value = balanceStats.free;
+    fmInvestSumAll.value = balanceStats.free;
+    smInvestSumAll.value = balanceStats.free;
 
     const sameDataText = `
-    <div>Свободные средства: <span style="color:${decorNumber(balanceStats.free)}">${numberSign(balanceStats.free)}${toCurrencyFormat(balanceStats.free)}</span></div>
-    <div>XIRR (с НПД / без НПД): ${toPercentFormat(calculateXIRR(cashFlowsWithNpd, dates))} / ${toPercentFormat(calculateXIRR(cashFlows, dates))}</div>
-    <br>
     <div style="font-size:16px">Статистика платформы</div>
     <div>Ставка на сборе (за всё время / за 30 дней): ${toPercentFormat(platformObj.data.average_interest_rate)} / ${toPercentFormat(platformObj.data.average_interest_rate_30days)}</div>
     <div>Минимальная и максимальная ставки:  ${toPercentFormat(platformObj.data.min_interest_rate)} / ${toPercentFormat(platformObj.data.max_interest_rate)}</div>
@@ -191,7 +257,7 @@ async function mainUpdateFunction() {
     font-size: 12px;
     padding: 5px 0 5px;
     text-align: center;
-">Jetlend Extension v${version}. <span id="support-btn" style="text-decoration:underline; cursor:pointer; user-select: none;">Поддержать разработку.</span></footer>
+">JetLend Extension v${version}. <span id="support-btn" style="text-decoration:underline; cursor:pointer; user-select: none;">Поддержать разработку.</span></footer>
     `
 
     const dataTextAllTime = 
@@ -207,6 +273,9 @@ async function mainUpdateFunction() {
     <div>НДФЛ: <span style="color:${decorNumber(-allTime.ndfl)}">${numberSign(-allTime.ndfl)}${toCurrencyFormat(-allTime.ndfl)}</span></div>
     <div>НДФЛ ожидаемый: <span style="color:${decorNumber(-balanceStats.nkd_ndfl)}">${numberSign(-balanceStats.nkd_ndfl)}${toCurrencyFormat(-balanceStats.nkd_ndfl)}</span></div>
     <div>Доход за вычетом НДФЛ: <span style="color:${decorNumber(allTime.profitWithoutNdfl)}">${numberSign(allTime.profitWithoutNdfl)}${toCurrencyFormat(allTime.profitWithoutNdfl)}</span></div>
+    <div>Свободные средства: <span style="color:${decorNumber(balanceStats.free)}">${numberSign(balanceStats.free)}${toCurrencyFormat(balanceStats.free)}</span></div>
+    <div>XIRR (с НПД / без НПД): ${toPercentFormat(allTime.xirr('npd'))} / ${toPercentFormat(allTime.xirr('clean'))}</div>
+    <br>
     ${innerHTML = sameDataText}
     `
 
@@ -223,12 +292,19 @@ async function mainUpdateFunction() {
     <div>НДФЛ: <span style="color:${decorNumber(-yearTime.ndfl)}">${numberSign(-yearTime.ndfl)}${toCurrencyFormat(-yearTime.ndfl)}</span></div>
     <div>НДФЛ ожидаемый: <span style="color:${decorNumber(-balanceStats.nkd_ndfl)}">${numberSign(-balanceStats.nkd_ndfl)}${toCurrencyFormat(-balanceStats.nkd_ndfl)}</span></div>
     <div>Доход за вычетом НДФЛ: <span style="color:${decorNumber(yearTime.profitWithoutNdfl)}">${numberSign(yearTime.profitWithoutNdfl)}${toCurrencyFormat(yearTime.profitWithoutNdfl)}</span></div>
+    <div>Свободные средства: <span style="color:${decorNumber(balanceStats.free)}">${numberSign(balanceStats.free)}${toCurrencyFormat(balanceStats.free)}</span></div>
+    <div>XIRR (с НПД / без НПД): ${toPercentFormat(yearTime.xirr('npd'))} / ${toPercentFormat(yearTime.xirr('clean'))}</div>
+    <br>
     ${innerHTML = sameDataText}
     `
 
     function updateProfit() {
       if (timePeriod == "allTime") {
-        incomeTitle.innerHTML = `<span>Доход за всё время (без НПД / чистый доход)</span> <span>Доходность</span>`;
+        if (investDays() < 365) {
+          incomeTitle.innerHTML = `<span>Доход за ${getInvestDays()} (без НПД / чистый доход)</span> <span>Доходность</span>`;
+        } else {
+          incomeTitle.innerHTML = `<span>Доход за всё время (без НПД / чистый доход)</span> <span>Доходность</span>`;
+        }
         incomeTag.innerHTML = `<span>${toCurrencyFormat(allTime.profitWithoutNpd)} / ${toCurrencyFormat(allTime.cleanProfit)}</span> <span><img src="/img/arrow.svg">${toPercentFormat(allTime.percentProfit)}</span>`;  
       
         $('.income__value span').addEventListener("click", function() {
@@ -238,7 +314,7 @@ async function mainUpdateFunction() {
             document.body.classList.add('bigBody');
           }
         });
-      } else if (timePeriod == "year") {
+      } else if (timePeriod == "year" && investDays() >= 365) {
         incomeTitle.innerHTML = `<span>Доход за год (без НПД / чистый доход)</span> <span>Доходность</span>`;
         incomeTag.innerHTML = `<span>${toCurrencyFormat(yearTime.profitWithoutNpd)} / ${toCurrencyFormat(yearTime.cleanProfit)}</span> <span><img src="/img/arrow.svg">${toPercentFormat(yearTime.percentProfit)}</span>`;  
       
@@ -257,7 +333,7 @@ async function mainUpdateFunction() {
     balanceTag.innerHTML = `<span>${toCurrencyFormat(balance)} / ${toCurrencyFormat(cleanBalance)}</span><span>${toPercentFormat(platformObj.data.average_interest_rate_30days)}</span>`;
     updateProfit();
     
-    if (timePeriod == "year") {
+    if (timePeriod == "year" && investDays() >= 365) {
       statsSection.innerHTML = dataTextYearTime;
       swapBtn.textContent = 'год';
     } else if (timePeriod == "allTime") {
@@ -267,19 +343,29 @@ async function mainUpdateFunction() {
     
     if (swapBtn.classList.contains('display-none')) {
       swapBtn.classList.remove('display-none');
-    }
+      if (investDays() < 365) {
+        swapBtn.textContent = getInvestDays();
+        swapBtn.style.textDecoration = 'none';
+        swapBtn.style.userSelect = 'auto';
+        swapBtn.style.cursor = 'text';
+      }
+    } 
     
-    if (!swapBtn.clickListenerAdded) {
-      swapBtn.addEventListener('click', function() {
-        if(swapBtn.textContent == 'всё время') {
-          swapBtn.textContent = 'год'
-          statsSection.innerHTML = dataTextYearTime;
-        } else if (swapBtn.textContent == 'год') {
-          swapBtn.textContent = 'всё время'
-          statsSection.innerHTML = dataTextAllTime;
-        }
-      });
-      swapBtn.clickListenerAdded = true;
+    if (investDays() >= 365) {
+      if (!swapBtn.clickListenerAdded) {
+        swapBtn.addEventListener('click', function() {
+          if(swapBtn.textContent == 'всё время') {
+            swapBtn.textContent = 'год'
+            statsSection.innerHTML = dataTextYearTime;
+          } else if (swapBtn.textContent == 'год') {
+            swapBtn.textContent = 'всё время'
+            statsSection.innerHTML = dataTextAllTime;
+          }
+        });
+        swapBtn.clickListenerAdded = true;
+      }
+    } else {
+      statsSection.innerHTML = dataTextAllTime;
     }
 
     if (!id("support-btn").clickListenerAdded) {
@@ -305,7 +391,6 @@ async function mainUpdateFunction() {
   };
   chrome.storage.local.set({ cacheJetlend: cache });
   }
-
 
   if (userStats.error) {
     $('.main-section').innerHTML = `<div style="margin: 64px 112px; text-wrap: nowrap;">Авторизуйтесь на сайте</div>`;
@@ -336,10 +421,12 @@ chrome.storage.local.get("cacheJetlend", function (result) {
   }
 });
 
-// Обновление отсортированного списка компаний
-async function updateCompanyList() {
-  id('numOfSortedCompany').textContent = `Загрузка...`;
-  $('.invest-section__btn-update').classList.add('display-none');
+// Обновление списка компаний (первичка)
+async function updateFirstMarket() {
+  fmCompanyUpdate = true;
+  id('fm-numOfSortedCompany').textContent = `Загрузка...`;
+  id('fm-btn-update').classList.add('display-none');
+  id('fm-btn-stop').classList.remove('display-none');
 
   const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
 
@@ -348,9 +435,9 @@ async function updateCompanyList() {
     const sorted = res.data.requests.filter(obj => (obj.collected_percentage !== 100 /* Полоска сбора не заполнена (меньше 100%) */) 
       && (obj.investing_amount === null /* Резервация (нет) */) 
       && (obj.company_investing_amount === null || obj.company_investing_amount === "0.00" /* Есть в портфеле (нет) */)
-      && (obj.term >= daysFrom.value && obj.term <= daysTo.value /* Срок займа */)
-      && (obj.interest_rate >= valueToNum(rateFrom.value) && obj.interest_rate <= valueToNum(rateTo.value) /* Процент займа (от 20 до 100) */) 
-      && (obj.loan_order >= loansFrom.value && obj.loan_order <= loansTo.value  /* Какой по счёту займ на платформе */))
+      && (obj.term >= fmDaysFrom.value && obj.term <= fmDaysTo.value /* Срок займа */)
+      && (obj.interest_rate >= valueToNum(fmRateFrom.value) && obj.interest_rate <= valueToNum(fmRateTo.value) /* Процент займа (от 20 до 100) */) 
+      && (obj.loan_order >= fmLoansFrom.value && obj.loan_order <= fmLoansTo.value  /* Какой по счёту займ на платформе */))
     
     async function fetchDetails(companyId) {
       const response = await fetchData(`https://jetlend.ru/invest/api/requests/${companyId}/details`);
@@ -363,47 +450,165 @@ async function updateCompanyList() {
 
     async function updateArray() {
       let count = 0;
+      let secondSort = [];
       for (const element of sorted) {
         const fd = await fetchDetails(element.id);
         element.financial_discipline = fd;
         count += 1;
-        id('numOfSortedCompany').textContent = `Загрузка... (${count}/${sorted.length})`;
-        console.log(id('numOfSortedCompany').textContent.includes("Загрузка..."));
+        id('fm-numOfSortedCompany').textContent = `Загрузка... Проверяем ФД... (${count}/${sorted.length})`;
+        if (fd === 1) {
+          secondSort.push(element);
+        }
+        if (!fmCompanyUpdate) {
+          fmCompanyUpdate = true;
+          break;
+        }
       }
-      console.log(sorted); // Вывод обновленного массива
-      document.getElementById('numOfSortedCompany').textContent = `Доступно: ${sorted.length} ${getZaimEnding(sorted.length)} `;
-      document.querySelector('.invest-section__btn-update').classList.remove('display-none');
-      investCompanyArray = sorted;
+      console.log('Массив доступных для инвестиций компаний', secondSort); // Вывод обновленного массива
+      id('fm-numOfSortedCompany').textContent = `Доступно: ${secondSort.length} ${getZaimEnding(secondSort.length)} `;
+      id('fm-btn-update').classList.remove('display-none');
+      id('fm-btn-stop').classList.add('display-none');
+      fmInvestCompanyArray = secondSort;
     }
     updateArray()
   };
 }
-updateCompanyList();
+updateFirstMarket();
 
-// Распределение средств
-id('investSubmit').addEventListener('click', function() {
+// Распределение средств (первичка)
+id('firstMarketSubmit').addEventListener('click', function() {
   const valueToInt = value => parseInt((value).toString().replace(',', '.'));
 
-  if (id('investAgree').checked 
-    && valueToInt(investSum.value) <= freeBalance 
-    && valueToInt(investSum.value) >= 100 
-    && !id('numOfSortedCompany').textContent.includes("Загрузка...")
+  if (id('fmInvestAgree').checked 
+    && valueToInt(fmInvestSum.value) <= freeBalance 
+    && valueToInt(fmInvestSum.value) >= 100 
+    && !id('fm-numOfSortedCompany').textContent.includes("Загрузка...")
     && freeBalance >= 100
-    && investCompanyArray.length >= 1) {
+    && fmInvestCompanyArray.length >= 1) {
     console.log('Проверка пройдена');
     function numOfCuts() {
-      let canInvest = Math.floor(valueToInt(investSumAll.value) / valueToInt(investSum.value));
-      if (canInvest > investCompanyArray.length) {
-        return investCompanyArray.length;
+      let canInvest = Math.floor(valueToInt(fmInvestSumAll.value) / valueToInt(fmInvestSum.value));
+      if (canInvest > fmInvestCompanyArray.length) {
+        return fmInvestCompanyArray.length;
       } else {
         return canInvest;
       }
     }
-    const sliceArray = investCompanyArray.slice(0, numOfCuts());
+    const sliceArray = fmInvestCompanyArray.slice(0, numOfCuts());
     const arrOfCompanyId = sliceArray.map(obj => obj.id);
-    chrome.storage.local.set({invest: {array: arrOfCompanyId, sum: valueToInt(investSum.value)}});
+    chrome.storage.local.set({fmInvest: {array: arrOfCompanyId, sum: valueToInt(fmInvestSum.value)}});
     chrome.tabs.create({ url: "https://jetlend.ru/invest/v3/?state=login" });
   } else {
     console.log('Не удовлетворяет условиям');
   };
 })
+
+// Распределение средств (вторичка)
+id('secondMarketSubmit').addEventListener('click', function() {
+  const valueToInt = value => parseInt((value).toString().replace(',', '.'));
+  const valueToPercent = value => parseFloat((parseFloat((value).toString().replace(',', '.'))/100).toFixed(4));
+  if (id('smInvestAgree').checked 
+    && valueToInt(smInvestSum.value) <= freeBalance 
+    && valueToInt(smInvestSum.value) >= 100 
+    && !id('sm-numOfSortedCompany').textContent.includes("Загрузка...")
+    && freeBalance >= 100
+    && smInvestCompanyArray.length >= 1) {
+    console.log('Проверка пройдена');
+    function numOfCuts() {
+      let canInvest = Math.floor(valueToInt(smInvestSumAll.value) / valueToInt(smInvestSum.value));
+      if (canInvest > smInvestCompanyArray.length) {
+        return smInvestCompanyArray.length;
+      } else {
+        return canInvest;
+      }
+    }
+    const sliceArray = smInvestCompanyArray.slice(0, numOfCuts());
+    const arrOfCompanyId = sliceArray.map(obj => obj.loan_id);
+    chrome.storage.local.set({smInvest: {
+      array: arrOfCompanyId, 
+      sum: valueToInt(smInvestSum.value),
+      sumAll: valueToInt(smInvestSumAll.value), 
+      minPrice: valueToPercent(smPriceFrom.value), 
+      maxPrice: valueToPercent(smPriceTo.value)}});
+    chrome.tabs.create({ url: "https://jetlend.ru/invest/v3/?state=login", active: true });
+  } else {
+    console.log('Не удовлетворяет условиям');
+  };
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Обновление списка компаний (вторичка)
+async function updateSecondMarket() {
+  smCompanyUpdate = true;
+  id('sm-numOfSortedCompany').textContent = `Загрузка...`;
+  id('sm-btn-update').classList.add('display-none');
+  id('sm-btn-stop').classList.remove('display-none');
+
+  const res = await fetchData("https://jetlend.ru/invest/api/exchange/loans?limit=10000&offset=0&sort_dir=desc&sort_field=ytm");
+
+  if (res.data) {
+    const valueToPercent = value => parseFloat((parseFloat((value).toString().replace(',', '.'))/100).toFixed(4)); // '12,3456' => 0.1234
+    const sorted = res.data.data.filter(obj => (obj.invested_debt === null || obj.invested_debt === "0.00") /* Есть в портфеле (нет) */
+      && (obj.term_left >= smDaysFrom.value && obj.term_left <= smDaysTo.value) /* Остаток срока займа */
+      // && (obj.interest_rate >= 0.15 && obj.interest_rate <= 1) /* Изначальный процент займа (от 20 до 100) */
+      && (obj.ytm >= valueToPercent(smRateFrom.value) && obj.ytm <= valueToPercent(smRateTo.value)) /* Эффективная ставка (от 20 до 100) */
+      // && (obj.loan_order >= 1 && obj.loan_order <= 5)  /* Какой по счёту займ на платформе */
+      && (obj.progress >= valueToPercent(smProgressFrom.value) && obj.progress <= valueToPercent(smProgressTo.value)) /* Выплачено (прогресс в %) */
+      && (obj.min_price >= valueToPercent(smPriceFrom.value) && obj.min_price <= valueToPercent(smPriceTo.value)) /* Мин прайс от 50% до 90% */
+      && (obj.status === "active")) 
+  
+
+    async function fetchDetails(companyId) {
+      const response = await fetchData(`https://jetlend.ru/invest/api/requests/${companyId}/details`);
+      if (response.data) {
+        return response.data.data.details.financial_discipline;
+      } else {
+        console.log('Что-то пошло не так');
+      }
+    }
+
+    async function updateArray() {
+      let count = 0;
+      let secondSort = [];
+      for (const element of sorted) {
+        const fd = await fetchDetails(element.loan_id);
+        element.financial_discipline = fd;
+        count += 1;
+        id('sm-numOfSortedCompany').textContent = `Загрузка... Проверяем ФД... (${count}/${sorted.length})`;
+        if (fd >= valueToPercent(smFdFrom.value) && fd <= valueToPercent(smFdTo.value) /* ФД от до */) {
+          secondSort.push(element);
+        }
+        if (!smCompanyUpdate) {
+          smCompanyUpdate = true;
+          break;
+        }
+      }
+      id('sm-numOfSortedCompany').textContent = `Доступно: ${secondSort.length} ${getZaimEnding(secondSort.length)} `;
+      id('sm-btn-update').classList.remove('display-none');
+      id('sm-btn-stop').classList.add('display-none');
+      smInvestCompanyArray = secondSort;
+      console.log('Вторая сортировка', smInvestCompanyArray);
+    }
+    updateArray();
+    console.log('Первая сортировка', sorted);
+  };
+}
+
+
+
