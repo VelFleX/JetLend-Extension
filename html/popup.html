@@ -15,7 +15,7 @@
         <span title="Посетите Jetlend чтобы обновить данные" style="color: #e1bb45; cursor: pointer">(Не обновлено)</span>
       </div>
       <div class="settings">
-        <span>Отображать данные за <span class="settings__swap">всё время</span></span>
+        <span id="time-setting">Отображать данные за <span class="settings__swap">всё время</span></span>
       </div>
       <div class="main-section">
         <div class="balance">
@@ -40,7 +40,7 @@
         </div>
       </div>
       <div class="buttons-section">
-        <a class="btn" href="https://jetlend.ru/invest/v3/?state=login" target="»_blank">Перейти в Jetlend</a>
+        <a class="btn" href="https://jetlend.ru/invest/v3/?state=login" target="»_blank">Перейти в JetLend</a>
         <div class="btn invest-section__btn-open">Распределение средств</div>
       </div>
       
@@ -54,7 +54,7 @@
           <ol>
             <li>Предложить свои идеи можно отправив личное сообщение JSON'у в телеграме или в группе "JetLend Неофициальный чат".</li>
             <br>
-            <li>Можно посетить репозиторий на GitHub по <a style="text-decoration: underline; color: #8888e6;" href="https://github.com/VelFleX/Jetlend-Extension" target="»_blank">ссылке</a>, чтобы ознакомиться с проектом и внести свой вклад.</li>
+            <li>Можно посетить репозиторий на GitHub по <a style="text-decoration: underline; color: #8888e6;" href="https://github.com/VelFleX/JetLend-Extension" target="»_blank">ссылке</a>, чтобы ознакомиться с проектом и внести свой вклад.</li>
             <br>
             <li>Финансовую поддержку можно осуществить, переводом по номеру карты: 
               <p>2200 7001 4467 7803</p><!--  или перейдя по <a style="text-decoration: underline; color: #8888e6;" href="" target="»_blank">ссылке</a>.</p>  -->
@@ -71,19 +71,51 @@
           <h5>Распределение средств <span class="invest-section__title-sum">(Загрузка...)</span></h5>
           <span class="invest-section__btn-close">×</span>
         </div>
-        <div class="invest-section__input-title">Срок займа в днях (от / до):</div>
-        <input class="invest-section__input" id="invest-days-from" type="number" min="0" max="5000" step="50" value="0"> / <input class="invest-section__input" id="invest-days-to" type="number" min="0" max="5000" step="50" value="2000">
-        <div class="invest-section__input-title">Ставка (от / до):</div>
-        <input class="invest-section__input" id="rate-from" type="number" min="0" max="200" value="0"> / <input class="invest-section__input" id="rate-to" type="number" min="0" max="200" value="100">
-        <div class="invest-section__input-title">Количество займов у заёмщика (от / до):</div>
-        <input class="invest-section__input" id="loans-from" type="number" min="1" max="100" value="1"> / <input class="invest-section__input" id="loans-to" type="number" min="1" max="100" value="100">
-        <div class="invest-section__input-title">Сумма (в один займ / всего):</div>
-        <input class="invest-section__input" id="invest-sum" type="number" min="100" step="100" value="100"> / <input class="invest-section__input" id="invest-sum-all" type="number" min="100" step="100" value="100">
-        <div>
-          <span style="font-size: 16px;" id="numOfSortedCompany">Загрузка...</span><span class="invest-section__btn-update display-none">(Обновить)</span>
+        <div id="marketMode" style="margin-bottom: 10px; text-decoration: underline; cursor: pointer; user-select: none;">Первичный рынок</div>
+        
+        <div id="firstMarket">
+          <div class="invest-section__input-title">Срок займа в днях (от / до):</div>
+          <input class="invest-section__input" id="fm-invest-days-from" type="number" min="0" max="5000" step="50" value="0"> / <input class="invest-section__input" id="fm-invest-days-to" type="number" min="0" max="5000" step="50" value="2000">
+          <div class="invest-section__input-title">Ставка (от / до):</div>
+          <input class="invest-section__input" id="fm-rate-from" type="number" min="0" max="200" value="0"> / <input class="invest-section__input" id="fm-rate-to" type="number" min="0" max="200" value="100">
+          <div class="invest-section__input-title">Количество займов у заёмщика (от / до):</div>
+          <input class="invest-section__input" id="fm-loans-from" type="number" min="1" max="100" value="1"> / <input class="invest-section__input" id="fm-loans-to" type="number" min="1" max="100" value="100">
+          <div class="invest-section__input-title">Сумма (в один займ / всего):</div>
+          <input class="invest-section__input" id="fm-invest-sum" type="number" min="100" step="100" value="100"> / <input class="invest-section__input" id="fm-invest-sum-all" type="number" min="100" step="100" value="100">
+          <div>
+            <span style="font-size: 16px;" id="fm-numOfSortedCompany">Загрузка...</span>
+            <span class="invest-section__btn-update display-none" id="fm-btn-update">(Обновить)</span>
+            <span class="invest-section__btn-stop" id="fm-btn-stop">(Остановить)</span>
+          </div>
+          <label style="display: block; font-size: 12px; margin: 10px 0; user-select: none; cursor: pointer;"><input style="margin-right: 5px;" id="fmInvestAgree" type="checkbox" checked>Подтверждаю, что ознакомился с <a style="text-decoration: underline; color: #8888e6;" href="https://jetlend.ru/doc-view/rules" target="»_blank">правилами</a> и принимаю риски, связанные с инвестициями, а также, что сумма инвестиций с начала текущего года на всех инвестиционных платформах не превышает 600 000 ₽. Кроме того, я не предъявляю никаких претензий к разработчикам данного расширения и несу ответственность за все свои инвестиционные операции, выполненные с использованием данного расширения.</label>
+          <button class="btn" id="firstMarketSubmit">Распределить средства</button>
         </div>
-        <label style="display: block; font-size: 12px; margin: 10px 0; user-select: none; cursor: pointer;"><input style="margin-right: 5px;" id="investAgree" type="checkbox" checked>Подтверждаю, что ознакомился с <a style="text-decoration: underline; color: #8888e6;" href="https://jetlend.ru/doc-view/rules" target="»_blank">правилами</a> и принимаю риски, связанные с инвестициями, а также, что сумма инвестиций с начала текущего года на всех инвестиционных платформах не превышает 600 000 ₽. Кроме того, я не предъявляю никаких претензий к разработчикам данного расширения и несу ответственность за все свои инвестиционные операции, выполненные с использованием данного расширения.</label>
-        <button id="investSubmit" class="btn">Распределить средства</button>
+
+        <div class="display-none" id="secondMarket">
+          <div class="invest-section__input-title">Остаток срока займа в днях (от / до):</div>
+          <input class="invest-section__input" id="sm-invest-days-from" type="number" min="0" max="5000" step="50" value="0"> / <input class="invest-section__input" id="sm-invest-days-to" type="number" min="0" max="5000" step="50" value="2000">
+          <div class="invest-section__input-title">Эффективная ставка (от / до):</div>
+          <input class="invest-section__input" id="sm-rate-from" type="number" min="0" max="200" step="1" value="0"> / <input class="invest-section__input" id="sm-rate-to" type="number" min="0" max="200" step="1" value="100">
+          <div class="invest-section__input-title">ФД заёмщика (от / до):</div>
+          <input class="invest-section__input" id="sm-fd-from" type="number" min="0" max="100" step="1" value="0"> / <input class="invest-section__input" id="sm-fd-to" type="number" min="0" max="100" step="1" value="100">
+          <div class="invest-section__input-title">Процент закрытия займа (от / до):</div>
+          <input class="invest-section__input" id="sm-progress-from" type="number" min="0" max="100" step="1" value="0"> / <input class="invest-section__input" id="sm-progress-to" type="number" min="0" max="100" step="1" value="100">
+          <div class="invest-section__input-title">Цена в процентах (от / до):</div>
+          <input class="invest-section__input" id="sm-price-from" type="number" min="0" max="200" step="1" value="1"> / <input class="invest-section__input" id="sm-price-to" type="number" min="1" max="200" step="1" value="100">
+          
+          
+          <div class="invest-section__input-title">Сумма (в один займ / всего):</div>
+          <input class="invest-section__input" id="sm-invest-sum" type="number" min="100" step="100" value="100"> / <input class="invest-section__input" id="sm-invest-sum-all" type="number" min="100" step="100" value="100">
+          
+          <div>
+            <span style="font-size: 16px;" id="sm-numOfSortedCompany">Загрузка...</span>
+            <span class="invest-section__btn-update display-none" id="sm-btn-update">(Обновить)</span>
+            <span class="invest-section__btn-stop" id="sm-btn-stop">(Остановить)</span>
+          </div>
+          <label style="display: block; font-size: 12px; margin: 10px 0; user-select: none; cursor: pointer;"><input style="margin-right: 5px;" id="smInvestAgree" type="checkbox" checked>Подтверждаю, что я не предъявляю никаких претензий к разработчикам данного расширения и несу ответственность за все свои инвестиционные операции, выполненные с использованием данного расширения.</label>
+          <button class="btn" id="secondMarketSubmit">Распределить средства</button>
+        </div>
+      
       </div>
     </section>
 

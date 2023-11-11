@@ -242,7 +242,7 @@ a {
 .invest-section__input {
   font-size: 16px;
   height: 24px;
-  width: 70px;
+  width: 100px;
   margin: 5px 0 10px;
 }
 
@@ -250,7 +250,7 @@ a {
   font-size: 16px;
 }
 
-.invest-section__btn-update {
+.invest-section__btn-update, .invest-section__btn-stop {
   font-size: 16px;
   text-decoration: underline;
   cursor: pointer;
