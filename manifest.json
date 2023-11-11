@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "0.6.1",
+  "version": "0.7.0",
   "action": {
     "default_popup": "html/popup.html"
   },
@@ -15,13 +15,22 @@
   ],
    "background": {
     "service_worker": "js/background.js"
+  }, 
+  "commands": {
+    "open_extension": {
+      "suggested_key": {
+        "default": "Shift+Alt+J",
+        "mac": "Command+Shift+J"
+      },
+      "description": "Открытие Расширения"
+    }
   },
-  "name": "Расширение Jetlend",
+  "name": "Расширение JetLend",
   "description": "Позволяет быстро распределить средства, убирает НПД из статистики, показывает чистую доходность, считает XIRR.",
   "content_scripts": [
     {
       "matches": ["*://*/*"],
-      "js": ["js/global/functions.js", "js/content.js"]
+      "js": ["js/global/variables.js", "js/global/functions.js", "js/content.js"]
     }
   ]
 }

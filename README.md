@@ -19,7 +19,7 @@
 
 ## GitHub
 
-Репозиторий проекта на GitHub: https://github.com/VelFleX/Jetlend-Extension
+Репозиторий проекта на GitHub: https://github.com/VelFleX/JetLend-Extension
 
 ## License
 
