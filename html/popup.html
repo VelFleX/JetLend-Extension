@@ -4,66 +4,92 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link href="/css/style.css" rel="stylesheet" />
-    <title>Jetlend</title>
+    <title>JetLend Extension</title>
   </head>
   <body>
 
-
-    <div class="container">
-      <div class="lastUpdateDate">
-        Все активы
-        <span title="Посетите Jetlend чтобы обновить данные" style="color: #e1bb45; cursor: pointer">(Не обновлено)</span>
-      </div>
-      <div class="settings">
-        <span id="time-setting">Отображать данные за <span class="settings__swap">всё время</span></span>
-      </div>
-      <div class="main-section">
-        <div class="balance">
-          <div class="balance__title">
-            <span>Активы</span>
-            <span>Ставка на сборе</span>
+    <section class="main-section">
+      <div class="container">
+        <div class="main-section__inner">
+          <div class="lastUpdateDate">
+            Все активы
+            <span title="Посетите Jetlend чтобы обновить данные" style="color: #e1bb45; cursor: pointer">(Не обновлено)</span>
           </div>
-          <div class="balance__value">
-            <span>-</span>
-            <span>-</span>
+          <div class="settings">
+            <span id="time-setting">Отображать данные за <span class="settings__swap">всё время</span></span>
+          </div>
+          <section class="main-section__stats">
+            <div class="balance">
+              <div class="balance__title">
+                <span>Активы</span>
+                <span>Ставка на сборе</span>
+              </div>
+              <div class="balance__value">
+                <span>-</span>
+                <span>-</span>
+              </div>
+            </div>
+            <div class="income">
+              <div class="income__title">
+                <span>Доход</span>
+                <span>Доходность</span>
+              </div>
+              <div class="income__value">
+                <span style="color: var(--var-fontColor);">-</span>
+                <span style="color: var(--var-fontColor);">-</span>
+              </div>
+            </div>
+          </section>
+          <div class="buttons-section">
+            <a class="btn" href="https://jetlend.ru/invest/v3/?state=login" target="»_blank">Перейти в JetLend</a>
+            <div class="btn invest-section__btn-open">Распределение средств</div>
           </div>
         </div>
-        <div class="income">
-          <div class="income__title">
-            <span>Доход</span>
-            <span>Доходность</span>
-          </div>
-          <div class="income__value">
-            <span style="color: var(--var-fontColor);">-</span>
-            <span style="color: var(--var-fontColor);">-</span>
-          </div>
-        </div>
       </div>
-      <div class="buttons-section">
-        <a class="btn" href="https://jetlend.ru/invest/v3/?state=login" target="»_blank">Перейти в JetLend</a>
-        <div class="btn invest-section__btn-open">Распределение средств</div>
+    </section>
+    
+      <div class="modal-container display-none" id="support-section">
+        <section class="modal" >
+          <div class="modal__title">
+            <h5>Поддержать разработку</h5><span class="modal__btn-close" id="support-section__btn-close">×</span>
+          </div>
+          <br>
+          <div>Есть несколько способов поддержать разработку:</div>
+          <div style="padding: 10px 0 0 20px;">        
+            <ol>
+              <li>Предложить свои идеи можно отправив личное сообщение JSON'у в телеграме или в группе "JetLend Неофициальный чат".</li>
+              <br>
+              <li>Можно посетить репозиторий на GitHub по <a class="link" href="https://github.com/VelFleX/JetLend-Extension" target="»_blank">ссылке</a>, чтобы ознакомиться с проектом и внести свой вклад.</li>
+              <br>
+              <li>Финансовую поддержку можно осуществить, переводом по номеру карты: 
+                <p>2200 7001 4467 7803</p>
+                <p>Ваше пожертвование будет очень ценным и поможет продолжить разработку. Благодарим вас за вашу поддержку!</p></li>
+            </ol>
+          </div>
+        </section>
       </div>
       
-      <section class="support-section display-none">
-        <div class="support-section__title">
-          <h5>Поддержать разработку</h5><span class="support-section__btn-close">×</span>
-        </div>
-        <br>
-        <div>Есть несколько способов поддержать разработку:</div>
-        <div style="padding: 10px 0 0 20px;">        
-          <ol>
-            <li>Предложить свои идеи можно отправив личное сообщение JSON'у в телеграме или в группе "JetLend Неофициальный чат".</li>
-            <br>
-            <li>Можно посетить репозиторий на GitHub по <a style="text-decoration: underline; color: #8888e6;" href="https://github.com/VelFleX/JetLend-Extension" target="»_blank">ссылке</a>, чтобы ознакомиться с проектом и внести свой вклад.</li>
-            <br>
-            <li>Финансовую поддержку можно осуществить, переводом по номеру карты: 
-              <p>2200 7001 4467 7803</p><!--  или перейдя по <a style="text-decoration: underline; color: #8888e6;" href="" target="»_blank">ссылке</a>.</p>  -->
-              <p>Ваше пожертвование будет очень ценным и поможет продолжить разработку. Благодарим вас за вашу поддержку!</p></li>
-          </ol>
+      <div class="modal-container display-none" id="fm-list">
+        <section class="modal">
+          <div class="modal__title">
+            <h5>Список компаний на первичном рынке</h5>
+            <span class="modal__btn-close" id="fm-list__btn-close">×</span>
+          </div>
+          <br>
+          <div id="fm-list-ul"></div>
+        </section>
       </div>
 
-      </section>
-
+      <div class="modal-container display-none" id="sm-list">
+        <section class="modal">
+          <div class="modal__title">
+            <h5>Список компаний на вторичном рынке</h5>
+            <span class="modal__btn-close" id="sm-list__btn-close">×</span>
+          </div>
+          <br>
+          <div id="sm-list-ul"></div>
+        </section>
+      </div>
 
     <section class="invest-section">
       <div class="container">
@@ -77,15 +103,20 @@
           <div class="invest-section__input-title">Срок займа в днях (от / до):</div>
           <input class="invest-section__input" id="fm-invest-days-from" type="number" min="0" max="5000" step="50" value="0"> / <input class="invest-section__input" id="fm-invest-days-to" type="number" min="0" max="5000" step="50" value="2000">
           <div class="invest-section__input-title">Ставка (от / до):</div>
-          <input class="invest-section__input" id="fm-rate-from" type="number" min="0" max="200" value="0"> / <input class="invest-section__input" id="fm-rate-to" type="number" min="0" max="200" value="100">
+          <input class="invest-section__input" id="fm-rate-from" type="number" min="0" max="200" value="0"> / <input class="invest-section__input" id="fm-rate-to" type="number" min="0" max="200" value="35">
           <div class="invest-section__input-title">Количество займов у заёмщика (от / до):</div>
           <input class="invest-section__input" id="fm-loans-from" type="number" min="1" max="100" value="1"> / <input class="invest-section__input" id="fm-loans-to" type="number" min="1" max="100" value="100">
-          <div class="invest-section__input-title">Сумма (в один займ / всего):</div>
+          <div class="invest-section__input-title">Сумма в одного заёмщика (до):</div>
+          <input class="invest-section__input" id="fm-max-company-sum" style="width: 217px" type="number" min="100" step="100" value="100">
+          
+          
+          <div class="invest-section__input-title">Сумма (в один займ / всего распределить средств):</div>
           <input class="invest-section__input" id="fm-invest-sum" type="number" min="100" step="100" value="100"> / <input class="invest-section__input" id="fm-invest-sum-all" type="number" min="100" step="100" value="100">
           <div>
             <span style="font-size: 16px;" id="fm-numOfSortedCompany">Загрузка...</span>
-            <span class="invest-section__btn-update display-none" id="fm-btn-update">(Обновить)</span>
-            <span class="invest-section__btn-stop" id="fm-btn-stop">(Остановить)</span>
+            <span class="invest-section__btn display-none" id="fm-btn-update">(Обновить)</span>
+            <span class="invest-section__btn display-none" id="fm-btn-show">(Показать список)</span>
+            <span class="invest-section__btn" id="fm-btn-stop">(Остановить)</span>
           </div>
           <label style="display: block; font-size: 12px; margin: 10px 0; user-select: none; cursor: pointer;"><input style="margin-right: 5px;" id="fmInvestAgree" type="checkbox" checked>Подтверждаю, что ознакомился с <a style="text-decoration: underline; color: #8888e6;" href="https://jetlend.ru/doc-view/rules" target="»_blank">правилами</a> и принимаю риски, связанные с инвестициями, а также, что сумма инвестиций с начала текущего года на всех инвестиционных платформах не превышает 600 000 ₽. Кроме того, я не предъявляю никаких претензий к разработчикам данного расширения и несу ответственность за все свои инвестиционные операции, выполненные с использованием данного расширения.</label>
           <button class="btn" id="firstMarketSubmit">Распределить средства</button>
@@ -102,15 +133,20 @@
           <input class="invest-section__input" id="sm-progress-from" type="number" min="0" max="100" step="1" value="0"> / <input class="invest-section__input" id="sm-progress-to" type="number" min="0" max="100" step="1" value="100">
           <div class="invest-section__input-title">Цена в процентах (от / до):</div>
           <input class="invest-section__input" id="sm-price-from" type="number" min="0" max="200" step="1" value="1"> / <input class="invest-section__input" id="sm-price-to" type="number" min="1" max="200" step="1" value="100">
+          <div class="invest-section__input-title">Класс займа (от / до):</div>
+          <input class="invest-section__input" id="sm-class-from" type="number" min="0" max="3" step="1" value="0"> / <input class="invest-section__input" id="sm-class-to" type="number" min="0" max="3" step="1" value="0">
+          <div class="invest-section__input-title">Сумма в одного заёмщика (до):</div>
+          <input class="invest-section__input" id="sm-max-company-sum" style="width: 217px" number" min="100" step="100" value="100">
           
           
-          <div class="invest-section__input-title">Сумма (в один займ / всего):</div>
+          <div class="invest-section__input-title">Сумма (в один займ / всего распределить средств):</div>
           <input class="invest-section__input" id="sm-invest-sum" type="number" min="100" step="100" value="100"> / <input class="invest-section__input" id="sm-invest-sum-all" type="number" min="100" step="100" value="100">
           
           <div>
             <span style="font-size: 16px;" id="sm-numOfSortedCompany">Загрузка...</span>
-            <span class="invest-section__btn-update display-none" id="sm-btn-update">(Обновить)</span>
-            <span class="invest-section__btn-stop" id="sm-btn-stop">(Остановить)</span>
+            <span class="invest-section__btn display-none" id="sm-btn-update">(Обновить)</span>
+            <span class="invest-section__btn display-none" id="sm-btn-show">(Показать список)</span>
+            <span class="invest-section__btn" id="sm-btn-stop">(Остановить)</span>
           </div>
           <label style="display: block; font-size: 12px; margin: 10px 0; user-select: none; cursor: pointer;"><input style="margin-right: 5px;" id="smInvestAgree" type="checkbox" checked>Подтверждаю, что я не предъявляю никаких претензий к разработчикам данного расширения и несу ответственность за все свои инвестиционные операции, выполненные с использованием данного расширения.</label>
           <button class="btn" id="secondMarketSubmit">Распределить средства</button>
@@ -119,10 +155,12 @@
       </div>
     </section>
 
-    <section class="stats-section"">
-      <p>Загрузка...</p>
+    <section class="stats-section">
+      <div class="container">
+        <p>Загрузка...</p>
+      </div>
     </section>
-    <span class="swap display-none">всё время</span>
+    
     <script src="/js/global/variables.js"></script>
     <script src="/js/global/functions.js"></script>
     <script src="/js/global/XIRR.js"></script>

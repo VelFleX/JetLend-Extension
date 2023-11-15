@@ -1,3 +1,4 @@
+// Фетчдата
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "fetchData") {
     fetch(request.url, {
@@ -24,6 +25,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true;
 });
 
+// Уведомления баджа
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action === "setBadge") {
     chrome.action.setBadgeText({ text: request.text });
@@ -31,6 +33,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   }
 });
 
+// Открытие расширения в новом окне сочетанием клавиш
 chrome.commands.onCommand.addListener(function(command) {
   if (command === "open_extension") {
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
@@ -42,3 +45,6 @@ chrome.commands.onCommand.addListener(function(command) {
     });
   }
 });
+
+
+

@@ -1,41 +1,51 @@
-const $ = document.querySelector.bind(document);
+const $ = {
+  get: function(selector) {
+    if (selector.startsWith('#')) {
+      return document.getElementById(selector.substring(1));
+    }
+    return document.querySelector(selector);
+  },
+};
+
 const all = document.querySelectorAll.bind(document);
-const id = document.getElementById.bind(document);
 
-const version = "0.7.0";
+const version = "0.8.0 beta 1";
 
-const lastUpdateDateTag = $(".lastUpdateDate"); //Тэг последнего обновления данных
-const balanceTitle = $(".balance__title");      //Заголовок баланса
-const balanceTag = $(".balance__value");        //Тэг баланса
-const incomeTitle = $(".income__title");        //Заголовок дохода
-const incomeTag = $(".income__value");          //Тэг дохода
-const btnInvestOpen = $('.invest-section__btn-open '); // Кнопка открытия страницы распределения средств
-const btnInvestClose = $('.invest-section__btn-close'); // Кнопка закрытия страницы распределения средств
-const statsSection = $('.stats-section');       // Блок подробной статистики
-const swapBtn = $('.swap');                     // Свапалка в подробной статистике
-const settingsBtn = $('.settings__swap');       // Кнопка-свапалка в настройках
+const lastUpdateDateTag = $.get(".lastUpdateDate"); //Тэг последнего обновления данных
+const balanceTitle = $.get(".balance__title");      //Заголовок баланса
+const balanceTag = $.get(".balance__value");        //Тэг баланса
+const incomeTitle = $.get(".income__title");        //Заголовок дохода
+const incomeTag = $.get(".income__value");          //Тэг дохода
+const btnInvestOpen = $.get('.invest-section__btn-open '); // Кнопка открытия страницы распределения средств
+const btnInvestClose = $.get('.invest-section__btn-close'); // Кнопка закрытия страницы распределения средств
+const statsSection = $.get('.stats-section');       // Блок подробной статистики
+const settingsBtn = $.get('.settings__swap');       // Кнопка-свапалка в настройках
 
-let fmDaysFrom = id('fm-invest-days-from');
-let fmDaysTo = id('fm-invest-days-to');
-let fmRateFrom = id('fm-rate-from');
-let fmRateTo = id('fm-rate-to');
-let fmLoansFrom = id('fm-loans-from');
-let fmLoansTo = id('fm-loans-to');
-let fmInvestSum = id('fm-invest-sum');
-let fmInvestSumAll = id('fm-invest-sum-all');
+let fmDaysFrom = $.get('#fm-invest-days-from');
+let fmDaysTo = $.get('#fm-invest-days-to');
+let fmRateFrom = $.get('#fm-rate-from');
+let fmRateTo = $.get('#fm-rate-to');
+let fmLoansFrom = $.get('#fm-loans-from');
+let fmLoansTo = $.get('#fm-loans-to');
+let fmMaxCompanySum = $.get('#fm-max-company-sum');
+let fmInvestSum = $.get('#fm-invest-sum');
+let fmInvestSumAll = $.get('#fm-invest-sum-all');
 
-let smDaysFrom = id('sm-invest-days-from');
-let smDaysTo = id('sm-invest-days-to');
-let smRateFrom = id('sm-rate-from');
-let smRateTo = id('sm-rate-to');
-let smFdFrom = id('sm-fd-from');
-let smFdTo = id('sm-fd-to');
-let smProgressFrom = id('sm-progress-from');
-let smProgressTo = id('sm-progress-to');
-let smPriceFrom = id('sm-price-from');
-let smPriceTo = id('sm-price-to');
-let smInvestSum = id('sm-invest-sum');
-let smInvestSumAll = id('sm-invest-sum-all');
+let smDaysFrom = $.get('#sm-invest-days-from');
+let smDaysTo = $.get('#sm-invest-days-to');
+let smRateFrom = $.get('#sm-rate-from');
+let smRateTo = $.get('#sm-rate-to');
+let smFdFrom = $.get('#sm-fd-from');
+let smFdTo = $.get('#sm-fd-to');
+let smProgressFrom = $.get('#sm-progress-from');
+let smProgressTo = $.get('#sm-progress-to');
+let smPriceFrom = $.get('#sm-price-from');
+let smPriceTo = $.get('#sm-price-to');
+let smClassFrom = $.get('#sm-class-from');
+let smClassTo = $.get('#sm-class-to');
+let smMaxCompanySum = $.get('#sm-max-company-sum');
+let smInvestSum = $.get('#sm-invest-sum');
+let smInvestSumAll = $.get('#sm-invest-sum-all');
 
 let fmCompanyUpdate = true;
 let smCompanyUpdate = false;

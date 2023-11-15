@@ -24,19 +24,25 @@
 
 :root {
   --var-bgColor: #fff;
+  --var-secondBgColor: #f3f3f3;
   --var-fontColor: #1e2021;
   --var-buttonColor: #1e2021;
   --var-buttonHoverColor: #363a3c;
   --var-buttonTextColor: #fff;
+  --var-smallBtnColor: #e0e0e0;;
+  --var-smallBtnColor--hover: #cecece;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --var-bgColor: #333;
+    --var-secondBgColor: #2a2a2a;
     --var-fontColor: #fff;
     --var-buttonColor: #186251;
     --var-buttonHoverColor: #1e3431;
     --var-buttonTextColor: #fff;
+    --var-smallBtnColor: #747474;
+    --var-smallBtnColor--hover: #515151;
   }
 }
 
@@ -49,18 +55,21 @@
 }
 
 body {
-  width: 500px;
-  height: 240px;
+  height: 245px;
   font-family: SF Pro Display, sans-serif, currencies, auto;
   font-size: 24px;
   color: var(--var-fontColor);
   background-color: var(--var-bgColor);
-  transition: height .25s ease-in-out;
+  transition: height 0.25s ease-in-out;
   overflow-y: scroll;
 }
 
 body::-webkit-scrollbar {
-  width: 1px;
+  width: 0px;
+}
+
+.modal::-webkit-scrollbar {
+  width: 0px;
 }
 
 a {
@@ -68,10 +77,19 @@ a {
   color: inherit;
 }
 
+.link {
+  text-decoration: underline; 
+  color: #8888e6;
+}
+
 .container {
   max-width: 520px;
   margin: 0 auto;
   padding: 0 10px;
+}
+
+.main-section__inner {
+  width: 500px;
 }
 
 .lastUpdateDate {
@@ -103,7 +121,10 @@ a {
   text-decoration: underline;
 }
 
-.balance__title, .balance__value, .income__title, .income__value {
+.balance__title,
+.balance__value,
+.income__title,
+.income__value {
   display: flex;
   justify-content: space-between;
   user-select: none;
@@ -118,7 +139,7 @@ a {
   margin-right: 5px;
 }
 
-.main-section {
+.main-section__stats {
   margin-bottom: 16px;
 }
 
@@ -131,7 +152,8 @@ a {
   margin-top: 10px;
 }
 
-.balance__value, .income__value {
+.balance__value,
+.income__value {
   font-weight: 500;
 }
 
@@ -168,8 +190,28 @@ a {
 .btn:hover {
   background: var(--var-buttonHoverColor);
 }
-.support-section {
-  width: 400px;
+
+.modal-container {
+  position: relative;
+  cursor: pointer;
+}
+
+.modal-container::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(5px); /* создаем размытие заднего фона */
+  z-index: 10;
+}
+
+.modal {
+  width: 480px;
+  height: 100%;
+  margin-top: 20px;
+  overflow-y: auto;
   position: fixed;
   top: 50%;
   left: 50%;
@@ -178,25 +220,23 @@ a {
   color: var(--var-fontColor);
   padding: 20px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  z-index: 1;
+  z-index: 10;
   font-size: 16px;
-}
-
-.bigBody {
-  height: 665px;
+  cursor: auto;
 }
 
 .stats-section {
-  position: absolute; 
-  font-size: 14px; 
+  font-size: 14px;
   margin-top: 6px;
   line-height: 20px;
   width: 100%;
+  overflow: hidden;
+  max-height: 0px;
+  transition: .25s ease-in-out;
 }
 
 .swap {
   user-select: none;
-  position: absolute;
   margin-top: 6px;
   font-size: 16px;
   left: 115px;
@@ -221,7 +261,8 @@ a {
   transition: .25s;
 }
 
-.invest-section__title, .support-section__title {
+.invest-section__title,
+.modal__title {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -233,8 +274,9 @@ a {
   font-weight: 300;
 }
 
-.invest-section__btn-close, .support-section__btn-close {
-  float:right;
+.invest-section__btn-close,
+.modal__btn-close {
+  float: right;
   cursor: pointer;
   font-size: 30px;
 }
@@ -250,31 +292,56 @@ a {
   font-size: 16px;
 }
 
-.invest-section__btn-update, .invest-section__btn-stop {
+.invest-section__btn {
   font-size: 16px;
   text-decoration: underline;
   cursor: pointer;
   user-select: none;
 }
 
-.notification {
-  position: fixed;
-  background: green;
-  color: white;
-  width: 200px;
-  height: 100px;
-  margin: 10px;
-  right: 0;
-  bottom: 0;
-  z-index: 999999999999;
-}
-
-.notification__title {
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.notification__text {
-  font-size: 16px;
+.list-element {
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--var-secondBgColor);
   font-weight: 300;
 }
+
+.list-element + .list-element {
+  margin-top: 12px;
+}
+
+.list-element__img {
+  object-fit: cover;
+  height: 50px;
+  width: 50px;
+  border-radius: 100%;
+  margin: 0px 10px 10px 0;
+}
+
+.list-element__loan-name {
+  cursor: pointer;
+  text-decoration: underline;
+  user-select: none;
+}
+
+.list-element__btn {
+  width: 100%;
+  text-align: center;
+  display: block;
+  background: var(--var-smallBtnColor);
+  padding: 8px;
+  margin: 10px 0px 0px;
+  border-radius: 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: .25s ease-in-out;
+}
+
+.list-element__btn:hover {
+  background: var(--var-smallBtnColor--hover);
+}
+
+.list-element__btn:active {
+  scale: .99;
+}
+

@@ -30,9 +30,10 @@ async function updateBadgeInfo() {
         daysFrom: 0,
         daysTo: 2000,
         rateFrom: 0,
-        rateTo: 100,
+        rateTo: 35,
         loansFrom: 1,
         loansTo: 100,
+        maxCompanySum: 100,
         investSum: 100,
       };
 
@@ -45,6 +46,9 @@ async function updateBadgeInfo() {
         fdTo: 100,
         progressFrom: 0,
         progressTo: 100,
+        classFrom: 0,
+        classTo: 0,
+        maxCompanySum: 100,
         priceFrom: 1,
         priceTo: 100,
         investSum: 100,
@@ -68,6 +72,9 @@ async function updateBadgeInfo() {
         }
         if (data.investSettings.fmLoansTo) {
           fm.loansTo = parseFloat(data.investSettings.fmLoansTo);
+        }
+        if (data.investSettings.fmMaxCompanySum) {
+          fm.maxCompanySum = parseFloat(data.investSettings.fmMaxCompanySum);
         }
         if (data.investSettings.fmInvestSum) {
           fm.investSum = parseFloat(data.investSettings.fmInvestSum);
@@ -96,6 +103,15 @@ async function updateBadgeInfo() {
         }
         if (data.investSettings.smProgressTo) {
           sm.progressTo = parseFloat(data.investSettings.smProgressTo);
+        }
+        if (data.investSettings.smClassFrom) {
+          sm.classFrom = parseFloat(data.investSettings.smClassFrom);
+        }
+        if (data.investSettings.smClassTo) {
+          sm.classTo = parseFloat(data.investSettings.smClassTo);
+        }
+        if (data.investSettings.smMaxCompanySum) {
+          sm.maxCompanySum = parseFloat(data.investSettings.smMaxCompanySum);
         }
         if (data.investSettings.smPriceFrom) {
           sm.priceFrom = parseFloat(data.investSettings.smPriceFrom);
@@ -170,7 +186,7 @@ async function sortCompanyUpdate(fm, sm) {
             obj.loan_order >= fm.loansFrom &&
             obj.loan_order <= fm.loansTo /* Какой по счёту займ на платформе */
         );
-        fmSortedLength = getMin(sortCap, fmSorted.length);
+        fmSortedLength = Math.min(sortCap, fmSorted.length);
 
           let fmSecondSort = [];
           for (const element of fmSorted) {
@@ -213,26 +229,15 @@ async function sortCompanyUpdate(fm, sm) {
           
         const smSorted = smData.data.data.filter(
           (obj) =>
-            (obj.invested_debt === null ||
-              obj.invested_debt === "0.00") /* Есть в портфеле (нет) */ &&
-            obj.term_left >= sm.daysFrom &&
-            obj.term_left <= sm.daysTo /* Остаток срока займа */ &&
-            // && (obj.interest_rate >= 0.15 && obj.interest_rate <= 1) /* Изначальный процент займа (от 20 до 100) */
-            obj.ytm >= valueToPercent(sm.rateFrom) &&
-            obj.ytm <=
-              valueToPercent(
-                sm.rateTo
-              ) /* Эффективная ставка (от 20 до 100) */ &&
-            // && (obj.loan_order >= 1 && obj.loan_order <= 5)  /* Какой по счёту займ на платформе */
-            obj.progress >= valueToPercent(sm.progressFrom) &&
-            obj.progress <=
-              valueToPercent(sm.progressTo) /* Выплачено (прогресс в %) */ &&
-            obj.min_price >= valueToPercent(sm.priceFrom) &&
-            obj.min_price <=
-              valueToPercent(sm.priceTo) /* Мин прайс от 50% до 90% */ &&
-            obj.status === "active"
-        );
-        smSortedLength = getMin(sortCap, smSorted.length);
+            (obj.invested_debt === null || obj.invested_debt === "0.00") /* Есть в портфеле (нет) */ 
+            && (obj.term_left >= sm.daysFrom && obj.term_left <= sm.daysTo) /* Остаток срока займа */ 
+            && (obj.ytm >= valueToPercent(sm.rateFrom) && obj.ytm <= valueToPercent(sm.rateTo)) /* Эффективная ставка (от 20 до 100) */ 
+            && (obj.progress >= valueToPercent(sm.progressFrom) && obj.progress <= valueToPercent(sm.progressTo)) /* Выплачено (прогресс в %) */ 
+            && (obj.min_price >= valueToPercent(sm.priceFrom) && obj.min_price <= valueToPercent(sm.priceTo)) /* Мин прайс от 50% до 90% */ 
+            && (obj.loan_class >= parseInt(sm.classFrom) && obj.loan_class <= parseInt(sm.classTo)) /* Класс займа */
+            && (obj.invested_company_debt <= parseFloat(sm.maxCompanySum)) /* Сумма в одного заёмщика */
+            && (obj.status === "active"));
+        smSortedLength = Math.min(sortCap, smSorted.length);
 
           let smSecondSort = [];
           for (const element of smSorted) {
@@ -265,10 +270,10 @@ async function sortCompanyUpdate(fm, sm) {
           
 
           setBadge(
-            `${getMin(
+            `${Math.min(
               fmInvestCompanyArray.length,
               Math.floor(freeBalance / fm.investSum)
-            )}/${getMin(
+            )}/${Math.min(
               smInvestCompanyArray.length,
               Math.floor(freeBalance / sm.investSum)
             )}`
@@ -546,4 +551,8 @@ chrome.storage.local.get("smInvest", function (data) {
 chrome.storage.local.remove("smInvest");
 
 
-    
+
+
+
+
+

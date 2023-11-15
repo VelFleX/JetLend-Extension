@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "0.7.0",
+  "version": "0.8.0",
   "action": {
     "default_popup": "html/popup.html"
   },
@@ -13,14 +13,18 @@
     "storage", "declarativeNetRequest", "activeTab", "tabs", "notifications", "declarativeContent"
 
   ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
    "background": {
     "service_worker": "js/background.js"
   }, 
   "commands": {
     "open_extension": {
       "suggested_key": {
-        "default": "Shift+Alt+J",
-        "mac": "Command+Shift+J"
+        "default": "Alt+J",
+        "mac": "Alt+J",
+        "linux": "Alt+J"
       },
       "description": "Открытие Расширения"
     }
@@ -29,7 +33,7 @@
   "description": "Позволяет быстро распределить средства, убирает НПД из статистики, показывает чистую доходность, считает XIRR.",
   "content_scripts": [
     {
-      "matches": ["*://*/*"],
+      "matches": ["<all_urls>"],
       "js": ["js/global/variables.js", "js/global/functions.js", "js/content.js"]
     }
   ]

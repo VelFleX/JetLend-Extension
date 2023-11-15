@@ -1,8 +1,5 @@
 const darkTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-// Минимальное число из двух
-const getMin = (n1, n2) => (n1 > n2 ? n2 : n1);
-
 // Фетч для попапа (исправляет проблемы)
 function fetchData(url) {
   return new Promise((resolve, reject) => {
@@ -18,6 +15,29 @@ function fetchData(url) {
       );
     }
   });
+}
+
+function daysEnding(days) {
+  const lastTwoDigits = days % 100;
+  return days === 1 ? ' день' : (lastTwoDigits >= 11 && lastTwoDigits <= 14) ? ' дней' : (lastTwoDigits % 10 === 1) ? ' день' : (lastTwoDigits % 10 >= 2 && lastTwoDigits % 10 <= 4) ? ' дня' : ' дней';
+}
+
+function toShortCurrencyFormat(num) {
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1).replace(/\.0$/, '').replace('.', ',') + ' млн ₽';
+  }
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1).replace(/\.0$/, '').replace('.', ',') + ' тыс ₽';
+  }
+  return toCurrencyFormat(num);
+}
+
+function opneModal(modalId) {
+  $.get(`${modalId}`).classList.remove('display-none');
+}
+
+function closeModal(modalId) {
+  $.get(`${modalId}`).classList.add('display-none');
 }
 
 // Функция изменения текста на значке расширения
@@ -66,10 +86,8 @@ function updateInvestSettings() {
 // Функция открытия инвест страницы
 function openInvestPage() {
   document.querySelector(".invest-section").style.top = "0";
-  document.body.style.height = "510px";
-  if (document.body.classList.contains("bigBody")) {
-    document.body.classList.remove("bigBody");
-  }
+  document.body.style.height = "590px";
+  $.get('.stats-section').style.maxHeight = '0px';
 }
 
 // Функция закрытия инвест страницы
@@ -78,19 +96,7 @@ function closeInvestPage() {
   document.body.style.height = "";
 }
 
-// Функция открытия страницы поддержки
-function openSupportPage() {
-  let popup = document.querySelector(".support-section");
-  popup.classList.remove("display-none");
-}
-
-// Функция закрытия страницы поддержки
-function closeSupportPage() {
-  let popup = document.querySelector(".support-section");
-  popup.classList.add("display-none");
-}
-
-// Функция правильного окончания "займа"
+// Функция правильного окончания слова "займ"
 function getZaimEnding(n) {
   let ending = "";
   if (n % 10 === 1 && n % 100 !== 11) {
@@ -156,7 +162,7 @@ function getCookie(name) {
 
 // Функция отправки уведомлений
 function sendNotification(title, text) {
-  if (!document.body.contains(id("notificationContainer"))) {
+  if (!document.body.contains($.get("#notificationContainer"))) {
     const notificationContainer = document.createElement("div");
     notificationContainer.id = "notificationContainer";
     Object.assign(notificationContainer.style, {
@@ -171,7 +177,7 @@ function sendNotification(title, text) {
     });
     document.body.appendChild(notificationContainer);
   }
-  const notificationContainer = id("notificationContainer");
+  const notificationContainer = $.get("#notificationContainer");
   let color = "#1e2021";
   let bgColor = "#fff";
   if (darkTheme) {
@@ -206,19 +212,19 @@ function sendNotification(title, text) {
 
 // Функция свапа рынков на распределении средств
 function marketSwap() {
-  if (id("marketMode").textContent === "Первичный рынок") {
-    id("marketMode").textContent = "Вторичный рынок";
-    id("firstMarket").classList.add("display-none");
-    id("secondMarket").classList.remove("display-none");
-    document.body.style.height = "590px";
+  if ($.get("#marketMode").textContent === "Первичный рынок") {
+    $.get("#marketMode").textContent = "Вторичный рынок";
+    $.get("#firstMarket").classList.add("display-none");
+    $.get("#secondMarket").classList.remove("display-none");
+    document.body.style.height = "710px";
     fmCompanyUpdate = false;
     smCompanyUpdate = true;
     updateSecondMarket();
   } else {
-    id("marketMode").textContent = "Первичный рынок";
-    id("secondMarket").classList.add("display-none");
-    id("firstMarket").classList.remove("display-none");
-    document.body.style.height = "510px";
+    $.get("#marketMode").textContent = "Первичный рынок";
+    $.get("#secondMarket").classList.add("display-none");
+    $.get("#firstMarket").classList.remove("display-none");
+    document.body.style.height = "590px";
     fmCompanyUpdate = true;
     smCompanyUpdate = false;
   }
@@ -230,3 +236,13 @@ document.addEventListener("click", function (event) {
     event.target.parentNode.parentNode.parentNode.remove();
   }
 });
+
+// Подробнее о компании
+async function fetchDetails(companyId) {
+  const response = await fetchData(`https://jetlend.ru/invest/api/requests/${companyId}/details`);
+  if (response.data) {
+    return response.data.data.details;
+  } else {
+    console.log('Что-то пошло не так');
+  }
+}
