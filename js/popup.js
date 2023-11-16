@@ -34,10 +34,11 @@ document.addEventListener("click", function (event) {
   }
 });
 let fmInvestCompanyArray = [];
+let fmrInvestCompanyArray = [];
 let smInvestCompanyArray = [];
 let freeBalance = 0;
 
-const formsElements =[fmDaysFrom, fmDaysTo, fmRateFrom, fmRateTo, fmLoansFrom, fmLoansTo, fmInvestSum,
+const formsElements =[fmDaysFrom, fmDaysTo, fmRateFrom, fmRateTo, fmLoansFrom, fmLoansTo, fmMaxCompanySum, fmInvestSum,
   smDaysFrom, smDaysTo, smRateFrom, smRateTo, smFdFrom, smFdTo, smProgressFrom,
   smProgressTo, smPriceFrom, smPriceTo, smClassFrom, smClassTo, smMaxCompanySum, smInvestSum];
 
@@ -49,6 +50,11 @@ $.get('#fm-btn-update').addEventListener('click', updateFirstMarket);
 $.get('#fm-btn-show').addEventListener('click', () => {opneModal('#fm-list'); fmCompanyShow(fmInvestCompanyArray, '#fm-list-ul')});
 $.get('#fm-btn-stop').addEventListener('click', function() {fmCompanyUpdate = false});
 $.get('#fm-list__btn-close').addEventListener('click', () => closeModal('#fm-list'));
+
+$.get('#fmr-btn-update').addEventListener('click', updateFirstMarketReserv);
+$.get('#fmr-btn-show').addEventListener('click', () => {opneModal('#fmr-list'); fmCompanyShow(fmrInvestCompanyArray, '#fmr-list-ul')});
+$.get('#fmr-btn-stop').addEventListener('click', function() {fmrCompanyUpdate = false});
+$.get('#fmr-list__btn-close').addEventListener('click', () => closeModal('#fmr-list'));
 
 $.get('#sm-btn-update').addEventListener('click', updateSecondMarket);
 $.get('#sm-btn-show').addEventListener('click', () => {opneModal('#sm-list'); smCompanyShow(smInvestCompanyArray, '#sm-list-ul')});
@@ -62,59 +68,109 @@ function fmCompanyShow(arr, blockId) {
   const removeElement = index => arr.splice(index, 1);
   const list = $.get(`${blockId}`);
   list.innerHTML = ''; // очищаем текущий список
+  function createListElement(element) {
+    return `
+        <div style="display: flex; margin-top: 6px;">
+          <img class="list-element__img" src="https://jetlend.ru${element.preview_small_url === null ? element.image_url : element.preview_small_url}">
+          <div style="display: flex; flex-direction: column; text-wrap: nowrap;">
+            <a class="list-element__loan-name target-url" style="font-weight:600" href="https://jetlend.ru/invest/v3/company/${element.id}">${element.loan_name}</a>
+            <span style="font-size: 14px">${element.loan_isin}</span>
+            <span style="font-size: 14px">
+              <span style="${element.rating.includes('A') ? 'color: limegreen;' : 
+                          element.rating.includes('B') ? 'color: orange;' : 
+                          'color: orangered;'} font-weight:600">${element.rating} 
+              </span>, 
+              <span style="${element.financial_discipline === 1 ? 'color: limegreen;' : 
+                          element.financial_discipline <= 0.4 ? 'color: red;' : 
+                          'color: orange;'} font-weight:600">ФД: ${(element.financial_discipline*100).toFixed(0)}%
+              </span> 
+            </span>
+          </div>
 
+          <div style="margin-left: auto">
+            <span style="${element.company_investing_amount === null ? 'color: limegreen;' : 
+                          element.company_investing_amount === '0.00' ? 'color: #8888e6;' :  'color: orange;'}
+                          font-size: 14px; text-wrap: nowrap; font-weight:600; float: right">
+                          ${element.company_investing_amount === null ? 'Заёмщика нет в портфеле' : 
+                          element.company_investing_amount === '0.00' ? 'Займ в портфеле погашен' : 
+                          `Компания в портфеле: ${toCurrencyFormat(element.company_investing_amount)}`}
+            </span> 
+
+
+            <div style="${element.investing_amount !== null ? 'color: goldenrod;' : ''} font-size: 14px; font-weight: 600; float: right">
+                        ${element.investing_amount !== null ? `Зарезервировано: ${toCurrencyFormat(element.investing_amount)}` : ''}
+            </div>
+            
+          </div>
+
+        </div>
+        <div style="margin-top: 5px">
+            <span>
+              <span>Ставка: <span style="font-weight:600">${(element.interest_rate*100).toFixed(2)}%</span>, срок: </span> 
+              <span><span style="font-weight:600">${element.term}</span> ${daysEnding(element.term)} </span> 
+            </span>        
+        </div>
+        <div style="margin-top: 5px">
+          <span>Сумма: <span style="font-weight:600">${toShortCurrencyFormat(element.amount)}</span>, собрано: </span>
+          <span style="font-weight:600">(${element.collected_percentage.toFixed(0)}%/100%)</span> </div>
+        <div style="margin-top: 5px">
+            <span>Выручка за год: <span style="font-weight:600">${toShortCurrencyFormat(element.revenueForPastYear)}</span>,</span>
+            <span> прибыль за год: <span style="font-weight:600">${toShortCurrencyFormat(element.profitForPastYear)}</span></span> 
+        </div>
+        <div style="margin-top: 5px"> 
+          <span>Дата регистрации: <span style="font-weight:600">${element.registrationDate} </span> </span> 
+        </div>
+        <div style="margin-top: 5px"> 
+        <span>Адрес: ${element.address}</span> 
+       </div>
+          <div style="margin-top: 5px">
+              <span>Деятельность: ${element.primaryCatergory}.</span>
+          </div> 
+          <div style="margin: 5px 0px 10px">
+            <span>${element.site ? `<a class="target-url link" href="${element.site}">Перейти на сайт компании</a>` : 'Cайта нет'}</span>
+        </div> 
+  `;
+  }
   arr.forEach((element, index) => {
     const listItem = document.createElement('div');
     listItem.classList.add('list-element')
-    listItem.innerHTML = `
-    <div style="display: flex; margin-top: 6px;">
-      <img class="list-element__img" src="https://jetlend.ru${element.preview_small_url === null ? element.image_url : element.preview_small_url}">
-      <div style="display: flex; flex-direction: column;">
-        <a class="list-element__loan-name target-url" style="font-weight:600" href="https://jetlend.ru/invest/v3/company/${element.id}">${element.loan_name}</a>
-        <span style="font-size: 14px">${element.loan_isin}</span>
-        <span style="font-size: 14px">
-          <span style="${element.rating.includes('A') ? 'color: limegreen;' : 
-                      element.rating.includes('B') ? 'color: orange;' : 
-                      'color: orangered;'} font-weight:600">${element.rating} 
-          </span>, 
-          <span style="${element.financial_discipline === 1 ? 'color: limegreen;' : 
-                      element.financial_discipline <= 0.4 ? 'color: red;' : 
-                      'color: orange;'} font-weight:600">ФД: ${(element.financial_discipline*100).toFixed(0)}%
-          </span> 
-        </span>
-      </div>
-      <div style="margin-left: auto;">
-        <span style="${element.company_investing_amount === null ? 'color: limegreen;' : 
-                      parseFloat(element.company_investing_amount) > 0 ? 'color: orange;' : ''}
-                      font-size: 14px; text-wrap: nowrap; font-weight:600">${(element.company_investing_amount === null ? 'Заёмщика нет в портфеле' : 
-                      element.company_investing_amount === '0.00' ? 'Займ в портфеле погашен' : 
-                      'В портфеле: '+ toCurrencyFormat(element.company_investing_amount))}
-        </span> 
-      </div>
-    </div>
-    <div style="margin-top: 5px">
-        <span>
-          <span>Ставка: <span style="font-weight:600">${(element.interest_rate*100).toFixed(2)}%</span>, срок: </span> 
-          <span><span style="font-weight:600">${element.term}</span> ${daysEnding(element.term)} </span> 
-        </span>        
-    </div>
-    <div style="margin-top: 5px">
-      <span>Сумма: <span style="font-weight:600">${toShortCurrencyFormat(element.amount)}</span>, собрано: </span>
-      <span style="font-weight:600">(${element.collected_percentage.toFixed(0)}%/100%)</span> </div>
-    <div style="margin-top: 5px">
-        <span>Выручка за год: <span style="font-weight:600">${toShortCurrencyFormat(element.revenueForPastYear)}</span>,</span>
-        <span> прибыль за год: <span style="font-weight:600">${toShortCurrencyFormat(element.profitForPastYear)}</span></span> 
-    </div>
-    <div style="margin-top: 5px"> 
-      <span>Дата регистрации: <span style="font-weight:600">${element.registrationDate} </span> </span> 
-    </div>
-    <div style="margin-top: 5px">
-        <span>Деятельность: ${element.primaryCatergory}.</span>
-    </div> 
-    <div style="margin: 5px 0px 10px">
-      <span>${element.site ? `<a class="target-url link" href="${element.site}">Перейти на сайт компании</a>` : 'Cайта нет'}</span>
-    </div> 
-    `; 
+    listItem.innerHTML = createListElement(element); 
+    listItem.addEventListener('click', async function() {
+      const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
+      const load = document.createElement('div');
+      load.classList.add('list-element__load-block');
+      load.textContent = 'Загрузка...';
+      console.log(load);
+      listItem.appendChild(load);
+      if (res.data) {
+        const company = res.data.requests.find(item => item.id === element.id);
+        const details = await fetchDetails(element.id);
+        Object.assign(company, details);
+        console.log(company);
+        listItem.innerHTML = createListElement(company); 
+        const buttons = document.createElement('div');
+        buttons.classList.add('buttons-section')
+        const focus = document.createElement('span');
+        focus.innerHTML = `${element.profile ? `<a class="target-url btn" href="${element.profile}">Контур. Фокус</a>` : 'Контур. Фокуса нет'}`
+        const removeButton = document.createElement('span');
+        removeButton.textContent = 'Удалить';
+        removeButton.classList.add('btn');
+        removeButton.onclick = function() {
+          removeElement(index);
+          if (arr.length === 0) {
+            closeModal('#fm-list')
+          }
+          updateFmArrayText();
+          fmCompanyShow(arr, blockId);
+          console.log(arr);
+        }; 
+        listItem.appendChild(buttons);
+        buttons.appendChild(focus);
+        buttons.appendChild(removeButton); 
+        listItem.style.filter = '';
+      }
+    })
+
     const buttons = document.createElement('div');
     buttons.classList.add('buttons-section')
     const focus = document.createElement('span');
@@ -128,6 +184,7 @@ function fmCompanyShow(arr, blockId) {
         closeModal('#fm-list')
        }
       updateFmArrayText();
+      fmCompanyShow(arr, blockId);
       console.log(arr);
     }; 
     listItem.appendChild(buttons);
@@ -148,6 +205,17 @@ function updateFmArrayText() {
   $.get('#fm-btn-stop').classList.add('display-none');
 }
 
+function updateSmArrayText() {
+  $.get('#sm-numOfSortedCompany').textContent = `Доступно: ${smInvestCompanyArray.length} ${getZaimEnding(smInvestCompanyArray.length)} `;
+  $.get('#sm-btn-update').classList.remove('display-none');
+  if (smInvestCompanyArray.length >= 1) {
+    $.get('#fm-btn-show').classList.remove('display-none');
+  } else if (smInvestCompanyArray.length === 0) {
+    $.get('#sm-btn-show').classList.add('display-none');
+  }
+  $.get('#sm-btn-stop').classList.add('display-none');
+}
+
 function smCompanyShow(arr, blockId) {
   const removeElement = index => arr.splice(index, 1);
   const list = $.get(`${blockId}`);
@@ -159,7 +227,7 @@ function smCompanyShow(arr, blockId) {
     listItem.innerHTML = `
     <div style="display: flex; margin-top: 6px;">
       <img class="list-element__img" src="https://jetlend.ru${element.preview_small_url === null ? element.image_url : element.preview_small_url}">
-      <div style="display: flex; flex-direction: column;">
+      <div style="display: flex; flex-direction: column; text-wrap: nowrap;">
         <a class="list-element__loan-name target-url" style="font-weight:600" href="https://jetlend.ru/invest/v3/company/${element.loan_id}">${element.loan_name}</a>
         <span style="font-size: 14px">${element.loan_isin}</span>
         <span style="font-size: 14px">
@@ -179,11 +247,11 @@ function smCompanyShow(arr, blockId) {
       </div>
       <div style="margin-left: auto">
         <span style="${element.invested_company_debt === null ? 'color: limegreen;' : 
-                      parseFloat(element.invested_company_debt) > 0 ? 'color: orange;' : ''}
-                      font-size: 14px; text-wrap: nowrap; font-weight:600; float: right">
-                      ${(element.invested_company_debt === null ? 'Заёмщика нет в портфеле' : 
-                      element.invested_company_debt === '0.00' ? 'Займ в портфеле погашен' : 
-                      'В портфеле:')}
+                       element.invested_company_debt === '0.00' ? 'color: #8888e6;' :  'color: orange;'}
+                       font-size: 14px; text-wrap: nowrap; font-weight:600; float: right">
+                       ${(element.invested_company_debt === null ? 'Заёмщика нет в портфеле' : 
+                       element.invested_company_debt === '0.00' ? 'Займ в портфеле погашен' : 
+                       'Компания в портфеле:')}
         </span> 
         <div style="${
           (element.invested_company_debt !== '0.00' && element.invested_company_debt !== null) ? 
@@ -212,17 +280,15 @@ function smCompanyShow(arr, blockId) {
       </span>
     </div>
     <div style="margin-top: 5px">
-      <span>Сумма: 
-        <span style="font-weight:600">${toShortCurrencyFormat(element.amount)}</span>
-      </span>
-      </div>
-    <div style="margin-top: 5px">
         <span>Выручка за год: <span style="font-weight:600">${toShortCurrencyFormat(element.revenueForPastYear)}</span>, </span>
         <span>прибыль за год: <span style="font-weight:600">${toShortCurrencyFormat(element.profitForPastYear)}</span>,</span> 
     </div>
     <div style="margin-top: 5px"> 
      <span>Дата регистрации: <span style="font-weight:600">${element.registrationDate} </span> </span> 
     </div>
+    <div style="margin-top: 5px"> 
+    <span>Адрес: ${element.address}</span> 
+   </div>
     <div style="margin-top: 5px">
         <span>Деятельность: ${element.primaryCatergory}.</span>
     </div> 
@@ -240,9 +306,10 @@ function smCompanyShow(arr, blockId) {
     removeButton.onclick = function() {
       removeElement(index);
       if (arr.length === 0) {
-        closeModal('#fm-list')
+        closeModal('#sm-list')
        }
-      updateFmArrayText();
+      updateSmArrayText();
+      smCompanyShow(arr, blockId);
       console.log(arr);
     }; 
     listItem.appendChild(buttons);
@@ -637,7 +704,8 @@ async function updateFirstMarket() {
       && (obj.term >= parseInt(fmDaysFrom.value) && obj.term <= parseInt(fmDaysTo.value)) /* Срок займа */
       && (obj.interest_rate >= valueToNum(fmRateFrom.value) && obj.interest_rate <= valueToNum(fmRateTo.value)) /* Процент займа (от 20 до 100) */ 
       && (obj.loan_order >= parseFloat(fmLoansFrom.value) && obj.loan_order <= parseFloat(fmLoansTo.value))  /* Какой по счёту займ на платформе */
-      && (obj.company_investing_amount <= parseFloat(fmMaxCompanySum.value))) /* Сумма в одного заёмщика */
+      && (obj.company_investing_amount <= parseFloat(fmMaxCompanySum.value)) /* Сумма в одного заёмщика */
+      ) 
 
     async function updateArray() {
       let count = 0;
@@ -668,6 +736,50 @@ async function updateFirstMarket() {
   };
 }
 updateFirstMarket();
+
+// Обновление списка компаний (первичка, резерв)
+async function updateFirstMarketReserv() {
+  fmrCompanyUpdate = true;
+  fmCompanyUpdate = false;
+  $.get('#fmr-numOfSortedCompany').textContent = `Загрузка...`;
+  $.get('#fmr-btn-update').classList.add('display-none');
+  $.get('#fmr-btn-show').classList.add('display-none');
+  $.get('#fmr-btn-stop').classList.remove('display-none');
+
+  const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
+
+  if (res.data) {
+    const sorted = res.data.requests.filter(obj => (obj.collected_percentage !== 100) /* Полоска сбора не заполнена (меньше 100%) */ 
+      && (obj.investing_amount !== null) /* Резервация (нет) */ 
+      ) 
+
+    async function updateArray() {
+      let count = 0;
+      let secondSort = [];
+      for (const element of sorted) {
+        const details = await fetchDetails(element.id);
+        Object.assign(element, details);
+        count += 1;
+        secondSort.push(element);
+        $.get('#fmr-numOfSortedCompany').textContent = `Загрузка... Проверяем ФД... (${count}/${sorted.length})`;
+        if (!fmrCompanyUpdate) {
+          fmrCompanyUpdate = true;
+          break;
+        }
+      }
+      console.log('Массив зарезервированных компаний', secondSort); // Вывод обновленного массива
+      fmrInvestCompanyArray = secondSort;
+      $.get('#fmr-numOfSortedCompany').textContent = `Загружено: ${secondSort.length} ${getZaimEnding(secondSort.length)} (всего:  ${sorted.length} ${getZaimEnding(sorted.length)})`;
+      $.get('#fmr-btn-update').classList.remove('display-none');
+      $.get('#fmr-btn-update').textContent = '(Обновить)';
+      if (fmrInvestCompanyArray.length >= 1) {
+        $.get('#fmr-btn-show').classList.remove('display-none');
+      }
+      $.get('#fmr-btn-stop').classList.add('display-none');
+    }
+    updateArray()
+  };
+}
 
 // Обновление списка компаний (вторичка)
 async function updateSecondMarket() {

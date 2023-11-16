@@ -80,6 +80,17 @@
         </section>
       </div>
 
+      <div class="modal-container display-none" id="fmr-list">
+        <section class="modal">
+          <div class="modal__title">
+            <h5>Список компаний на первичном рынке</h5>
+            <span class="modal__btn-close" id="fmr-list__btn-close">×</span>
+          </div>
+          <br>
+          <div id="fmr-list-ul"></div>
+        </section>
+      </div>
+
       <div class="modal-container display-none" id="sm-list">
         <section class="modal">
           <div class="modal__title">
@@ -107,7 +118,7 @@
           <div class="invest-section__input-title">Количество займов у заёмщика (от / до):</div>
           <input class="invest-section__input" id="fm-loans-from" type="number" min="1" max="100" value="1"> / <input class="invest-section__input" id="fm-loans-to" type="number" min="1" max="100" value="100">
           <div class="invest-section__input-title">Сумма в одного заёмщика (до):</div>
-          <input class="invest-section__input" id="fm-max-company-sum" style="width: 217px" type="number" min="100" step="100" value="100">
+          <input class="invest-section__input" id="fm-max-company-sum" style="width: 308px" type="number" min="100" max="100000000" step="100" value="100">
           
           
           <div class="invest-section__input-title">Сумма (в один займ / всего распределить средств):</div>
@@ -117,6 +128,12 @@
             <span class="invest-section__btn display-none" id="fm-btn-update">(Обновить)</span>
             <span class="invest-section__btn display-none" id="fm-btn-show">(Показать список)</span>
             <span class="invest-section__btn" id="fm-btn-stop">(Остановить)</span>
+          </div>
+          <div>
+            <span style="font-size: 16px;" id="fmr-numOfSortedCompany"></span>
+            <span class="invest-section__btn" id="fmr-btn-update">Загрузить список зарезервированных займов</span>
+            <span class="invest-section__btn display-none" id="fmr-btn-show">(Показать список)</span>
+            <span class="invest-section__btn display-none" id="fmr-btn-stop">(Остановить)</span>
           </div>
           <label style="display: block; font-size: 12px; margin: 10px 0; user-select: none; cursor: pointer;"><input style="margin-right: 5px;" id="fmInvestAgree" type="checkbox" checked>Подтверждаю, что ознакомился с <a style="text-decoration: underline; color: #8888e6;" href="https://jetlend.ru/doc-view/rules" target="»_blank">правилами</a> и принимаю риски, связанные с инвестициями, а также, что сумма инвестиций с начала текущего года на всех инвестиционных платформах не превышает 600 000 ₽. Кроме того, я не предъявляю никаких претензий к разработчикам данного расширения и несу ответственность за все свои инвестиционные операции, выполненные с использованием данного расширения.</label>
           <button class="btn" id="firstMarketSubmit">Распределить средства</button>
@@ -136,7 +153,7 @@
           <div class="invest-section__input-title">Класс займа (от / до):</div>
           <input class="invest-section__input" id="sm-class-from" type="number" min="0" max="3" step="1" value="0"> / <input class="invest-section__input" id="sm-class-to" type="number" min="0" max="3" step="1" value="0">
           <div class="invest-section__input-title">Сумма в одного заёмщика (до):</div>
-          <input class="invest-section__input" id="sm-max-company-sum" style="width: 217px" number" min="100" step="100" value="100">
+          <input class="invest-section__input" id="sm-max-company-sum" style="width: 308px" type="number" min="100" max="100000000" step="100" value="100">
           
           
           <div class="invest-section__input-title">Сумма (в один займ / всего распределить средств):</div>

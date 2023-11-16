@@ -9,7 +9,7 @@ const $ = {
 
 const all = document.querySelectorAll.bind(document);
 
-const version = "0.8.0 beta 1";
+const version = "0.8.0 beta 2";
 
 const lastUpdateDateTag = $.get(".lastUpdateDate"); //Тэг последнего обновления данных
 const balanceTitle = $.get(".balance__title");      //Заголовок баланса
@@ -48,4 +48,5 @@ let smInvestSum = $.get('#sm-invest-sum');
 let smInvestSumAll = $.get('#sm-invest-sum-all');
 
 let fmCompanyUpdate = true;
+let fmrCompanyUpdate = false;
 let smCompanyUpdate = false;

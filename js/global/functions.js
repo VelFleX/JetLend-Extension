@@ -66,6 +66,7 @@ function updateInvestSettings() {
     fmRateTo: fmRateTo.value,
     fmLoansFrom: fmLoansFrom.value,
     fmLoansTo: fmLoansTo.value,
+    fmMaxCompanySum: fmMaxCompanySum.value,
     fmInvestSum: fmInvestSum.value,
     // Вторичка
     smDaysFrom: smDaysFrom.value,
@@ -76,6 +77,9 @@ function updateInvestSettings() {
     smFdTo: smFdTo.value,
     smProgressFrom: smProgressFrom.value,
     smProgressTo: smProgressTo.value,
+    smClassFrom: smClassFrom.value, 
+    smClassTo: smClassTo.value, 
+    smMaxCompanySum: smMaxCompanySum.value,
     smPriceFrom: smPriceFrom.value,
     smPriceTo: smPriceTo.value,
     smInvestSum: smInvestSum.value,
@@ -86,7 +90,7 @@ function updateInvestSettings() {
 // Функция открытия инвест страницы
 function openInvestPage() {
   document.querySelector(".invest-section").style.top = "0";
-  document.body.style.height = "590px";
+  document.body.style.height = "620px";
   $.get('.stats-section').style.maxHeight = '0px';
 }
 
@@ -140,7 +144,8 @@ function getUpdateTime(unixTime) {
 
 // Функция перевода из числового в денежный формат (20.20 => 20,20 ₽)
 const toCurrencyFormat = (element) =>
-  element.toLocaleString("ru-RU", { style: "currency", currency: "RUB" });
+  parseFloat(element).toLocaleString("ru-RU", { style: "currency", currency: "RUB" });
+
 
 // Функция перевода из числа в проценты (0.2 => 20 %)
 const toPercentFormat = (element) =>
@@ -216,7 +221,7 @@ function marketSwap() {
     $.get("#marketMode").textContent = "Вторичный рынок";
     $.get("#firstMarket").classList.add("display-none");
     $.get("#secondMarket").classList.remove("display-none");
-    document.body.style.height = "710px";
+    document.body.style.height = "760px";
     fmCompanyUpdate = false;
     smCompanyUpdate = true;
     updateSecondMarket();
@@ -224,7 +229,7 @@ function marketSwap() {
     $.get("#marketMode").textContent = "Первичный рынок";
     $.get("#secondMarket").classList.add("display-none");
     $.get("#firstMarket").classList.remove("display-none");
-    document.body.style.height = "590px";
+    document.body.style.height = "620px";
     fmCompanyUpdate = true;
     smCompanyUpdate = false;
   }
@@ -246,3 +251,14 @@ async function fetchDetails(companyId) {
     console.log('Что-то пошло не так');
   }
 }
+
+
+// let wasOpen = false;
+// if (!wasOpen) {
+//   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+//     if (tabs.length > 0) {
+//       chrome.tabs.create({ url: 'html/popup.html' });
+//     }
+//   });
+//   wasOpen = true;
+// }
