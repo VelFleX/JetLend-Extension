@@ -138,7 +138,7 @@ async function updateBadgeInfo() {
       sortCompanyUpdate(fm, sm);
     }
   } catch (error) {
-    console.error(error);
+    console.error(error); // Скорее всего контекст инвалид из-за обновления приложения и не обновления страницы после этого
   }
 }
 
@@ -232,7 +232,7 @@ async function sortCompanyUpdate(fm, sm) {
           
         const smSorted = smData.data.data.filter(
           (obj) =>
-            (obj.invested_debt === null || obj.invested_debt === "0.00") /* Есть в портфеле (нет) */ 
+            (obj.invested_debt === null || obj.invested_debt === 0.00) /* Есть в портфеле (нет) */ 
             && (obj.term_left >= sm.daysFrom && obj.term_left <= sm.daysTo) /* Остаток срока займа */ 
             && (obj.ytm >= valueToPercent(sm.rateFrom) && obj.ytm <= valueToPercent(sm.rateTo)) /* Эффективная ставка (от 20 до 100) */ 
             && (obj.progress >= valueToPercent(sm.progressFrom) && obj.progress <= valueToPercent(sm.progressTo)) /* Выплачено (прогресс в %) */ 
@@ -441,13 +441,13 @@ setInterval(function () {
 // Распределение средств (первичка)
 chrome.storage.local.get("fmInvest", function (data) {
   if (data.fmInvest) {
-    function invest(companyId) {
+    async function invest(companyId) {
       let user = {
         agree: true,
         amount: data.fmInvest.sum,
       };
 
-      fetch(`https://jetlend.ru/invest/api/requests/${companyId}/invest`, {
+      await fetch(`https://jetlend.ru/invest/api/requests/${companyId}/invest`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json;charset=UTF-8",
@@ -460,29 +460,23 @@ chrome.storage.local.get("fmInvest", function (data) {
         .then((data) => console.log(data));
     }
 
-    for (element of data.fmInvest.array) {
-      invest(element);
+    async function mainFunction() {
+      sendNotification("Ожидайте", "Средства распределяются, не закрывайте вкладку.");
+      for (element of data.fmInvest.array) {
+        invest(element);
+      }
+      sendNotification("Готово", "Средства распределены успешно!");
+      setBadge("");
     }
-
-
-    sendNotification("Готово", "Средства распределены успешно!");
-    setBadge("");
+    mainFunction();
   }
+  chrome.storage.local.remove("fmInvest");
 });
-chrome.storage.local.remove("fmInvest");
+
 
 // Распределение средств (вторичка)
 chrome.storage.local.get("smInvest", function (data) {
-  if (data.smInvest) {
-
-
-
-    
-  
-  
-  
-  
-  
+  if (data.smInvest) { 
     async function smInvest(min, max, all, sum, companyArray) {
       let sumAll = all; // Свободные средства
       async function invest(companyId, count, price) {
@@ -509,7 +503,7 @@ chrome.storage.local.get("smInvest", function (data) {
           const sort = resp.data.data.filter(obj => (obj.count > 0) && (obj.price >= min && obj.price <= max)).reverse();
           const secondSort = [];
           let sumOne = sum; // Сумма в один займ
-          console.log('sort', sort);
+          console.log('Массив компаний по айди: ', sort);
           console.log('companyId', companyId);
           for (element of sort) {
             const getPrice = element => element.amount / element.count + 5; // Погрешность 5р
@@ -541,8 +535,9 @@ chrome.storage.local.get("smInvest", function (data) {
     }
     mainFunction();
   }
+  chrome.storage.local.remove("smInvest");
 });
-chrome.storage.local.remove("smInvest");
+
 
 
 

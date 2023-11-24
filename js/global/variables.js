@@ -5,11 +5,63 @@ const $ = {
     }
     return document.querySelector(selector);
   },
+  create: function(tag, a, b) {
+    let block = document.createElement(tag);
+
+    if (typeof a === 'string') {
+      block.textContent = a;
+      if (b) {
+        props(b);
+      }
+    } else if (typeof a === 'object') {
+      props(a);
+      if (b) {
+        block.textContent = b;
+      }
+    }
+    
+    function props(obj) {
+      if (obj.class) {
+        for (let name of obj.class) {
+          block.classList.add(name);
+        }
+      }
+      
+      if (obj.id) {
+        block.id = obj.id;
+      } 
+
+      if (obj.style) {
+        for (let styleKey in obj.style) {
+          block.style[styleKey] = obj.style[styleKey];
+        }
+      }
+
+      if (obj.src) {
+        block.src = obj.src;
+      }
+
+      if (obj.href) {
+        block.href = obj.href;
+      }
+
+      if (obj.parent) {
+        obj.parent.appendChild(block);
+      }
+
+      if (obj.child) {
+        for (let child of obj.child) {
+          block.appendChild(child);
+        }
+      }
+    }
+    return block;
+  }
 };
 
 const all = document.querySelectorAll.bind(document);
 
-const version = "0.8.0 beta 2";
+const version = "0.8.0 beta 3";
 
 const lastUpdateDateTag = $.get(".lastUpdateDate"); //Тэг последнего обновления данных
 const balanceTitle = $.get(".balance__title");      //Заголовок баланса

@@ -90,7 +90,7 @@ function updateInvestSettings() {
 // Функция открытия инвест страницы
 function openInvestPage() {
   document.querySelector(".invest-section").style.top = "0";
-  document.body.style.height = "620px";
+  document.body.style.height = "650px";
   $.get('.stats-section').style.maxHeight = '0px';
 }
 
@@ -221,7 +221,7 @@ function marketSwap() {
     $.get("#marketMode").textContent = "Вторичный рынок";
     $.get("#firstMarket").classList.add("display-none");
     $.get("#secondMarket").classList.remove("display-none");
-    document.body.style.height = "760px";
+    document.body.style.height = "790px";
     fmCompanyUpdate = false;
     smCompanyUpdate = true;
     updateSecondMarket();
@@ -229,7 +229,7 @@ function marketSwap() {
     $.get("#marketMode").textContent = "Первичный рынок";
     $.get("#secondMarket").classList.add("display-none");
     $.get("#firstMarket").classList.remove("display-none");
-    document.body.style.height = "620px";
+    document.body.style.height = "650px";
     fmCompanyUpdate = true;
     smCompanyUpdate = false;
   }
