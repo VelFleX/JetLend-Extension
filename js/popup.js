@@ -723,7 +723,7 @@ async function updateFirstMarket() {
   $.get('#fm-btn-stop').classList.remove('display-none');
   $.get('#fm-numOfAllCompany').textContent = 'Загрузка...';
   const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
-
+  console.log('Сумма в одного (первичка): ', (parseFloat(fmMaxCompanySum.value) - parseFloat(fmInvestSum.value)));
   if (res.data) {
     $.get('#fm-numOfAllCompany').textContent = res.data.requests.length;
     const valueToNum = value => parseFloat((parseFloat((value).toString().replace(',', '.'))/100).toFixed(4));
@@ -733,7 +733,7 @@ async function updateFirstMarket() {
       && (obj.term >= parseInt(fmDaysFrom.value) && obj.term <= parseInt(fmDaysTo.value)) /* Срок займа */
       && (obj.interest_rate >= valueToNum(fmRateFrom.value) && obj.interest_rate <= valueToNum(fmRateTo.value)) /* Процент займа (от 20 до 100) */ 
       && (obj.loan_order >= parseFloat(fmLoansFrom.value) && obj.loan_order <= parseFloat(fmLoansTo.value))  /* Какой по счёту займ на платформе */
-      && (obj.company_investing_amount <= parseFloat(fmMaxCompanySum.value)) /* Сумма в одного заёмщика */
+      && (obj.company_investing_amount <= (parseFloat(fmMaxCompanySum.value) - parseFloat(fmInvestSum.value))) /* Сумма в одного заёмщика */
       ) 
 
     async function updateArray() {
@@ -774,7 +774,7 @@ async function updateFirstMarketReserv() {
   $.get('#fmr-btn-update').classList.add('display-none');
   $.get('#fmr-btn-show').classList.add('display-none');
   $.get('#fmr-btn-stop').classList.remove('display-none');
-
+  console.log('Сумма в одного (вторичка): ', (parseFloat(smMaxCompanySum.value) - parseFloat(smInvestSum.value)));
   const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
 
   if (res.data) {
@@ -832,8 +832,9 @@ async function updateSecondMarket() {
       && (obj.progress >= valueToPercent(smProgressFrom.value) && obj.progress <= valueToPercent(smProgressTo.value)) /* Выплачено (прогресс в %) */
       && (obj.loan_class >= parseInt(smClassFrom.value) && obj.loan_class <= parseInt(smClassTo.value)) /* Класс займа */
       && (obj.min_price >= valueToPercent(smPriceFrom.value) && obj.min_price <= valueToPercent(smPriceTo.value)) /* Мин прайс от 50% до 90% */
-      && (obj.invested_company_debt <= parseFloat(smMaxCompanySum.value)) /* Сумма в одного заёмщика */
-      && (obj.status === "active")); 
+      && (obj.invested_company_debt <= (parseFloat(smMaxCompanySum.value) - parseFloat(smInvestSum.value))) /* Сумма в одного заёмщика */
+      // && (obj.status === "active") /* Без понятия что это */
+      ); 
 
     async function updateArray() {
       let count = 0;
