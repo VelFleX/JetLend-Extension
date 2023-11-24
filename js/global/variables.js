@@ -61,7 +61,7 @@ const $ = {
 
 const all = document.querySelectorAll.bind(document);
 
-const version = "0.8.0 beta 3";
+const version = "0.8.0 beta 4";
 
 const lastUpdateDateTag = $.get(".lastUpdateDate"); //Тэг последнего обновления данных
 const balanceTitle = $.get(".balance__title");      //Заголовок баланса

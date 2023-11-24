@@ -729,7 +729,7 @@ async function updateFirstMarket() {
     const valueToNum = value => parseFloat((parseFloat((value).toString().replace(',', '.'))/100).toFixed(4));
     const sorted = res.data.requests.filter(obj => (obj.collected_percentage !== 100) /* Полоска сбора не заполнена (меньше 100%) */ 
       && (obj.investing_amount === null) /* Резервация (нет) */ 
-      && (obj.company_investing_amount === null || obj.company_investing_amount === "0.00") /* Есть заёмщик портфеле (нет) */
+      // && (obj.company_investing_amount === null || obj.company_investing_amount === "0.00") /* Есть заёмщик портфеле (нет) */
       && (obj.term >= parseInt(fmDaysFrom.value) && obj.term <= parseInt(fmDaysTo.value)) /* Срок займа */
       && (obj.interest_rate >= valueToNum(fmRateFrom.value) && obj.interest_rate <= valueToNum(fmRateTo.value)) /* Процент займа (от 20 до 100) */ 
       && (obj.loan_order >= parseFloat(fmLoansFrom.value) && obj.loan_order <= parseFloat(fmLoansTo.value))  /* Какой по счёту займ на платформе */
@@ -824,8 +824,8 @@ async function updateSecondMarket() {
   if (res.data) {
     $.get('#sm-numOfAllCompany').textContent = res.data.data.length;
     const valueToPercent = value => parseFloat((parseFloat((value).toString().replace(',', '.'))/100).toFixed(4)); // '12,3456' => 0.1234
-    const sorted = res.data.data.filter(obj => (obj.invested_debt === null || obj.invested_debt === 0.00) /* Есть в портфеле (нет) */
-      && (obj.term_left >= parseFloat(smDaysFrom.value) && obj.term_left <= parseFloat(smDaysTo.value)) /* Остаток срока займа */
+    const sorted = res.data.data.filter(obj => (obj.term_left >= parseFloat(smDaysFrom.value) && obj.term_left <= parseFloat(smDaysTo.value)) /* Остаток срока займа */
+      // && (obj.invested_debt === null || obj.invested_debt === 0.00) /* Есть в портфеле (нет) */
       // && (obj.interest_rate >= 0.15 && obj.interest_rate <= 1) /* Изначальный процент займа (от 20 до 100) */
       && (obj.ytm >= valueToPercent(smRateFrom.value) && obj.ytm <= valueToPercent(smRateTo.value)) /* Эффективная ставка (от 20 до 100) */
       // && (obj.loan_order >= 1 && obj.loan_order <= 5)  /* Какой по счёту займ на платформе */
