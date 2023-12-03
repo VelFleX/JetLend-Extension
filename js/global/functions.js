@@ -232,6 +232,7 @@ function marketSwap() {
     document.body.style.height = "650px";
     fmCompanyUpdate = true;
     smCompanyUpdate = false;
+    updateFirstMarket();
   }
 }
 
@@ -250,6 +251,67 @@ async function fetchDetails(companyId) {
   } else {
     console.log('Что-то пошло не так');
   }
+}
+
+
+
+
+function currencyAnimation(blockId, initialValue, finalValue, arrowHide = false) {
+  if (initialValue === finalValue) {
+    return;
+  }
+  const duration = 1500; 
+  let currentTime = 0;
+  const span = document.getElementById(blockId);
+  const arrow = document.createElement('span');
+  arrow.classList.add('arrow');
+  
+  if (arrowHide) {
+    arrow.style.fontSize = '0px';
+  }
+
+  initialValue < finalValue ? arrow.style.bottom = '0px' : arrow.style.top = '0px';
+
+  function animateValue(timestamp) {
+    function animation(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+    
+    if (!currentTime) {
+      currentTime = timestamp;
+    }
+
+    const progress = timestamp - currentTime;
+    const currentValue = initialValue + animation(progress / duration) * (finalValue - initialValue);
+    span.innerHTML = `${toCurrencyFormat(currentValue)}`;
+    span.appendChild(arrow);
+    
+    initialValue < finalValue ? arrow.textContent = `▲${toShortCurrencyFormat(currentValue - initialValue)}` : 
+                                arrow.textContent = `▼${toShortCurrencyFormat(Math.abs(currentValue - initialValue))}`;
+    
+    initialValue < finalValue ? span.style.color = '#00ba88' : span.style.color = '#f23c3c';
+    
+    if (progress < duration) {
+      requestAnimationFrame(animateValue);
+    } else {
+      span.innerHTML = `${toCurrencyFormat(finalValue)}`;
+      span.appendChild(arrow);
+      requestAnimationFrame(function() {
+        arrow.style.opacity = 0;
+        initialValue < finalValue ? arrow.style.bottom = '10px' : arrow.style.top = '10px';
+        span.style.color = '';
+      });
+      setTimeout(() => {
+        arrow.remove();
+      }, 1500);
+    }
+  }
+  requestAnimationFrame(animateValue);
+}
+
+function currensyToFloat(currency) {
+  const currencyString = currency.toString();
+  return parseFloat(currencyString.replaceAll(/\s/g, '').replace(',', '.'));
 }
 
 

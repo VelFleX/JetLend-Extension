@@ -539,9 +539,3 @@ chrome.storage.local.get("smInvest", function (data) {
 });
 
 
-
-
-
-
-
-
