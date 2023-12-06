@@ -1,11 +1,9 @@
 let timePeriod = "";
-document.addEventListener("click", function (event) {
-  if (event.target == $.get('.income__value span')) {
+$.get('.income__currency').addEventListener("click", function (event) {
+  if (event.currentTarget == $.get('.income__currency')) {
     if($.get('.stats-section').style.maxHeight === '1000px') {
-      // document.body.style.height = '';
       $.get('.stats-section').style.maxHeight = '0px';
     } else {
-      // document.body.style.height = '665px';
       $.get('.stats-section').style.maxHeight = '1000px';
     }
   }
@@ -52,8 +50,8 @@ let dataTextAllTime = '';
 let dataTextYearTime = '';
 let sameDataText = '';
 
-const formsElements =[fmDaysFrom, fmDaysTo, fmRateFrom, fmRateTo, fmLoansFrom, fmLoansTo, fmMaxCompanySum, fmInvestSum,
-  smDaysFrom, smDaysTo, smRateFrom, smRateTo, smFdFrom, smFdTo, smProgressFrom,
+const formsElements = [fmDaysFrom, fmDaysTo, fmRatingFrom, fmRatingTo, fmRateFrom, fmRateTo, fmLoansFrom, fmLoansTo, fmMaxCompanySum, fmInvestSum,
+  smDaysFrom, smDaysTo, smRatingFrom, smRatingTo, smRateFrom, smRateTo, smFdFrom, smFdTo, smProgressFrom,
   smProgressTo, smPriceFrom, smPriceTo, smClassFrom, smClassTo, smMaxCompanySum, smInvestSum];
 
 formsElements.forEach(element => element.addEventListener('change', updateInvestSettings))
@@ -78,6 +76,19 @@ $.get('#sm-list__btn-close').addEventListener('click', () => closeModal('#sm-lis
 $.get("#support-section__btn-close").addEventListener("click", () => $.get("#support-section").classList.add("display-none"));
 $.get('#marketMode').addEventListener('click', marketSwap);
 
+chrome.storage.local.get("investSettings", function(data) {
+  if (data.investSettings) {
+    const settings = data.investSettings;
+    const keys = Object.keys(settings);
+    keys.forEach(key => {
+      const element = $.get(formsElementsObj[key]);
+      if (element && settings[key]) {
+        element.value = settings[key];
+      }
+    });
+  }
+});
+
 function fmCompanyShow(arr, blockId) {
   const removeElement = index => arr.splice(index, 1);
   const list = $.get(`${blockId}`);
@@ -87,67 +98,49 @@ function fmCompanyShow(arr, blockId) {
         <header style="display: flex; margin-top: 6px;">
           <img class="list-element__img" src="https://jetlend.ru${element.preview_small_url === null ? element.image_url : element.preview_small_url}">
           <div style="display: flex; flex-direction: column; text-wrap: nowrap;">
-            <a class="list-element__loan-name target-url" style="font-weight:600" href="https://jetlend.ru/invest/v3/company/${element.id}">${element.loan_name}</a>
+            <a class="list-element__loan-name target-url" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block; width: 0;" 
+              href="https://jetlend.ru/invest/v3/company/${element.id}">${element.loan_name}</a>
             <span style="font-size: 14px">${element.loan_isin}</span>
             <span style="font-size: 14px">
-              <span style="${element.rating.includes('A') ? 'color: limegreen;' : 
+              <b style="${element.rating.includes('A') ? 'color: limegreen;' : 
                           element.rating.includes('B') ? 'color: orange;' : 
-                          'color: orangered;'} font-weight:600">${element.rating} 
-              </span>, 
-              <span style="${element.financial_discipline === 1 ? 'color: limegreen;' : 
+                          'color: orangered;'}">${element.rating}|${ratingArray.indexOf(element.rating)}
+              </b>, 
+              <b style="${element.financial_discipline === 1 ? 'color: limegreen;' : 
                           element.financial_discipline <= 0.4 ? 'color: red;' : 
-                          'color: orange;'} font-weight:600">ФД: ${(element.financial_discipline*100).toFixed(0)}%
-              </span> 
+                          'color: orange;'}">ФД: ${(element.financial_discipline*100).toFixed(0)}%
+              </b> 
             </span>
           </div>
-
-          <div style="margin-left: auto">
-            <span style="${element.company_investing_amount === null ? 'color: limegreen;' : 
+          <div style="display: block; flex: 1; margin-left: -50px; font-size: 14px;">
+            <b style="${element.company_investing_amount === null ? 'color: limegreen;' : 
                           element.company_investing_amount === '0.00' ? 'color: #8888e6;' : 'color: orange;'}
-                          font-size: 14px; text-wrap: nowrap; font-weight:600; float: right">
+                          text-wrap: nowrap; float: right">
                           ${element.company_investing_amount === null ? 'Заёмщика нет в портфеле' : 
                           element.company_investing_amount === '0.00' ? 'Заёмщик был в портфеле' : 
                           `Компания в портфеле: ${toCurrencyFormat(element.company_investing_amount)}`}
-            </span> 
-
-
-            <div style="${element.investing_amount !== null ? 'color: orange;' : ''} font-size: 14px; font-weight: 600; float: right">
+            </b> 
+            <div style="${element.investing_amount !== null ? 'color: orange;' : ''} font-weight: 600; float: right">
                         ${element.investing_amount !== null ? `Зарезервировано: ${toCurrencyFormat(element.investing_amount)}` : ''}
             </div>
-            
           </div>
-
         </header>
+        
         <main>
-        <div style="margin-top: 5px">
-          ${element.company}
-        </div>
-        <div style="margin-top: 5px">
-            <span>
-              <span>Ставка: <span style="font-weight:600">${(element.interest_rate*100).toFixed(2)}%</span>, срок: </span> 
-              <span><span style="font-weight:600">${element.term}</span> ${daysEnding(element.term)} </span> 
-            </span>        
-        </div>
-        <div style="margin-top: 5px">
-          <span>Сумма: <span style="font-weight:600">${toShortCurrencyFormat(element.amount)}</span>, собрано: </span>
-          <span style="font-weight:600">(${element.collected_percentage.toFixed(0)}%/100%)</span> </div>
-        <div style="margin-top: 5px">
-            <span>Выручка за год: <span style="font-weight:600">${toShortCurrencyFormat(element.revenueForPastYear)}</span>,</span>
-            <span> прибыль за год: <span style="font-weight:600">${toShortCurrencyFormat(element.profitForPastYear)}</span></span> 
-        </div>
-        <div style="margin-top: 5px"> 
-          <span>Дата регистрации: <span style="font-weight:600">${element.registrationDate} </span> </span> 
-        </div>
-        <div style="margin-top: 5px"> 
-        <span>Адрес: ${element.address}</span> 
-       </div>
-          <div style="margin-top: 5px">
-              <span>Деятельность: ${element.primaryCatergory}.</span>
+          <p>${element.company}</p>
+          <p>ИНН: <b>${element.inn}</b>, ОГРН: <b>${element.ogrn}</b></p>
+          <p>Ставка: <b>${(element.interest_rate*100).toFixed(2)}%</b>, срок: <b>${element.term}</b> ${daysEnding(element.term)}</p>
+          <p>Сумма: <b>${toShortCurrencyFormat(element.amount)}</b>, собрано: <b>(${element.collected_percentage.toFixed(0)}%/100%)</b></p>
+          <p>Выручка за год: <b>${toShortCurrencyFormat(element.revenueForPastYear)}</b>, прибыль за год: <b>${toShortCurrencyFormat(element.profitForPastYear)}</b></p>
+          <p>Дата регистрации: <b>${element.registrationDate}</b></p>
+          <p>Адрес: ${element.address}</p>
+          <p>Деятельность: ${element.primaryCatergory}.</p> 
+          <div style="margin: 5px 0px 10px">${element.site ? `<a class="target-url link" href="${element.site}">Сайт компании </a>` : 'Cайта нет '}|
+            <a class="target-url link" href="${element.profile}"> Контур. Фокус </a>|
+            <a class="target-url link" href="https://vbankcenter.ru/contragent/search?searchStr=${element.inn}"> ВБЦ </a>|
+            <a class="target-url link" href="https://checko.ru/search?query=${element.inn}"> Чекко </a>|
+            <a class="target-url link" href="https://www.rusprofile.ru/search?query=${element.inn}"> Rusprofile </a>
           </div> 
-          <div style="margin: 5px 0px 10px">
-            <span>${element.site ? `<a class="target-url link" href="${element.site}">Перейти на сайт компании </a>` : 'Cайта нет '}/</span>
-            <span>${element.profile ? `<a class="target-url link" href="${element.profile}"> Контур. Фокус</a>` : ' Контур. Фокуса нет'}</span>
-        </div> 
         </main>
 
   `;
@@ -156,64 +149,57 @@ function fmCompanyShow(arr, blockId) {
     const listItem = document.createElement('div');
     listItem.classList.add('list-element', 'contrast-bg');
     listItem.innerHTML = createListElement(element); 
-    listItem.addEventListener('click', async function() {
-      const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
-      const load = document.createElement('div');
-      load.classList.add('list-element__load-block');
-      load.textContent = 'Загрузка...';
-      console.log(load);
-      listItem.appendChild(load);
-      if (res.data) {
-        const company = res.data.requests.find(item => item.id === element.id);
-        const details = await fetchDetails(element.id);
-        Object.assign(company, details);
-        console.log(company);
-        listItem.innerHTML = createListElement(company); 
-        const buttons = document.createElement('div');
-        buttons.classList.add('buttons-section')
-        // const focus = document.createElement('span');
-        // focus.innerHTML = `${element.profile ? `<a class="target-url btn" href="${element.profile}">Контур. Фокус</a>` : 'Контур. Фокуса нет'}`
-        const removeButton = document.createElement('span');
-        removeButton.textContent = 'Удалить';
-        removeButton.classList.add('btn');
-        removeButton.onclick = function() {
-          removeElement(index);
-          if (arr.length === 0) {
-            closeModal('#fm-list')
-          }
-          updateFmArrayText();
-          fmCompanyShow(arr, blockId);
-          console.log(arr);
-        }; 
-        listItem.appendChild(buttons);
-        // buttons.appendChild(focus);
-        buttons.appendChild(removeButton); 
-        listItem.style.filter = '';
-      }
-    })
+    // listItem.addEventListener('click', async function() {
+    //   const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
+    //   const load = document.createElement('div');
+    //   load.classList.add('list-element__load-block');
+    //   load.textContent = 'Загрузка...';
+    //   listItem.appendChild(load);
+    //   if (res.data) {
+    //     const company = res.data.requests.find(item => item.id === element.id);
+    //     const details = await fetchDetails(element.id);
+    //     Object.assign(company, details);
+    //     listItem.innerHTML = createListElement(company); 
+    //     const buttons = document.createElement('div');
+    //     buttons.classList.add('buttons-section')
+    //     const removeButton = document.createElement('span');
+    //     removeButton.textContent = 'Удалить';
+    //     removeButton.classList.add('btn');
+    //     removeButton.onclick = function() {
+    //       removeElement(index);
+    //       if (arr.length === 0) {
+    //         closeModal('#fm-list')
+    //       }
+    //       updateFmArrayText();
+    //       fmCompanyShow(arr, blockId);
+    //     }; 
+    //     listItem.appendChild(buttons);
+    //     // buttons.appendChild(focus);
+    //     buttons.appendChild(removeButton); 
+    //     listItem.style.filter = '';
+    //   }
+    // });
+    if (arr !== fmrInvestCompanyArray) {
+      const buttons = document.createElement('div');
+      buttons.classList.add('buttons-section');
+      const removeButton = document.createElement('span');
+      removeButton.textContent = 'Удалить';
+      removeButton.classList.add('btn');
+      removeButton.onclick = function() {
+        removeElement(index);
+        if (arr.length === 0) {
+          closeModal('#fm-list')
+         }
+        updateFmArrayText();
+        fmCompanyShow(arr, blockId);
+      }; 
+      listItem.appendChild(buttons);
+      buttons.appendChild(removeButton); 
+    }
 
-    const buttons = document.createElement('div');
-    buttons.classList.add('buttons-section')
-    // const focus = document.createElement('span');
-    // focus.innerHTML = `${element.profile ? `<a class="target-url btn" href="${element.profile}">Контур. Фокус</a>` : 'Контур. Фокуса нет'}`
-    const removeButton = document.createElement('span');
-    removeButton.textContent = 'Удалить';
-    removeButton.classList.add('btn');
-    removeButton.onclick = function() {
-      removeElement(index);
-      if (arr.length === 0) {
-        closeModal('#fm-list')
-       }
-      updateFmArrayText();
-      fmCompanyShow(arr, blockId);
-      console.log(arr);
-    }; 
-    listItem.appendChild(buttons);
-    // buttons.appendChild(focus);
-    buttons.appendChild(removeButton); 
     list.appendChild(listItem); 
   });
-}
+};
 
 function updateFmArrayText() {
   $.get('#fm-numOfSortedCompany').textContent = `Доступно: ${fmInvestCompanyArray.length} ${getZaimEnding(fmInvestCompanyArray.length)} `;
@@ -241,88 +227,66 @@ function smCompanyShow(arr, blockId) {
   const removeElement = index => arr.splice(index, 1);
   const list = $.get(`${blockId}`);
   list.innerHTML = ''; // очищаем текущий список
-
   arr.forEach((element, index) => {
     const listItem = document.createElement('div');
     listItem.classList.add('list-element', 'contrast-bg');
     listItem.innerHTML = `
-    <div style="display: flex; margin-top: 6px;">
-      <img class="list-element__img" src="https://jetlend.ru${element.preview_small_url === null ? element.image_url : element.preview_small_url}">
-      <div style="display: flex; flex-direction: column; text-wrap: nowrap;">
-        <a class="list-element__loan-name target-url" style="font-weight:600" href="https://jetlend.ru/invest/v3/company/${element.loan_id}">${element.loan_name}</a>
-        <span style="font-size: 14px">${element.loan_isin}</span>
-        <span style="font-size: 14px">
-          <span style="${element.rating.includes('A') ? 'color: limegreen;' : 
-                      element.rating.includes('B') ? 'color: orange;' : 
-                      'color: orangered;'} font-weight:600">${element.rating} 
-          </span>, 
-          <span style="${element.financial_discipline === 1 ? 'color: limegreen;' : 
-                      element.financial_discipline <= 0.4 ? 'color: red;' : 
-                      'color: orange;'} font-weight:600">ФД: ${(element.financial_discipline*100).toFixed(0)}%
-          </span>, 
-          <span style="${element.loan_class === 0 ? 'color: limegreen;' : 
-                      element.loan_class === 1 ? 'color: orange;' : 
-                      'color: orangered;'} font-weight:600">Класс: ${element.loan_class}
-          </span>  
-        </span>
-      </div>
-
-      <div style="margin-left: auto">
-        <span style="${element.invested_company_debt === null ? 'color: limegreen;' : 
-                       element.invested_company_debt === 0 ? 'color: #8888e6;' :  'color: orange;'}
-                       font-size: 14px; text-wrap: nowrap; font-weight:600; float: right">
-                       ${(element.invested_company_debt === null ? 'Заёмщика нет в портфеле' : 
-                       element.invested_company_debt === 0 ? 'Заёмщик был в портфеле' : 
-                       `Компания в портфеле: ${toCurrencyFormat(element.invested_company_debt)}`)}
-        </span> 
-
-        <div style="${element.invested_debt !== null ? 'color: orange;' : ''} font-size: 14px; font-weight: 600; float: right">
-                  ${element.invested_debt !== null ? `Займ в портфеле: ${toCurrencyFormat(element.invested_debt)}` : ''}
+    <header>
+      <div style="display: flex; margin-top: 6px;">
+        <img class="list-element__img" src="https://jetlend.ru${element.preview_small_url === null ? element.image_url : element.preview_small_url}">
+        <div style="display: flex; flex-direction: column; text-wrap: nowrap;">
+          <a class="list-element__loan-name target-url" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block; width: 0;" 
+            href="https://jetlend.ru/invest/v3/company/${element.loan_id}">${element.loan_name}</a>
+          <span style="font-size: 14px">${element.loan_isin}</span>
+          <span style="font-size: 14px">
+            <b style="${element.rating.includes('A') ? 'color: limegreen;' : 
+                        element.rating.includes('B') ? 'color: orange;' : 
+                        'color: orangered;'}">${element.rating}|${ratingArray.indexOf(element.rating)}
+            </b>, 
+            <b style="${element.financial_discipline === 1 ? 'color: limegreen;' : 
+                        element.financial_discipline <= 0.4 ? 'color: red;' : 
+                        'color: orange;'}">ФД: ${(element.financial_discipline*100).toFixed(0)}%
+            </b>, 
+            <b style="${element.loan_class === 0 ? 'color: limegreen;' : 
+                        element.loan_class === 1 ? 'color: orange;' : 
+                        'color: orangered;'}">Класс: ${element.loan_class}
+            </b>  
+          </span>
+        </div>
+        <div style="display: block; flex: 1; margin-left: -50px; font-size: 14px;">
+          <b style="${element.invested_company_debt === null ? 'color: limegreen;' : 
+                        element.invested_company_debt === 0 ? 'color: #8888e6;' :  'color: orange;'}
+                         text-wrap: nowrap; float: right">
+                        ${(element.invested_company_debt === null ? 'Заёмщика нет в портфеле' : 
+                        element.invested_company_debt === 0 ? 'Заёмщик был в портфеле' : 
+                        `Компания в портфеле: ${toCurrencyFormat(element.invested_company_debt)}`)}
+          </b> 
+          <div style="${element.invested_debt !== null ? 'color: orange;' : ''} font-weight: 600; float: right">
+                    ${element.invested_debt !== null ? `Займ в портфеле: ${toCurrencyFormat(element.invested_debt)}` : ''}
+          </div>
         </div>
       </div>
-    </div>
-    <div style="margin: 5px 0">
-      ${element.company}
-    </div>
-      <span>Ставка: 
-        <span style="font-weight:600">${(element.interest_rate*100).toFixed(2)}% (${(element.ytm*100).toFixed(2)}%)
-        </span>, минимальная цена: 
-        <span style="font-weight:600">${(element.min_price*100).toFixed(2)}%</span>
-      </span>     
+    </header>
 
-    </div>
-    <div style="margin-top: 5px">
-      <span>Cрок: 
-        <span style="font-weight:600">${element.term}</span> 
-        <span style="font-weight:600">${daysEnding(element.term)}</span>, остаток:
-        <span style="font-weight:600"> ${element.term_left} ${daysEnding(element.term_left)}</span>,
-      </span> 
-      <span> выплачено:
-        <span style="font-weight:600">${(element.progress*100).toFixed(2)}%</span> 
-      </span>
-    </div>
-    <div style="margin-top: 5px">
-        <span>Выручка за год: <span style="font-weight:600">${toShortCurrencyFormat(element.revenueForPastYear)}</span>, </span>
-        <span>прибыль за год: <span style="font-weight:600">${toShortCurrencyFormat(element.profitForPastYear)}</span>,</span> 
-    </div>
-    <div style="margin-top: 5px"> 
-     <span>Дата регистрации: <span style="font-weight:600">${element.registrationDate} </span> </span> 
-    </div>
-    <div style="margin-top: 5px"> 
-    <span>Адрес: ${element.address}</span> 
-   </div>
-    <div style="margin-top: 5px">
-        <span>Деятельность: ${element.primaryCatergory}.</span>
-    </div> 
-    <div style="margin: 5px 0px 10px">
-      <span>${element.site ? `<a class="target-url link" href="${element.site}">Перейти на сайт компании </a>` : 'Cайта нет '}/</span>
-      <span>${element.profile ? `<a class="target-url link" href="${element.profile}"> Контур. Фокус</a>` : ' Контур. Фокуса нет'}</span>
-    </div> 
+    <main>
+      <p>${element.company}</p>
+      <p>ИНН: <b>${element.inn}</b>, ОГРН: <b>${element.ogrn}</b></p>
+      <p>Ставка: <b>${(element.interest_rate*100).toFixed(2)}% (${(element.ytm*100).toFixed(2)}%)</b>, минимальная цена: <b>${(element.min_price*100).toFixed(2)}%</b></p>
+      <p>Cрок: <b>${element.term + daysEnding(element.term)}</b>, остаток: <b>${element.term_left + daysEnding(element.term_left)}</b>, выплачено: <b>${(element.progress*100).toFixed(2)}%</b></p>
+      <p>Выручка за год: <b>${toShortCurrencyFormat(element.revenueForPastYear)}</b>, прибыль за год: <b>${toShortCurrencyFormat(element.profitForPastYear)}</b></p>
+      <p>Дата регистрации: <b>${element.registrationDate}</b></p>
+      <p>Адрес: ${element.address}</p>
+      <p>Деятельность: ${element.primaryCatergory}.</p> 
+      <div style="margin: 5px 0px 10px">${element.site ? `<a class="target-url link" href="${element.site}">Сайт компании </a>` : 'Cайта нет '}|
+        <a class="target-url link" href="${element.profile}"> Контур. Фокус </a>|
+        <a class="target-url link" href="https://vbankcenter.ru/contragent/search?searchStr=${element.inn}"> ВБЦ </a>|
+        <a class="target-url link" href="https://checko.ru/search?query=${element.inn}"> Чекко </a>|
+        <a class="target-url link" href="https://www.rusprofile.ru/search?query=${element.inn}"> Rusprofile </a>
+      </div> 
+    </main>
     `; 
     const buttons = document.createElement('div');
     buttons.classList.add('buttons-section')
-    // const focus = document.createElement('span');
-    // focus.innerHTML = `${element.profile ? `<a class="target-url btn" href="${element.profile}">Контур. Фокус</a>` : 'Контур. Фокуса нет'}`
     const removeButton = document.createElement('span');
     removeButton.textContent = 'Удалить';
     removeButton.classList.add('btn');
@@ -333,10 +297,8 @@ function smCompanyShow(arr, blockId) {
        }
       updateSmArrayText();
       smCompanyShow(arr, blockId);
-      console.log(arr);
     }; 
     listItem.appendChild(buttons);
-    // buttons.appendChild(focus);
     buttons.appendChild(removeButton); 
     list.appendChild(listItem); 
   });
@@ -358,81 +320,9 @@ chrome.storage.local.get("settings", function (data) {
   }
 });
 
-chrome.storage.local.get("investSettings", function(data) {
-  if (data.investSettings) {
-    if (data.investSettings.fmDaysFrom) {
-      fmDaysFrom.value = data.investSettings.fmDaysFrom;
-    }
-    if (data.investSettings.fmDaysTo) {
-      fmDaysTo.value = data.investSettings.fmDaysTo
-    }
-    if (data.investSettings.fmRateFrom) {
-      fmRateFrom.value = data.investSettings.fmRateFrom
-    }
-    if (data.investSettings.fmRateTo) {
-      fmRateTo.value = data.investSettings.fmRateTo
-    }
-    if (data.investSettings.fmLoansFrom) {
-      fmLoansFrom.value = data.investSettings.fmLoansFrom
-    }
-    if (data.investSettings.fmLoansTo) {
-      fmLoansTo.value = data.investSettings.fmLoansTo
-    }
-    if (data.investSettings.fmMaxCompanySum) {
-      fmMaxCompanySum.value = data.investSettings.fmMaxCompanySum
-    }
-    if (data.investSettings.fmInvestSum) {
-      fmInvestSum.value = data.investSettings.fmInvestSum
-    }
-    // Вторичка
-    if (data.investSettings.smDaysFrom) {
-      smDaysFrom.value = data.investSettings.smDaysFrom
-    }
-    if (data.investSettings.smDaysTo) {
-      smDaysTo.value = data.investSettings.smDaysTo
-    }
-    if (data.investSettings.smRateFrom) {
-      smRateFrom.value = data.investSettings.smRateFrom
-    }
-    if (data.investSettings.smRateTo) {
-      smRateTo.value = data.investSettings.smRateTo
-    }
-    if (data.investSettings.smFdFrom ) {
-      smFdFrom.value = data.investSettings.smFdFrom 
-    }
-    if (data.investSettings.smFdTo) {
-      smFdTo.value = data.investSettings.smFdTo
-    }
-    if (data.investSettings.smProgressFrom) {
-      smProgressFrom.value = data.investSettings.smProgressFrom
-    }
-    if (data.investSettings.smProgressTo) {
-      smProgressTo.value = data.investSettings.smProgressTo
-    }
-    if (data.investSettings.smClassFrom) {
-      smClassFrom.value = data.investSettings.smClassFrom 
-    }
-    if (data.investSettings.smClassTo) {
-      smClassTo.value = data.investSettings.smClassTo
-    }
-    if (data.investSettings.smMaxCompanySum) {
-      smMaxCompanySum.value = data.investSettings.smMaxCompanySum
-    }
-    if (data.investSettings.smPriceFrom) {
-      smPriceFrom.value = data.investSettings.smPriceFrom
-    }
-    if (data.investSettings.smPriceTo ) {
-      smPriceTo.value = data.investSettings.smPriceTo 
-    }
-    if (data.investSettings.smInvestSum) {
-      smInvestSum.value = data.investSettings.smInvestSum
-    }
-  }
-})
-
 async function mainUpdateFunction() {
   lastUpdateDateTag.innerHTML = `Все активы <span style="position: relative"><span class="load-spinner" title="Загузка актуальных данных..." style="cursor: pointer; width: 16px"></span></span>`;
-
+  $.get('.invest-section__title-sum').textContent = `(Загрузка...)`;
   const userStatsUrl = "https://jetlend.ru/invest/api/account/details";
   const userDataUrl = "https://jetlend.ru/invest/api/account/info";
   const platformStatsUrl = "https://jetlend.ru/invest/api/public/stats";
@@ -567,26 +457,26 @@ async function mainUpdateFunction() {
       });
       settingsBtn.clickListenerAdded = true;
     }
-
+    
     $.get('.invest-section__title-sum').textContent = `(Свободно: ${toCurrencyFormat(balanceStats.free)})`;
     fmInvestSumAll.value = balanceStats.free;
     smInvestSumAll.value = balanceStats.free;
 
     sameDataText = `
       <div class="contrast-bg">
-        <div style="font-size:16px">Статистика платформы</div>
-        <div>Ставка на сборе (за всё время / за 30 дней): ${toPercentFormat(platformObj.data.average_interest_rate)} / ${toPercentFormat(platformObj.data.average_interest_rate_30days)}</div>
-        <div>Минимальная и максимальная ставки:  ${toPercentFormat(platformObj.data.min_interest_rate)} / ${toPercentFormat(platformObj.data.max_interest_rate)}</div>
-        <div>Средняя ставка на вторичном рынке (30 дней): ${toPercentFormat(platformObj.data.average_market_interest_rate)}</div>
-        <div>Дефолтность (за всё время / за 30 дней): ${toPercentFormat(platformObj.data.default_rate_all)} / ${toPercentFormat(platformObj.data.default_rate)}</div>
+        <h3>Статистика платформы:</h3>
+        <p>Ставка на сборе (за всё время / за 30 дней): <b>${toPercentFormat(platformObj.data.average_interest_rate)}</b> / <b>${toPercentFormat(platformObj.data.average_interest_rate_30days)}</b></p>
+        <p>Минимальная и максимальная ставки:  <b>${toPercentFormat(platformObj.data.min_interest_rate)}</b> / <b>${toPercentFormat(platformObj.data.max_interest_rate)}</b></p>
+        <p>Средняя ставка на вторичном рынке (30 дней): <b>${toPercentFormat(platformObj.data.average_market_interest_rate)}</b></p>
+        <p>Дефолтность (за всё время / за 30 дней): <b>${toPercentFormat(platformObj.data.default_rate_all)}</b> / <b>${toPercentFormat(platformObj.data.default_rate)}</b></p>
       </div>
       <br>
       <div class="contrast-bg">
-        <div style="font-size:16px">Прочее</div>
-        <div>Айди: ${userObj.data.id}</div>
-        <div>Дата регистрации: ${formatReadableDate(userObj.data.register_date)}</div>
-        <div>Срок инвестирования: ${getInvestDays()}</div>
-        <div>Компаний в портфеле: ${amountCompany.data.data.companies_count}</div>
+        <h3>Прочее:</h3>
+        <p>Айди: <b>${userObj.data.id}</b></p>
+        <p>Дата регистрации: <b>${formatReadableDate(userObj.data.register_date)}</b></p>
+        <p>Срок инвестирования: <b>${getInvestDays()}</b></p>
+        <p>Компаний в портфеле: <b>${amountCompany.data.data.companies_count}</b></p>
       </div>
       <footer style="
       color: gray;
@@ -601,19 +491,19 @@ async function mainUpdateFunction() {
     dataTextAllTime = 
     `<div class="container">
       <div class="contrast-bg">
-        <span style="font-size:16px">Статистика за </span><span class="swap">всё время</span>
-        <div>Процентный доход: <span style="color:${decorNumber(allTime.interest)}">${numberSign(allTime.interest)}${toCurrencyFormat(allTime.interest)}<span></div>
-        <div>НПД (ожидаемый): <span style="color:${decorNumber(balanceStats.nkd + balanceStats.nkd_ndfl)}">${numberSign(balanceStats.nkd + balanceStats.nkd_ndfl)}${toCurrencyFormat(balanceStats.nkd + balanceStats.nkd_ndfl)}</span></div>
-        <div>Пени: <span style="color:${decorNumber(allTime.fine)}">${numberSign(allTime.fine)}${toCurrencyFormat(allTime.fine)}</span></div>
-        <div>Бонусы: <span style="color:${decorNumber(allTime.bonus)}">${numberSign(allTime.bonus)}${toCurrencyFormat(allTime.bonus)}</span></div>
-        <div>Реферальный доход: <span style="color:${decorNumber(allTime.reffBonus)}">${numberSign(allTime.reffBonus)}${toCurrencyFormat(allTime.reffBonus)}</span></div>
-        <div>Доход на вторичном рынке: <span style="color:${decorNumber(allTime.sale)}">${numberSign(allTime.sale)}${toCurrencyFormat(allTime.sale)}</span></div>
-        <div>Потери: <span style="color:${decorNumber(-allTime.loss)}">${numberSign(-allTime.loss)}${toCurrencyFormat(-allTime.loss)}</span></div>
-        <div>НДФЛ: <span style="color:${decorNumber(-allTime.ndfl)}">${numberSign(-allTime.ndfl)}${toCurrencyFormat(-allTime.ndfl)}</span></div>
-        <div>НДФЛ ожидаемый: <span style="color:${decorNumber(-balanceStats.nkd_ndfl)}">${numberSign(-balanceStats.nkd_ndfl)}${toCurrencyFormat(-balanceStats.nkd_ndfl)}</span></div>
-        <div>Доход за вычетом НДФЛ: <span style="color:${decorNumber(allTime.profitWithoutNdfl)}">${numberSign(allTime.profitWithoutNdfl)}${toCurrencyFormat(allTime.profitWithoutNdfl)}</span></div>
-        <div>Свободные средства: <span style="color:${decorNumber(balanceStats.free)}">${numberSign(balanceStats.free)}${toCurrencyFormat(balanceStats.free)}</span></div>
-        <div>XIRR (с НПД / без НПД): ${toPercentFormat(allTime.xirr('npd'))} / ${toPercentFormat(allTime.xirr('clean'))}</div>
+        <h3>Статистика за <span class="swap">всё время</span>:</h3>
+        <p>Процентный доход: <b style="color:${decorNumber(allTime.interest)}">${numberSign(allTime.interest)}${toCurrencyFormat(allTime.interest)}</b></p>
+        <p>НПД (ожидаемый): <b style="color:${decorNumber(balanceStats.nkd + balanceStats.nkd_ndfl)}">${numberSign(balanceStats.nkd + balanceStats.nkd_ndfl)}${toCurrencyFormat(balanceStats.nkd + balanceStats.nkd_ndfl)}</b></p>
+        <p>Пени: <b style="color:${decorNumber(allTime.fine)}">${numberSign(allTime.fine)}${toCurrencyFormat(allTime.fine)}</b></p>
+        <p>Бонусы: <b style="color:${decorNumber(allTime.bonus)}">${numberSign(allTime.bonus)}${toCurrencyFormat(allTime.bonus)}</b></p>
+        <p>Реферальный доход: <b style="color:${decorNumber(allTime.reffBonus)}">${numberSign(allTime.reffBonus)}${toCurrencyFormat(allTime.reffBonus)}</b></p>
+        <p>Доход на вторичном рынке: <b style="color:${decorNumber(allTime.sale)}">${numberSign(allTime.sale)}${toCurrencyFormat(allTime.sale)}</b></p>
+        <p>Потери: <b style="color:${decorNumber(-allTime.loss)}">${numberSign(-allTime.loss)}${toCurrencyFormat(-allTime.loss)}</b></p>
+        <p>НДФЛ: <b style="color:${decorNumber(-allTime.ndfl)}">${numberSign(-allTime.ndfl)}${toCurrencyFormat(-allTime.ndfl)}</b></p>
+        <p>НДФЛ ожидаемый: <b style="color:${decorNumber(-balanceStats.nkd_ndfl)}">${numberSign(-balanceStats.nkd_ndfl)}${toCurrencyFormat(-balanceStats.nkd_ndfl)}</b></p>
+        <p>Доход за вычетом НДФЛ: <b style="color:${decorNumber(allTime.profitWithoutNdfl)}">${numberSign(allTime.profitWithoutNdfl)}${toCurrencyFormat(allTime.profitWithoutNdfl)}</b></p>
+        <p>Свободные средства: <b style="color:${decorNumber(balanceStats.free)}">${numberSign(balanceStats.free)}${toCurrencyFormat(balanceStats.free)}</b></p>
+        <p>XIRR (с НПД / без НПД): <b>${toPercentFormat(allTime.xirr('npd'))}</b> / <b>${toPercentFormat(allTime.xirr('clean'))}</b></p>
       </div>
       <br>
     ${innerHTML = sameDataText}
@@ -622,19 +512,19 @@ async function mainUpdateFunction() {
     dataTextYearTime = 
     `<div class="container">
       <div class="contrast-bg">
-        <span style="font-size:16px">Статистика за </span><span class="swap">год</span>
-        <div>Процентный доход: <span style="color:${decorNumber(yearTime.interest)}">${numberSign(yearTime.interest)}${toCurrencyFormat(yearTime.interest)}<span></div>
-        <div>НПД (ожидаемый): <span style="color:${decorNumber(balanceStats.nkd + balanceStats.nkd_ndfl)}">${numberSign(balanceStats.nkd + balanceStats.nkd_ndfl)}${toCurrencyFormat(balanceStats.nkd + balanceStats.nkd_ndfl)}</span></div>
-        <div>Пени: <span style="color:${decorNumber(yearTime.fine)}">${numberSign(yearTime.fine)}${toCurrencyFormat(yearTime.fine)}</span></div>
-        <div>Бонусы: <span style="color:${decorNumber(yearTime.bonus)}">${numberSign(yearTime.bonus)}${toCurrencyFormat(yearTime.bonus)}</span></div>
-        <div>Реферальный доход: <span style="color:${decorNumber(yearTime.reffBonus)}">${numberSign(yearTime.reffBonus)}${toCurrencyFormat(yearTime.reffBonus)}</span></div>
-        <div>Доход на вторичном рынке: <span style="color:${decorNumber(yearTime.sale)}">${numberSign(yearTime.sale)}${toCurrencyFormat(yearTime.sale)}</span></div>
-        <div>Потери: <span style="color:${decorNumber(-yearTime.loss)}">${numberSign(-yearTime.loss)}${toCurrencyFormat(-yearTime.loss)}</span></div>
-        <div>НДФЛ: <span style="color:${decorNumber(-yearTime.ndfl)}">${numberSign(-yearTime.ndfl)}${toCurrencyFormat(-yearTime.ndfl)}</span></div>
-        <div>НДФЛ ожидаемый: <span style="color:${decorNumber(-balanceStats.nkd_ndfl)}">${numberSign(-balanceStats.nkd_ndfl)}${toCurrencyFormat(-balanceStats.nkd_ndfl)}</span></div>
-        <div>Доход за вычетом НДФЛ: <span style="color:${decorNumber(yearTime.profitWithoutNdfl)}">${numberSign(yearTime.profitWithoutNdfl)}${toCurrencyFormat(yearTime.profitWithoutNdfl)}</span></div>
-        <div>Свободные средства: <span style="color:${decorNumber(balanceStats.free)}">${numberSign(balanceStats.free)}${toCurrencyFormat(balanceStats.free)}</span></div>
-        <div>XIRR (с НПД / без НПД): ${toPercentFormat(yearTime.xirr('npd'))} / ${toPercentFormat(yearTime.xirr('clean'))}</div>
+        <h3>Статистика за <span class="swap">год</span>:</h3>
+        <p>Процентный доход: <b style="color:${decorNumber(yearTime.interest)}">${numberSign(yearTime.interest)}${toCurrencyFormat(yearTime.interest)}</b></p>
+        <p>НПД (ожидаемый): <b style="color:${decorNumber(balanceStats.nkd + balanceStats.nkd_ndfl)}">${numberSign(balanceStats.nkd + balanceStats.nkd_ndfl)}${toCurrencyFormat(balanceStats.nkd + balanceStats.nkd_ndfl)}</b></p>
+        <p>Пени: <b style="color:${decorNumber(yearTime.fine)}">${numberSign(yearTime.fine)}${toCurrencyFormat(yearTime.fine)}</b></p>
+        <p>Бонусы: <b style="color:${decorNumber(yearTime.bonus)}">${numberSign(yearTime.bonus)}${toCurrencyFormat(yearTime.bonus)}</b></p>
+        <p>Реферальный доход: <b style="color:${decorNumber(yearTime.reffBonus)}">${numberSign(yearTime.reffBonus)}${toCurrencyFormat(yearTime.reffBonus)}</b></p>
+        <p>Доход на вторичном рынке: <b style="color:${decorNumber(yearTime.sale)}">${numberSign(yearTime.sale)}${toCurrencyFormat(yearTime.sale)}</b></p>
+        <p>Потери: <b style="color:${decorNumber(-yearTime.loss)}">${numberSign(-yearTime.loss)}${toCurrencyFormat(-yearTime.loss)}</b></p>
+        <p>НДФЛ: <b style="color:${decorNumber(-yearTime.ndfl)}">${numberSign(-yearTime.ndfl)}${toCurrencyFormat(-yearTime.ndfl)}</b></p>
+        <p>НДФЛ ожидаемый: <b style="color:${decorNumber(-balanceStats.nkd_ndfl)}">${numberSign(-balanceStats.nkd_ndfl)}${toCurrencyFormat(-balanceStats.nkd_ndfl)}</b></p>
+        <p>Доход за вычетом НДФЛ: <b style="color:${decorNumber(yearTime.profitWithoutNdfl)}">${numberSign(yearTime.profitWithoutNdfl)}${toCurrencyFormat(yearTime.profitWithoutNdfl)}</b></p>
+        <p>Свободные средства: <b style="color:${decorNumber(balanceStats.free)}">${numberSign(balanceStats.free)}${toCurrencyFormat(balanceStats.free)}</b></p>
+        <p>XIRR (с НПД / без НПД): <b>${toPercentFormat(yearTime.xirr('npd'))}</b> / <b>${toPercentFormat(yearTime.xirr('clean'))}</b></p>
       </div>
       <br>
     ${innerHTML = sameDataText}
@@ -643,21 +533,26 @@ async function mainUpdateFunction() {
     function updateProfit() {
       if (investDays() < 365) {
         incomeTitle.innerHTML = `<span>Доход за ${getInvestDays()} (без НПД / чистый доход)</span> <span>Доходность</span>`;
-        incomeTag.innerHTML = `<span>${toCurrencyFormat(allTime.profitWithoutNpd)} / ${toCurrencyFormat(allTime.cleanProfit)}</span> <span><img src="/img/arrow.svg">${toPercentFormat(allTime.percentProfit)}</span>`;  
+        $.get('.income__currency').innerHTML = `<span>${toCurrencyFormat(allTime.profitWithoutNpd)} / ${toCurrencyFormat(allTime.cleanProfit)}</span>`;  
+        $.get('.income__percent').innerHTML = `<span><img src="/img/arrow.svg">${toPercentFormat(allTime.percentProfit)}</span>`;
       } else if (timePeriod == "allTime") {
         incomeTitle.innerHTML = `<span>Доход за всё время (без НПД / чистый доход)</span> <span>Доходность</span>`;
-        incomeTag.innerHTML = `<span>${toCurrencyFormat(allTime.profitWithoutNpd)} / ${toCurrencyFormat(allTime.cleanProfit)}</span> <span><img src="/img/arrow.svg">${toPercentFormat(allTime.percentProfit)}</span>`;  
+        $.get('.income__currency').innerHTML = `<span id='t'><span>${toCurrencyFormat(allTime.profitWithoutNpd)}</span> <span>/</span> <span>${toCurrencyFormat(allTime.cleanProfit)}</span></span>`;  
+        $.get('.income__percent').innerHTML = `<span><img src="/img/arrow.svg">${toPercentFormat(allTime.percentProfit)}</span>`;
       } else if (timePeriod == "year" && investDays() >= 365) {
         incomeTitle.innerHTML = `<span>Доход за год (без НПД / чистый доход)</span> <span>Доходность</span>`;
-        incomeTag.innerHTML = `<span>${toCurrencyFormat(yearTime.profitWithoutNpd)} / ${toCurrencyFormat(yearTime.cleanProfit)}</span> <span><img src="/img/arrow.svg">${toPercentFormat(yearTime.percentProfit)}</span>`;  
-      }
-      console.log('tr', document.getElementById('test'));
-      
+        $.get('.income__currency').innerHTML = `<span>${toCurrencyFormat(yearTime.profitWithoutNpd)} / ${toCurrencyFormat(yearTime.cleanProfit)}</span>`;  
+        $.get('.income__percent').innerHTML = `<span><img src="/img/arrow.svg">${toPercentFormat(yearTime.percentProfit)}</span>`;
+      }      
     }
 
     lastUpdateDateTag.innerHTML = `Все активы <span>(${getUpdateTime((new Date).getTime())})</span>`;
     balanceTitle.innerHTML = `<span>Активы / Активы без НПД</span> <span>Ставка на сборе</span>`;
     balanceTag.innerHTML = `<span id="test" style="text-wrap: nowrap"><span id="balance">${toCurrencyFormat(balance)}</span> / <span id="balance--clean">${toCurrencyFormat(cleanBalance)}</span></span><span style="text-wrap: nowrap">${toPercentFormat(platformObj.data.average_interest_rate_30days)}</span>`;
+    currencyAnimation('balance', currencyToFloat(cachedBalance), currencyToFloat($.get('#balance').textContent), 'hideArrow');
+    currencyAnimation('balance--clean', currencyToFloat(cachedCleanBalance), currencyToFloat($.get('#balance--clean').textContent));
+    cachedBalance = balance;
+    cachedCleanBalance = cleanBalance;
     updateProfit();
 
     if (timePeriod == "year" && investDays() >= 365) {
@@ -691,30 +586,15 @@ async function mainUpdateFunction() {
     collectionIncomeText: balanceTag.querySelectorAll('span')[3].textContent,      // Текст ставки на сборе
 
     incomeTitle: incomeTitle.querySelectorAll('span')[0].textContent,              // Текст заголовка дохода (согласно настройкам)
-    incomeText: incomeTag.querySelectorAll('span')[0].textContent,                 // Текст дохода (согласно настройкам)
+    incomeText: $.get('.income__currency').textContent,                            // Текст дохода (согласно настройкам)
 
     incomePercent: incomeTitle.querySelectorAll('span')[1].textContent,            // Текст заголовка процентного дохода
-    percentIncomeNum: incomeTag.querySelectorAll('span')[1].textContent,           // Процентный доход
+    percentIncomeNum: $.get('.income__percent').textContent,           // Процентный доход
     
     updateTime: new Date().getTime() // Текущее время
   };
   chrome.storage.local.set({ cacheJetlend: cache });
-
-  currencyAnimation('balance', currensyToFloat(cachedBalance), currensyToFloat($.get('#balance').textContent), 'hideArrow');
-  currencyAnimation('balance--clean', currensyToFloat(cachedCleanBalance), currensyToFloat($.get('#balance--clean').textContent));
-
-  // currencyAnimation('balance', 10000000, 4000000, 'hideArrow');
-  // currencyAnimation('balance--clean', 1, 7000000);
-  console.log('Число1',currensyToFloat(cachedCleanBalance));
-  console.log('Число2', currensyToFloat($.get('#balance--clean').textContent));
-  console.log(balanceTag.querySelectorAll('span')[3]);
-  // currencyAnimation('test', 100, 500);
-  // setTimeout(() => {
-  //   currencyAnimation('test', 1500, 1000)
-  // }, 5000);
   }
-
-  
   
   if (userStats.error) {
     $.get('.main-section__stats').innerHTML = `<div style="margin: 64px 0px; position: relative; transform: translate(25%, 0%);">Авторизуйтесь на сайте</div>`;
@@ -732,11 +612,12 @@ chrome.storage.local.get("cacheJetlend", function (result) {
     balanceTitle.innerHTML = `<span>${data.balanceTitle}</span> <span>${data.collectionIncomeTitle}</span>`;
     balanceTag.innerHTML = `<span class="load-opacity-animation">${data.balanceText}</span> <span class="load-opacity-animation">${data.collectionIncomeText}</span>`;
     incomeTitle.innerHTML = `<span>${data.incomeTitle}</span> <span>${data.incomePercent}</span>`;
-    incomeTag.innerHTML = `<span class="load-opacity-animation">${data.incomeText}</span> <span class="load-opacity-animation"><img src="/img/arrow.svg">${data.percentIncomeNum}</span>`;
+    
+    $.get('.income__currency').innerHTML = `<span class="load-opacity-animation">${data.incomeText}</span>`;
+    $.get('.income__percent').innerHTML = `<span class="load-opacity-animation"><img src="/img/arrow.svg">${data.percentIncomeNum}</span>`
+    
     cachedBalance = data.balance;
     cachedCleanBalance = data.cleanBalance;
-    console.log('Кэш баланса',cachedBalance);
-    console.log('Кэш баланса-слеан',cachedCleanBalance);
   }
 });
 
@@ -749,7 +630,6 @@ async function updateFirstMarket() {
   $.get('#fm-btn-stop').classList.remove('display-none');
   $.get('#market-companyAnaliz').classList.add('load-block-animation');
   const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
-  console.log('Сумма в одного (первичка): ', (parseFloat(fmMaxCompanySum.value) - parseFloat(fmInvestSum.value)));
   if (res.data) {
     $.get('#market-numOfAllCompany').textContent = res.data.requests.length;
     $.get('#market-averagePercent').textContent = toPercentFormat(res.data.requests.reduce((acc, curr) => acc + curr.interest_rate, 0)/res.data.requests.length)
@@ -759,6 +639,7 @@ async function updateFirstMarket() {
       && (obj.investing_amount === null) /* Резервация (нет) */ 
       // && (obj.company_investing_amount === null || obj.company_investing_amount === "0.00") /* Есть заёмщик портфеле (нет) */
       && (obj.term >= parseInt(fmDaysFrom.value) && obj.term <= parseInt(fmDaysTo.value)) /* Срок займа */
+      && (ratingArray.indexOf(obj.rating) >= parseInt(fmRatingFrom.value) && ratingArray.indexOf(obj.rating) <= parseInt(fmRatingTo.value)) /* Рейтинг займа */
       && (obj.interest_rate >= valueToNum(fmRateFrom.value) && obj.interest_rate <= valueToNum(fmRateTo.value)) /* Процент займа (от 20 до 100) */ 
       && (obj.loan_order >= parseFloat(fmLoansFrom.value) && obj.loan_order <= parseFloat(fmLoansTo.value))  /* Какой по счёту займ на платформе */
       && (obj.company_investing_amount <= (parseFloat(fmMaxCompanySum.value) - parseFloat(fmInvestSum.value))) /* Сумма в одного заёмщика */
@@ -780,7 +661,6 @@ async function updateFirstMarket() {
           break;
         }
       }
-      console.log('Массив доступных для инвестиций компаний', secondSort); // Вывод обновленного массива
       fmInvestCompanyArray = secondSort;
       $.get('#fm-numOfSortedCompany').textContent = `Доступно: ${secondSort.length} ${getZaimEnding(secondSort.length)} `;
       $.get('#fm-btn-update').classList.remove('display-none');
@@ -802,12 +682,11 @@ async function updateFirstMarketReserv() {
   $.get('#fmr-btn-update').classList.add('display-none');
   $.get('#fmr-btn-show').classList.add('display-none');
   $.get('#fmr-btn-stop').classList.remove('display-none');
-  console.log('Сумма в одного (вторичка): ', (parseFloat(smMaxCompanySum.value) - parseFloat(smInvestSum.value)));
   const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
 
   if (res.data) {
     const sorted = res.data.requests.filter(obj => (obj.collected_percentage !== 100) /* Полоска сбора не заполнена (меньше 100%) */ 
-      && (obj.investing_amount !== null) /* Резервация (нет) */ 
+      && (obj.investing_amount !== null) /* Резервация */ 
       ) 
 
     async function updateArray() {
@@ -824,9 +703,9 @@ async function updateFirstMarketReserv() {
           break;
         }
       }
-      console.log('Массив зарезервированных компаний', secondSort); // Вывод обновленного массива
       fmrInvestCompanyArray = secondSort;
-      $.get('#fmr-numOfSortedCompany').textContent = `Загружено: ${secondSort.length} ${getZaimEnding(secondSort.length)} (всего:  ${sorted.length})`;
+      $.get('#fmr-numOfSortedCompany').textContent =
+        `Загружено: ${secondSort.length} ${getZaimEnding(secondSort.length)} ${sorted.length > count ? `(всего:  ${sorted.length})` : ''}`;
       $.get('#fmr-btn-update').classList.remove('display-none');
       $.get('#fmr-btn-update').textContent = 'Обновить';
       if (fmrInvestCompanyArray.length >= 1) {
@@ -856,6 +735,7 @@ async function updateSecondMarket() {
     const sorted = res.data.data.filter(obj => (obj.term_left >= parseFloat(smDaysFrom.value) && obj.term_left <= parseFloat(smDaysTo.value)) /* Остаток срока займа */
       // && (obj.invested_debt === null || obj.invested_debt === 0.00) /* Есть в портфеле (нет) */
       // && (obj.interest_rate >= 0.15 && obj.interest_rate <= 1) /* Изначальный процент займа (от 20 до 100) */
+      && (ratingArray.indexOf(obj.rating) >= parseInt(smRatingFrom.value) && ratingArray.indexOf(obj.rating) <= parseInt(smRatingTo.value)) /* Рейтинг займа */
       && (obj.ytm >= valueToPercent(smRateFrom.value) && obj.ytm <= valueToPercent(smRateTo.value)) /* Эффективная ставка (от 20 до 100) */
       // && (obj.loan_order >= 1 && obj.loan_order <= 5)  /* Какой по счёту займ на платформе */
       && (obj.progress >= valueToPercent(smProgressFrom.value) && obj.progress <= valueToPercent(smProgressTo.value)) /* Выплачено (прогресс в %) */
@@ -888,10 +768,8 @@ async function updateSecondMarket() {
         $.get('#sm-btn-show').classList.remove('display-none');
       }
       $.get('#sm-btn-stop').classList.add('display-none');    
-      console.log('Вторая сортировка', smInvestCompanyArray);
     }
     updateArray();
-    console.log('Первая сортировка', sorted);
   };
 }
 
@@ -957,3 +835,16 @@ $.get('#secondMarketSubmit').addEventListener('click', function() {
     console.log('Не удовлетворяет условиям');
   };
 })
+
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+  if (message.data === 'Распределение средств заверешено') {
+    mainUpdateFunction();
+    $.get('#fm-numOfSortedCompany').textContent = '';
+    $.get('#fm-btn-show').classList.add('display-none');
+    $.get('#sm-numOfSortedCompany').textContent = '';
+    $.get('#sm-btn-show').classList.add('display-none');
+    fmInvestCompanyArray = [];
+    smInvestCompanyArray = [];
+  }
+});
+

@@ -62,6 +62,8 @@ function updateInvestSettings() {
   const newSettings = {
     fmDaysFrom: fmDaysFrom.value,
     fmDaysTo: fmDaysTo.value,
+    fmRatingFrom: fmRatingFrom.value,
+    fmRatingTo: fmRatingTo.value,
     fmRateFrom: fmRateFrom.value,
     fmRateTo: fmRateTo.value,
     fmLoansFrom: fmLoansFrom.value,
@@ -71,6 +73,8 @@ function updateInvestSettings() {
     // Вторичка
     smDaysFrom: smDaysFrom.value,
     smDaysTo: smDaysTo.value,
+    smRatingFrom: smRatingFrom.value,
+    smRatingTo: smRatingTo.value,
     smRateFrom: smRateFrom.value,
     smRateTo: smRateTo.value,
     smFdFrom: smFdFrom.value,
@@ -248,13 +252,8 @@ async function fetchDetails(companyId) {
   const response = await fetchData(`https://jetlend.ru/invest/api/requests/${companyId}/details`);
   if (response.data) {
     return response.data.data.details;
-  } else {
-    console.log('Что-то пошло не так');
-  }
+  } 
 }
-
-
-
 
 function currencyAnimation(blockId, initialValue, finalValue, arrowHide = false) {
   if (initialValue === finalValue) {
@@ -309,9 +308,11 @@ function currencyAnimation(blockId, initialValue, finalValue, arrowHide = false)
   requestAnimationFrame(animateValue);
 }
 
-function currensyToFloat(currency) {
-  const currencyString = currency.toString();
-  return parseFloat(currencyString.replaceAll(/\s/g, '').replace(',', '.'));
+function currencyToFloat(currency) {
+  const string = currency.toString();
+  const stringValue = string.replace(/\s/g, '').replace(',', '.');
+  const result = parseFloat(stringValue).toFixed(2);
+  return parseFloat(result);
 }
 
 

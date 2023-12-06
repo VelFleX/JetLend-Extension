@@ -1,3 +1,5 @@
+const version = "0.8.0";
+
 const $ = {
   get: function(selector) {
     if (selector.startsWith('#')) {
@@ -61,8 +63,6 @@ const $ = {
 
 const all = document.querySelectorAll.bind(document);
 
-const version = "0.8.0 beta 4";
-
 const lastUpdateDateTag = $.get(".lastUpdateDate"); //Тэг последнего обновления данных
 const balanceTitle = $.get(".balance__title");      //Заголовок баланса
 const balanceTag = $.get(".balance__value");        //Тэг баланса
@@ -75,6 +75,8 @@ const settingsBtn = $.get('.settings__swap');       // Кнопка-свапал
 
 let fmDaysFrom = $.get('#fm-invest-days-from');
 let fmDaysTo = $.get('#fm-invest-days-to');
+let fmRatingFrom = $.get('#fm-rating-from');
+let fmRatingTo = $.get('#fm-rating-to');
 let fmRateFrom = $.get('#fm-rate-from');
 let fmRateTo = $.get('#fm-rate-to');
 let fmLoansFrom = $.get('#fm-loans-from');
@@ -85,6 +87,8 @@ let fmInvestSumAll = $.get('#fm-invest-sum-all');
 
 let smDaysFrom = $.get('#sm-invest-days-from');
 let smDaysTo = $.get('#sm-invest-days-to');
+let smRatingFrom = $.get('#sm-rating-from');
+let smRatingTo = $.get('#sm-rating-to');
 let smRateFrom = $.get('#sm-rate-from');
 let smRateTo = $.get('#sm-rate-to');
 let smFdFrom = $.get('#sm-fd-from');
@@ -102,3 +106,36 @@ let smInvestSumAll = $.get('#sm-invest-sum-all');
 let fmCompanyUpdate = true;
 let fmrCompanyUpdate = false;
 let smCompanyUpdate = false;
+
+let formsElementsObj = {
+  fmDaysFrom: '#fm-invest-days-from',
+  fmDaysTo: '#fm-invest-days-to',
+  fmRatingFrom : '#fm-rating-from',
+  fmRatingTo: '#fm-rating-to',
+  fmRateFrom: '#fm-rate-from',
+  fmRateTo: '#fm-rate-to',
+  fmLoansFrom: '#fm-loans-from',
+  fmLoansTo: '#fm-loans-to',
+  fmMaxCompanySum: '#fm-max-company-sum',
+  fmInvestSum: '#fm-invest-sum',
+  fmInvestSumAll: '#fm-invest-sum-all',
+  smDaysFrom: '#sm-invest-days-from',
+  smDaysTo: '#sm-invest-days-to',
+  smRatingFrom : '#sm-rating-from',
+  smRatingTo: '#sm-rating-to',
+  smRateFrom: '#sm-rate-from',
+  smRateTo: '#sm-rate-to',
+  smFdFrom: '#sm-fd-from',
+  smFdTo: '#sm-fd-to',
+  smProgressFrom: '#sm-progress-from',
+  smProgressTo: '#sm-progress-to',
+  smPriceFrom: '#sm-price-from',
+  smPriceTo: '#sm-price-to',
+  smClassFrom: '#sm-class-from',
+  smClassTo: '#sm-class-to',
+  smMaxCompanySum: '#sm-max-company-sum',
+  smInvestSum: '#sm-invest-sum',
+  smInvestSumAll: '#sm-invest-sum-all'
+};
+
+const ratingArray = [,'AAA+', 'AAA', 'AA+', 'AA', 'A+', 'A', 'BBB+', 'BBB', 'BB+', 'BB', 'B+', 'B', 'CCC+', 'CCC', 'CC+', 'CC', 'C+', 'C', 'DDD+', 'DDD', 'DD+', 'DD', 'D+', 'D'];

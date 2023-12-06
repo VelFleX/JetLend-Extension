@@ -96,6 +96,16 @@ a {
   color: inherit;
 }
 
+p {
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
+  font-weight: 300;
+}
+
+b {
+  font-weight: 600;
+}
+
 .link {
   text-decoration: underline;
   color: #8888e6;
@@ -109,8 +119,7 @@ a {
 
 .modal {
   width: 480px;
-  height: 100%;
-  margin-top: 20px;
+  max-height: 100%;
   overflow-y: auto;
   position: fixed;
   top: 50%;
@@ -197,7 +206,7 @@ a {
           user-select: none;
 }
 
-.income__value span:first-child {
+.income__currency {
   cursor: pointer;
 }
 
@@ -225,7 +234,7 @@ a {
 }
 
 .stats-section {
-  font-size: 14px;
+  font-size: 16px;
   margin-top: 6px;
   line-height: 20px;
   width: 100%;
@@ -332,7 +341,6 @@ a {
      -moz-user-select: none;
           user-select: none;
   margin-top: 6px;
-  font-size: 16px;
   left: 115px;
   text-decoration: underline;
   cursor: pointer;

@@ -29,6 +29,8 @@ async function updateBadgeInfo() {
       let fm = {
         daysFrom: 0,
         daysTo: 2000,
+        ratingFrom: 1,
+        ratingTo: 20,
         rateFrom: 0,
         rateTo: 35,
         loansFrom: 1,
@@ -40,6 +42,8 @@ async function updateBadgeInfo() {
       let sm = {
         daysFrom: 0,
         daysTo: 2000,
+        ratingFrom: 1,
+        ratingTo: 20,
         rateFrom: 0,
         rateTo: 100,
         fdFrom: 0,
@@ -53,16 +57,18 @@ async function updateBadgeInfo() {
         priceTo: 100,
         investSum: 100,
       };
-      console.log('До кэша fmSum', fm.maxCompanySum);
-      console.log('До кэша smSum', sm.maxCompanySum);
-      console.log('До кэша classF', sm.classFrom);
-      console.log('До кэша classT', sm.classTo);
       if (data.investSettings) {
         if (data.investSettings.fmDaysFrom) {
           fm.daysFrom = parseFloat(data.investSettings.fmDaysFrom);
         }
         if (data.investSettings.fmDaysTo) {
           fm.daysTo = parseFloat(data.investSettings.fmDaysTo);
+        }
+        if (data.investSettings.fmRatingFrom) {
+          fm.ratingFrom = parseFloat(data.investSettings.fmRatingFrom);
+        }
+        if (data.investSettings.fmRatingTo) {
+          fm.ratingTo = parseFloat(data.investSettings.fmRatingTo);
         }
         if (data.investSettings.fmRateFrom) {
           fm.rateFrom = parseFloat(data.investSettings.fmRateFrom);
@@ -78,8 +84,6 @@ async function updateBadgeInfo() {
         }
         if (data.investSettings.fmMaxCompanySum) {
           fm.maxCompanySum = parseFloat(data.investSettings.fmMaxCompanySum);
-          console.log('В кэше fmSum', data.investSettings.fmMaxCompanySum);
-
         }
         if (data.investSettings.fmInvestSum) {
           fm.investSum = parseFloat(data.investSettings.fmInvestSum);
@@ -90,6 +94,12 @@ async function updateBadgeInfo() {
         }
         if (data.investSettings.smDaysTo) {
           sm.daysTo = parseFloat(data.investSettings.smDaysTo);
+        }
+        if (data.investSettings.smRatingFrom) {
+          sm.ratingFrom = parseFloat(data.investSettings.smRatingFrom);
+        }
+        if (data.investSettings.smRatingTo) {
+          sm.ratingTo = parseFloat(data.investSettings.smRatingTo);
         }
         if (data.investSettings.smRateFrom) {
           sm.rateFrom = parseFloat(data.investSettings.smRateFrom);
@@ -110,19 +120,13 @@ async function updateBadgeInfo() {
           sm.progressTo = parseFloat(data.investSettings.smProgressTo);
         }
         if (data.investSettings.smClassFrom) {
-          sm.classFrom = parseFloat(data.investSettings.smClassFrom);
-
-          console.log('В кэше classF', data.investSettings.smClassFrom);
-          
+          sm.classFrom = parseFloat(data.investSettings.smClassFrom);          
         }
         if (data.investSettings.smClassTo) {
-          sm.classTo = parseFloat(data.investSettings.smClassTo);
-          console.log('В кэше classT', data.investSettings.smClassTo);
-          
+          sm.classTo = parseFloat(data.investSettings.smClassTo);      
         }
         if (data.investSettings.smMaxCompanySum) {
           sm.maxCompanySum = parseFloat(data.investSettings.smMaxCompanySum);
-          console.log('В кэше smSum', data.investSettings.smMaxCompanySum);
         }
         if (data.investSettings.smPriceFrom) {
           sm.priceFrom = parseFloat(data.investSettings.smPriceFrom);
@@ -185,12 +189,11 @@ async function sortCompanyUpdate(fm, sm) {
           (obj) =>
             (obj.collected_percentage !== 100) /* Полоска сбора не заполнена (меньше 100%) */ 
             && (obj.investing_amount === null) /* Резервация (нет) */ 
-            && (obj.company_investing_amount === null || obj.company_investing_amount === "0.00") /* Есть в портфеле (нет) */ 
+            && (ratingArray.indexOf(obj.rating) >= parseInt(fm.ratingFrom) && ratingArray.indexOf(obj.rating) <= parseInt(fm.ratingTo)) /* Рейтинг займа */
             && (obj.term >= fm.daysFrom && obj.term <= fm.daysTo) /* Срок займа */ 
             && (obj.interest_rate >= valueToNum(fm.rateFrom)) && (obj.interest_rate <= valueToNum(fm.rateTo)) /* Процент займа (от 20 до 100) */ 
             && (obj.loan_order >= fm.loansFrom) && (obj.loan_order <= fm.loansTo) /* Какой по счёту займ на платформе */
             && (obj.company_investing_amount <= parseFloat(fm.maxCompanySum))) /* Сумма в одного заёмщика */ 
-            console.log('В сорте fmSum', fm.maxCompanySum);
         fmSortedLength = Math.min(sortCap, fmSorted.length);
 
           let fmSecondSort = [];
@@ -234,15 +237,13 @@ async function sortCompanyUpdate(fm, sm) {
           (obj) =>
             (obj.invested_debt === null || obj.invested_debt === 0.00) /* Есть в портфеле (нет) */ 
             && (obj.term_left >= sm.daysFrom && obj.term_left <= sm.daysTo) /* Остаток срока займа */ 
+            && (ratingArray.indexOf(obj.rating) >= parseInt(sm.ratingFrom) && ratingArray.indexOf(obj.rating) <= parseInt(sm.ratingTo)) /* Рейтинг займа */
             && (obj.ytm >= valueToPercent(sm.rateFrom) && obj.ytm <= valueToPercent(sm.rateTo)) /* Эффективная ставка (от 20 до 100) */ 
             && (obj.progress >= valueToPercent(sm.progressFrom) && obj.progress <= valueToPercent(sm.progressTo)) /* Выплачено (прогресс в %) */ 
             && (obj.min_price >= valueToPercent(sm.priceFrom) && obj.min_price <= valueToPercent(sm.priceTo)) /* Мин прайс от 50% до 90% */ 
             && (obj.loan_class >= parseInt(sm.classFrom) && obj.loan_class <= parseInt(sm.classTo)) /* Класс займа */
             && (obj.invested_company_debt <= parseFloat(sm.maxCompanySum)) /* Сумма в одного заёмщика */
             && (obj.status === "active"));
-            console.log('В сорте smClassF', sm.classFrom);
-            console.log('В сорте smClassT', sm.classTo);
-            console.log('В сорте smSum', sm.maxCompanySum);
         smSortedLength = Math.min(sortCap, smSorted.length);
 
           let smSecondSort = [];
@@ -467,6 +468,7 @@ chrome.storage.local.get("fmInvest", function (data) {
       }
       sendNotification("Готово", "Средства распределены успешно!");
       setBadge("");
+      chrome.runtime.sendMessage({data: 'Распределение средств заверешено'});
     }
     mainFunction();
   }
@@ -503,10 +505,8 @@ chrome.storage.local.get("smInvest", function (data) {
           const sort = resp.data.data.filter(obj => (obj.count > 0) && (obj.price >= min && obj.price <= max)).reverse();
           const secondSort = [];
           let sumOne = sum; // Сумма в один займ
-          console.log('Массив компаний по айди: ', sort);
-          console.log('companyId', companyId);
           for (element of sort) {
-            const getPrice = element => element.amount / element.count + 5; // Погрешность 5р
+            const getPrice = element => element.amount / element.count + 4; // Погрешность 4р
             if (sumOne > 0) {
               if (element.amount >= sumOne && Math.floor(sumOne/getPrice(element)) > 0) {
                 secondSort.push({id: companyId, price: element.price, count: Math.floor(sumOne/getPrice(element)), amount: getPrice(element)});
@@ -532,10 +532,9 @@ chrome.storage.local.get("smInvest", function (data) {
       await smInvest(data.smInvest.minPrice, data.smInvest.maxPrice, data.smInvest.sumAll, data.smInvest.sum, data.smInvest.array);
       sendNotification("Готово", "Средства распределены успешно!");
       setBadge("");
+      chrome.runtime.sendMessage({data: 'Распределение средств заверешено'});
     }
     mainFunction();
   }
   chrome.storage.local.remove("smInvest");
 });
-
-
