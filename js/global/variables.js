@@ -1,4 +1,4 @@
-const version = "0.8.0";
+const version = "0.8.1";
 
 const $ = {
   get: function(selector) {

@@ -1,14 +1,14 @@
 let timePeriod = "";
 $.get('.income__currency').addEventListener("click", function (event) {
   if (event.currentTarget == $.get('.income__currency')) {
-    if($.get('.stats-section').style.maxHeight === '1000px') {
+    if($.get('.stats-section').style.maxHeight === '1000px' || (!$.get('.stats-section').style.maxHeight && window.innerHeight >= 768)) {
       $.get('.stats-section').style.maxHeight = '0px';
     } else {
       $.get('.stats-section').style.maxHeight = '1000px';
     }
   }
 });
-
+console.log(window.innerWidth);
 document.addEventListener("click", function (event) {
   if (event.target.classList.contains('modal-container')) {
     event.target.classList.add('display-none');
@@ -589,14 +589,15 @@ async function mainUpdateFunction() {
     incomeText: $.get('.income__currency').textContent,                            // Текст дохода (согласно настройкам)
 
     incomePercent: incomeTitle.querySelectorAll('span')[1].textContent,            // Текст заголовка процентного дохода
-    percentIncomeNum: $.get('.income__percent').textContent,           // Процентный доход
+    percentIncomeNum: $.get('.income__percent').textContent,                       // Процентный доход
     
-    updateTime: new Date().getTime() // Текущее время
+    updateTime: new Date().getTime()                                               // Текущее время
   };
   chrome.storage.local.set({ cacheJetlend: cache });
   }
   
   if (userStats.error) {
+    lastUpdateDateTag.textContent = 'Нет авторизации';
     $.get('.main-section__stats').innerHTML = `<div style="margin: 64px 0px; position: relative; transform: translate(25%, 0%);">Авторизуйтесь на сайте</div>`;
   }
 }
@@ -732,6 +733,27 @@ async function updateSecondMarket() {
     $.get('#market-averagePercent').textContent = toPercentFormat(notZeroYtmObj.reduce((acc, curr) => acc + curr.ytm, 0)/notZeroYtmObj.length)
     $.get('#market-companyAnaliz').classList.remove('load-block-animation');
     const valueToPercent = value => parseFloat((parseFloat((value).toString().replace(',', '.'))/100).toFixed(4)); // '12,3456' => 0.1234
+
+
+
+    const smFilters = {
+      daysFrom: parseFloat(smDaysFrom.value),
+      daysTo: parseFloat(smDaysTo.value),
+      ratingFrom: parseInt(smRatingFrom.value),
+      ratingTo: parseInt(smRatingTo.value),
+      ytmFrom: valueToPercent(smRateFrom.value),
+      ytmTo: valueToPercent(smRateTo.value),
+      progressFrom: valueToPercent(smProgressFrom.value),
+      progressTo: valueToPercent(smProgressTo.value),
+      classFrom: parseInt(smClassFrom.value),
+      classTo: parseInt(smClassTo.value),
+      investDebt: (parseFloat(smMaxCompanySum.value) - parseFloat(smInvestSum.value))
+    }
+    console.log('Фильтры вторички (расширение): ', smFilters);
+
+
+
+
     const sorted = res.data.data.filter(obj => (obj.term_left >= parseFloat(smDaysFrom.value) && obj.term_left <= parseFloat(smDaysTo.value)) /* Остаток срока займа */
       // && (obj.invested_debt === null || obj.invested_debt === 0.00) /* Есть в портфеле (нет) */
       // && (obj.interest_rate >= 0.15 && obj.interest_rate <= 1) /* Изначальный процент займа (от 20 до 100) */
@@ -838,13 +860,14 @@ $.get('#secondMarketSubmit').addEventListener('click', function() {
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
   if (message.data === 'Распределение средств заверешено') {
-    mainUpdateFunction();
     $.get('#fm-numOfSortedCompany').textContent = '';
     $.get('#fm-btn-show').classList.add('display-none');
     $.get('#sm-numOfSortedCompany').textContent = '';
     $.get('#sm-btn-show').classList.add('display-none');
     fmInvestCompanyArray = [];
     smInvestCompanyArray = [];
+    closeInvestPage();
+    mainUpdateFunction();
   }
 });
 

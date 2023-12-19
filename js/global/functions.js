@@ -100,7 +100,7 @@ function openInvestPage() {
 
 // Функция закрытия инвест страницы
 function closeInvestPage() {
-  document.querySelector(".invest-section").style.top = "-1000px";
+  document.querySelector(".invest-section").style.top = "-5000px";
   document.body.style.height = "";
 }
 

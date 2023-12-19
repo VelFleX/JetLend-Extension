@@ -1,4 +1,114 @@
+// Распределение средств (первичка)
+chrome.storage.local.get("fmInvest", function (data) {
+  if (data.fmInvest) {
+    async function invest(companyId) {
+      let user = {
+        agree: true,
+        amount: data.fmInvest.sum,
+      };
+
+      await fetch(`https://jetlend.ru/invest/api/requests/${companyId}/invest`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json;charset=UTF-8",
+          "X-Csrftoken": getCookie("csrftoken"),
+        },
+        credentials: "include",
+        body: JSON.stringify(user),
+      })
+        .then((response) => response.json())
+        .then((data) => console.log(data));
+    }
+
+    async function mainFunction() {
+      sendNotification("Ожидайте", "Средства распределяются, не закрывайте вкладку.");
+      for (element of data.fmInvest.array) {
+        await invest(element);
+      }
+      sendNotification("Готово", "Распределение средств заверешено.");
+      setBadge("");
+      chrome.runtime.sendMessage({data: 'Распределение средств заверешено'});
+      chrome.storage.local.remove("fmInvest");
+      setTimeout(() => {
+        window.close();
+      }, 800); 
+    }
+    mainFunction();
+  }
+});
+
+//https://jetlend.ru/invest/api/exchange/loans/12026/buy/preview
+// Распределение средств (вторичка)
+chrome.storage.local.get("smInvest", function (data) {
+  if (data.smInvest) { 
+    async function smInvest(min, max, all, sum, companyArray) {
+      let sumAll = all; // Свободные средства
+      async function invest(companyId, count, price) {
+        let user = {
+          count: count,
+          max_price: price, // Процент
+        };
+    
+        await fetch(`https://jetlend.ru/invest/api/exchange/loans/${companyId}/buy`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json;charset=UTF-8",
+            "X-Csrftoken": getCookie("csrftoken"),
+          },
+          credentials: "include",
+          body: JSON.stringify(user),
+        })
+          .then((response) => response.json())
+          .then((data) => console.log(data));
+      }
+      for (companyId of companyArray) {
+        const resp = await fetchData(`https://jetlend.ru/invest/api/exchange/loans/${companyId}/dom/records`);
+        if (resp.data) {
+          const sort = resp.data.data.filter(obj => (obj.count > 0) && (obj.price >= min && obj.price <= max)).reverse();
+          const secondSort = [];
+          let sumOne = sum; // Сумма в один займ
+          for (element of sort) {
+            const getPrice = element => element.amount / element.count + 4; // Погрешность 4р
+            if (sumOne > 0) {
+              if (element.amount >= sumOne && Math.floor(sumOne/getPrice(element)) > 0) {
+                secondSort.push({id: companyId, price: element.price, count: Math.floor(sumOne/getPrice(element)), amount: getPrice(element)});
+                // sendNotification('Инвестиция', `id: ${companyId}, прайс: ${element.price}, количество: ${Math.floor(sumOne/getPrice(element))}, сумма: ${getPrice(element)}`);
+                sumAll -= sumOne;
+                sumOne = 0;
+              } else if (element.amount < sumOne) {
+                secondSort.push({id: companyId, price: element.price, count: element.count, amount: getPrice(element)});
+                // sendNotification('Инвестиция', `id: ${companyId}, прайс: ${element.price}, количество: ${element.count}, сумма: ${getPrice(element)}`);
+                sumAll -= element.amount;
+                sumOne -= element.amount;
+              } 
+            }
+          }
+          for (element of secondSort) {
+            await invest(element.id, element.count, element.price)
+          }
+        }
+      }
+    }  
+    async function mainFunction() {
+      sendNotification("Ожидайте", "Средства распределяются, не закрывайте вкладку.");
+      await smInvest(data.smInvest.minPrice, data.smInvest.maxPrice, data.smInvest.sumAll, data.smInvest.sum, data.smInvest.array);
+      sendNotification("Готово", "Распределение средств заверешено.");
+      setBadge("");
+      chrome.runtime.sendMessage({data: 'Распределение средств заверешено'});
+      chrome.storage.local.remove("smInvest");
+      setTimeout(() => {
+        window.close();
+      }, 800); 
+    }
+    mainFunction();
+  }
+});
+
 async function updateBadgeInfo() {
+  if (document.hidden) {
+    return;
+  }
+  
   const timeCd = 6;
   
   try {
@@ -180,6 +290,7 @@ async function sortCompanyUpdate(fm, sm) {
     const sortCap = 25;
     
     async function updateFirstMarket() {
+      console.log('fm filters: ', fm);
       if (fmData.data) {
         const valueToNum = (value) =>
           parseFloat(
@@ -193,7 +304,7 @@ async function sortCompanyUpdate(fm, sm) {
             && (obj.term >= fm.daysFrom && obj.term <= fm.daysTo) /* Срок займа */ 
             && (obj.interest_rate >= valueToNum(fm.rateFrom)) && (obj.interest_rate <= valueToNum(fm.rateTo)) /* Процент займа (от 20 до 100) */ 
             && (obj.loan_order >= fm.loansFrom) && (obj.loan_order <= fm.loansTo) /* Какой по счёту займ на платформе */
-            && (obj.company_investing_amount <= parseFloat(fm.maxCompanySum))) /* Сумма в одного заёмщика */ 
+            && (obj.company_investing_amount <= (parseFloat(fm.maxCompanySum) - parseFloat(fm.investSum)))) /* Сумма в одного заёмщика */ 
         fmSortedLength = Math.min(sortCap, fmSorted.length);
 
           let fmSecondSort = [];
@@ -227,12 +338,26 @@ async function sortCompanyUpdate(fm, sm) {
 
     // Обновление списка компаний (вторичка)
     async function updateSecondMarket() {
+      console.log('sm filters: ', sm);
       if (smData.data) {
         const valueToPercent = (value) =>
           parseFloat(
             (parseFloat(value.toString().replace(",", ".")) / 100).toFixed(4)
           ); // '12,3456' => 0.1234
-          
+        const smFilters = {
+          daysFrom: sm.daysFrom,
+          daysTo: sm.daysTo,
+          ratingFrom: parseInt(sm.ratingFrom),
+          ratingTo: parseInt(sm.ratingTo),
+          ytmFrom: valueToPercent(sm.rateFrom),
+          ytmTo: valueToPercent(sm.rateTo),
+          progressFrom: valueToPercent(sm.progressFrom),
+          progressTo: valueToPercent(sm.progressTo),
+          classFrom: parseInt(sm.classFrom),
+          classTo: parseInt(sm.classTo),
+          investDebt: parseFloat(sm.maxCompanySum)
+        }
+        console.log('Фильтры вторички: ', smFilters);
         const smSorted = smData.data.data.filter(
           (obj) =>
             (obj.invested_debt === null || obj.invested_debt === 0.00) /* Есть в портфеле (нет) */ 
@@ -242,7 +367,7 @@ async function sortCompanyUpdate(fm, sm) {
             && (obj.progress >= valueToPercent(sm.progressFrom) && obj.progress <= valueToPercent(sm.progressTo)) /* Выплачено (прогресс в %) */ 
             && (obj.min_price >= valueToPercent(sm.priceFrom) && obj.min_price <= valueToPercent(sm.priceTo)) /* Мин прайс от 50% до 90% */ 
             && (obj.loan_class >= parseInt(sm.classFrom) && obj.loan_class <= parseInt(sm.classTo)) /* Класс займа */
-            && (obj.invested_company_debt <= parseFloat(sm.maxCompanySum)) /* Сумма в одного заёмщика */
+            && (obj.invested_company_debt <= (parseFloat(sm.maxCompanySum) - parseFloat(sm.investSum))) /* Сумма в одного заёмщика */
             && (obj.status === "active"));
         smSortedLength = Math.min(sortCap, smSorted.length);
 
@@ -439,102 +564,3 @@ setInterval(function () {
   updateBadgeInfo();
 }, 60000);
 
-// Распределение средств (первичка)
-chrome.storage.local.get("fmInvest", function (data) {
-  if (data.fmInvest) {
-    async function invest(companyId) {
-      let user = {
-        agree: true,
-        amount: data.fmInvest.sum,
-      };
-
-      await fetch(`https://jetlend.ru/invest/api/requests/${companyId}/invest`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json;charset=UTF-8",
-          "X-Csrftoken": getCookie("csrftoken"),
-        },
-        credentials: "include",
-        body: JSON.stringify(user),
-      })
-        .then((response) => response.json())
-        .then((data) => console.log(data));
-    }
-
-    async function mainFunction() {
-      sendNotification("Ожидайте", "Средства распределяются, не закрывайте вкладку.");
-      for (element of data.fmInvest.array) {
-        invest(element);
-      }
-      sendNotification("Готово", "Средства распределены успешно!");
-      setBadge("");
-      chrome.runtime.sendMessage({data: 'Распределение средств заверешено'});
-    }
-    mainFunction();
-  }
-  chrome.storage.local.remove("fmInvest");
-});
-
-
-// Распределение средств (вторичка)
-chrome.storage.local.get("smInvest", function (data) {
-  if (data.smInvest) { 
-    async function smInvest(min, max, all, sum, companyArray) {
-      let sumAll = all; // Свободные средства
-      async function invest(companyId, count, price) {
-        let user = {
-          count: count,
-          max_price: price, // Процент
-        };
-    
-        await fetch(`https://jetlend.ru/invest/api/exchange/loans/${companyId}/buy`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json;charset=UTF-8",
-            "X-Csrftoken": getCookie("csrftoken"),
-          },
-          credentials: "include",
-          body: JSON.stringify(user),
-        })
-          .then((response) => response.json())
-          .then((data) => console.log(data));
-      }
-      for (companyId of companyArray) {
-        const resp = await fetchData(`https://jetlend.ru/invest/api/exchange/loans/${companyId}/dom/records`);
-        if (resp.data) {
-          const sort = resp.data.data.filter(obj => (obj.count > 0) && (obj.price >= min && obj.price <= max)).reverse();
-          const secondSort = [];
-          let sumOne = sum; // Сумма в один займ
-          for (element of sort) {
-            const getPrice = element => element.amount / element.count + 4; // Погрешность 4р
-            if (sumOne > 0) {
-              if (element.amount >= sumOne && Math.floor(sumOne/getPrice(element)) > 0) {
-                secondSort.push({id: companyId, price: element.price, count: Math.floor(sumOne/getPrice(element)), amount: getPrice(element)});
-                // sendNotification('Инвестиция', `id: ${companyId}, прайс: ${element.price}, количество: ${Math.floor(sumOne/getPrice(element))}, сумма: ${getPrice(element)}`);
-                sumAll -= sumOne;
-                sumOne = 0;
-              } else if (element.amount < sumOne) {
-                secondSort.push({id: companyId, price: element.price, count: element.count, amount: getPrice(element)});
-                // sendNotification('Инвестиция', `id: ${companyId}, прайс: ${element.price}, количество: ${element.count}, сумма: ${getPrice(element)}`);
-                sumAll -= element.amount;
-                sumOne -= element.amount;
-              } 
-            }
-          }
-          for (element of secondSort) {
-            await invest(element.id, element.count, element.price)
-          }
-        }
-      }
-    }  
-    async function mainFunction() {
-      sendNotification("Ожидайте", "Средства распределяются, не закрывайте вкладку.");
-      await smInvest(data.smInvest.minPrice, data.smInvest.maxPrice, data.smInvest.sumAll, data.smInvest.sum, data.smInvest.array);
-      sendNotification("Готово", "Средства распределены успешно!");
-      setBadge("");
-      chrome.runtime.sendMessage({data: 'Распределение средств заверешено'});
-    }
-    mainFunction();
-  }
-  chrome.storage.local.remove("smInvest");
-});
