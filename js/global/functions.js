@@ -199,7 +199,7 @@ function sendNotification(title, text) {
   justify-content: space-between;
   background: ${bgColor};
   color: ${color};
-  width: 300px;
+  width: 420px;
   margin: 10px;
   padding: 5px 10px;
   line-height: 1.5; 

@@ -1,6 +1,10 @@
 // Распределение средств (первичка)
 chrome.storage.local.get("fmInvest", function (data) {
   if (data.fmInvest) {
+    let investedSum = 0;
+    let companyCount = 0;
+    let companyArrayLength = data.fmInvest.array.length;
+    let errorCount = 0;
     async function invest(companyId) {
       let user = {
         agree: true,
@@ -17,7 +21,17 @@ chrome.storage.local.get("fmInvest", function (data) {
         body: JSON.stringify(user),
       })
         .then((response) => response.json())
-        .then((data) => console.log(data));
+        .then((obj) =>  {
+          if (obj.status.toLowerCase() === 'ok') {
+            sendNotification('Успешная инвестиция!', `Сумма: ${toCurrencyFormat(data.fmInvest.sum)}`);
+            investedSum += data.fmInvest.sum;
+            companyCount++;
+          } else {
+            sendNotification('Ошибка!', `${obj.error}`);
+            errorCount++;
+          }
+          console.log(obj)
+        });
     }
 
     async function mainFunction() {
@@ -25,13 +39,14 @@ chrome.storage.local.get("fmInvest", function (data) {
       for (element of data.fmInvest.array) {
         await invest(element);
       }
-      sendNotification("Готово", "Распределение средств заверешено.");
+      sendNotification("Распределение заверешено", `Общая сумма: ${toCurrencyFormat(investedSum)}. 
+                                  Количество займов: ${companyCount} из ${companyArrayLength}. Ошибки: ${errorCount}.`);
       setBadge("");
       chrome.runtime.sendMessage({data: 'Распределение средств заверешено'});
       chrome.storage.local.remove("fmInvest");
-      setTimeout(() => {
-        window.close();
-      }, 800); 
+      // setTimeout(() => {
+      //   window.close();
+      // }, 3000); 
     }
     mainFunction();
   }
@@ -41,6 +56,10 @@ chrome.storage.local.get("fmInvest", function (data) {
 // Распределение средств (вторичка)
 chrome.storage.local.get("smInvest", function (data) {
   if (data.smInvest) { 
+    let investedSum = 0;
+    let companyCount = 0;
+    let companyArrayLength = data.smInvest.array.length;
+    let errorCount = 0;
     async function smInvest(min, max, all, sum, companyArray) {
       let sumAll = all; // Свободные средства
       async function invest(companyId, count, price) {
@@ -59,7 +78,17 @@ chrome.storage.local.get("smInvest", function (data) {
           body: JSON.stringify(user),
         })
           .then((response) => response.json())
-          .then((data) => console.log(data));
+          .then((data) => {
+            if (data.status.toLowerCase() === 'ok') {
+              sendNotification('Успешная инвестиция!', `Сумма: ${toCurrencyFormat(data.data.amount)}`);
+              investedSum += data.data.amount;
+              companyCount++;
+            } else {
+              sendNotification('Ошибка!', `${data.status}`);
+              errorCount++;
+            }
+            console.log(data);
+          });
       }
       for (companyId of companyArray) {
         const resp = await fetchData(`https://jetlend.ru/invest/api/exchange/loans/${companyId}/dom/records`);
@@ -92,13 +121,14 @@ chrome.storage.local.get("smInvest", function (data) {
     async function mainFunction() {
       sendNotification("Ожидайте", "Средства распределяются, не закрывайте вкладку.");
       await smInvest(data.smInvest.minPrice, data.smInvest.maxPrice, data.smInvest.sumAll, data.smInvest.sum, data.smInvest.array);
-      sendNotification("Готово", "Распределение средств заверешено.");
+      sendNotification("Распределение заверешено", `Общая сумма: ${toCurrencyFormat(investedSum)}. 
+                                  Количество займов: ${companyCount} из ${companyArrayLength}. Ошибки: ${errorCount}.`);
       setBadge("");
       chrome.runtime.sendMessage({data: 'Распределение средств заверешено'});
       chrome.storage.local.remove("smInvest");
-      setTimeout(() => {
-        window.close();
-      }, 800); 
+      // setTimeout(() => {
+      //   window.close();
+      // }, 4000); 
     }
     mainFunction();
   }
@@ -564,3 +594,39 @@ setInterval(function () {
   updateBadgeInfo();
 }, 60000);
 
+
+
+
+// function createShadowDOM() {
+//   const containerParent = document.createElement('div');
+//   containerParent.classList.add('JLE-container');
+//   document.body.appendChild(containerParent);
+//   const shadowRoot = containerParent.attachShadow({ mode: 'open' });
+
+//   const interfaceStyles = `
+//     #my-extension-interface {
+//       background: red;
+//       position: fixed;
+//       top: 0;
+//       z-index: 10000;
+//     }
+//   `;
+
+//   const interfaceHTML = `
+//     <div id="my-extension-interface">
+//       Привет мир
+//     </div>
+//   `;
+
+//   const styleElement = document.createElement('style');
+//   styleElement.textContent = interfaceStyles;
+//   shadowRoot.appendChild(styleElement);
+
+//   shadowRoot.innerHTML += interfaceHTML;
+
+//   setTimeout(() => {
+//     containerParent.remove();
+//   }, 2000);
+// }
+
+// createShadowDOM();

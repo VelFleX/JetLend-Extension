@@ -574,6 +574,10 @@ async function mainUpdateFunction() {
       $.get("#support-btn").addEventListener("click", () => $.get("#support-section").classList.remove("display-none"));
     }
     
+    // if (!userStatsObj.data.status.qualification.passed) {
+    //   $.get('#fmInvestAgreeText').textContent = $.get('#smInvestAgreeText').textContent;
+    // }
+
   // Сохранение данных
   const cache = {
     balanceTitle: balanceTitle.querySelectorAll('span')[0].textContent,            // Текст заголовка активов (согласно настройкам)
@@ -591,9 +595,11 @@ async function mainUpdateFunction() {
     incomePercent: incomeTitle.querySelectorAll('span')[1].textContent,            // Текст заголовка процентного дохода
     percentIncomeNum: $.get('.income__percent').textContent,                       // Процентный доход
     
-    updateTime: new Date().getTime()                                               // Текущее время
+    updateTime: new Date().getTime(),                                              // Текущее время
+
+    qualification: userStatsObj.data.status.qualification.passed                   // Статус квала
   };
-  chrome.storage.local.set({ cacheJetlend: cache });
+    chrome.storage.local.set({ cacheJetlend: cache });
   }
   
   if (userStats.error) {
@@ -619,6 +625,10 @@ chrome.storage.local.get("cacheJetlend", function (result) {
     
     cachedBalance = data.balance;
     cachedCleanBalance = data.cleanBalance;
+
+    if (data.qualification) {
+      $.get('#fmInvestAgreeText').textContent = $.get('#smInvestAgreeText').textContent;
+    }
   }
 });
 
