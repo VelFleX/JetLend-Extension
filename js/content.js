@@ -23,11 +23,11 @@ chrome.storage.local.get("fmInvest", function (data) {
         .then((response) => response.json())
         .then((obj) =>  {
           if (obj.status.toLowerCase() === 'ok') {
-            sendNotification('Успешная инвестиция!', `Сумма: ${toCurrencyFormat(data.fmInvest.sum)}`);
+            sendNotification('Успешная инвестиция', `Сумма: ${toCurrencyFormat(data.fmInvest.sum)}`);
             investedSum += data.fmInvest.sum;
             companyCount++;
           } else {
-            sendNotification('Ошибка!', `${obj.error}`);
+            sendNotification('Ошибка', `${obj.error}`);
             errorCount++;
           }
           console.log(obj)
@@ -67,7 +67,6 @@ chrome.storage.local.get("smInvest", function (data) {
           count: count,
           max_price: price, // Процент
         };
-    
         await fetch(`https://jetlend.ru/invest/api/exchange/loans/${companyId}/buy`, {
           method: "POST",
           headers: {
@@ -80,17 +79,22 @@ chrome.storage.local.get("smInvest", function (data) {
           .then((response) => response.json())
           .then((data) => {
             if (data.status.toLowerCase() === 'ok') {
-              sendNotification('Успешная инвестиция!', `Сумма: ${toCurrencyFormat(data.data.amount)}`);
+              sendNotification('Успешная инвестиция', `Сумма: ${toCurrencyFormat(data.data.amount)}`);
+              sumAll = parseFloat((sumAll - data.data.amount).toFixed(2))
+              // sendNotification('Info2', sumAll)
               investedSum += data.data.amount;
               companyCount++;
             } else {
-              sendNotification('Ошибка!', `${data.status}`);
+              sendNotification('Ошибка', `${data.status}`);
               errorCount++;
             }
             console.log(data);
           });
       }
       for (companyId of companyArray) {
+        if (sumAll < sum) {
+          return;
+        };
         const resp = await fetchData(`https://jetlend.ru/invest/api/exchange/loans/${companyId}/dom/records`);
         if (resp.data) {
           const sort = resp.data.data.filter(obj => (obj.count > 0) && (obj.price >= min && obj.price <= max)).reverse();
@@ -101,13 +105,16 @@ chrome.storage.local.get("smInvest", function (data) {
             if (sumOne > 0) {
               if (element.amount >= sumOne && Math.floor(sumOne/getPrice(element)) > 0) {
                 secondSort.push({id: companyId, price: element.price, count: Math.floor(sumOne/getPrice(element)), amount: getPrice(element)});
-                // sendNotification('Инвестиция', `id: ${companyId}, прайс: ${element.price}, количество: ${Math.floor(sumOne/getPrice(element))}, сумма: ${getPrice(element)}`);
-                sumAll -= sumOne;
+                // sendNotification('Инвестиция', `id: ${companyId}, процент: ${element.price}, количество: ${Math.floor(sumOne/getPrice(element))}, цена: ${getPrice(element)}`);
+                // sumAll -= sumOne;
+                // sumAll -= Math.floor(sumOne/getPrice(element)) * getPrice(element);
+                // sendNotification('info', `Остаток средств: ${sumAll} / ${sumAll+sumOne}, sumOne: ${sumOne}`);
                 sumOne = 0;
               } else if (element.amount < sumOne) {
                 secondSort.push({id: companyId, price: element.price, count: element.count, amount: getPrice(element)});
-                // sendNotification('Инвестиция', `id: ${companyId}, прайс: ${element.price}, количество: ${element.count}, сумма: ${getPrice(element)}`);
-                sumAll -= element.amount;
+                // sendNotification('Инвестиция', `id: ${companyId}, процент: ${element.price}, количество: ${element.count}, цена: ${getPrice(element)}`);
+                // sumAll -= element.amount;
+                // sendNotification('info', `СуммАлл: ${sumAll}, elAmount: ${element.amount}, sumOne (До вычета): ${sumOne}`);
                 sumOne -= element.amount;
               } 
             }
@@ -320,7 +327,6 @@ async function sortCompanyUpdate(fm, sm) {
     const sortCap = 25;
     
     async function updateFirstMarket() {
-      console.log('fm filters: ', fm);
       if (fmData.data) {
         const valueToNum = (value) =>
           parseFloat(
@@ -368,7 +374,6 @@ async function sortCompanyUpdate(fm, sm) {
 
     // Обновление списка компаний (вторичка)
     async function updateSecondMarket() {
-      console.log('sm filters: ', sm);
       if (smData.data) {
         const valueToPercent = (value) =>
           parseFloat(
@@ -387,7 +392,6 @@ async function sortCompanyUpdate(fm, sm) {
           classTo: parseInt(sm.classTo),
           investDebt: parseFloat(sm.maxCompanySum)
         }
-        console.log('Фильтры вторички: ', smFilters);
         const smSorted = smData.data.data.filter(
           (obj) =>
             (obj.invested_debt === null || obj.invested_debt === 0.00) /* Есть в портфеле (нет) */ 
@@ -597,36 +601,3 @@ setInterval(function () {
 
 
 
-// function createShadowDOM() {
-//   const containerParent = document.createElement('div');
-//   containerParent.classList.add('JLE-container');
-//   document.body.appendChild(containerParent);
-//   const shadowRoot = containerParent.attachShadow({ mode: 'open' });
-
-//   const interfaceStyles = `
-//     #my-extension-interface {
-//       background: red;
-//       position: fixed;
-//       top: 0;
-//       z-index: 10000;
-//     }
-//   `;
-
-//   const interfaceHTML = `
-//     <div id="my-extension-interface">
-//       Привет мир
-//     </div>
-//   `;
-
-//   const styleElement = document.createElement('style');
-//   styleElement.textContent = interfaceStyles;
-//   shadowRoot.appendChild(styleElement);
-
-//   shadowRoot.innerHTML += interfaceHTML;
-
-//   setTimeout(() => {
-//     containerParent.remove();
-//   }, 2000);
-// }
-
-// createShadowDOM();

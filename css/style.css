@@ -43,33 +43,6 @@
     transform: translateX(100%);
   }
 }
-:root {
-  --var-bgColor: #fff;
-  --var-secondBgColor: #F3F4F6;
-  --var-fontColor: #1e2021;
-  --var-buttonColor: #1e2021;
-  --var-buttonHoverColor: #363a3c;
-  --var-buttonTextColor: #fff;
-  --var-smallBtnColor: #e0e0e0;
-  --var-smallBtnColor--hover: #cecece;
-  --var-first-color: #ededed;
-  --var-second-color: #e8e8e8;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --var-bgColor: #1F2022;
-    --var-secondBgColor: #272928;
-    --var-fontColor: #fff;
-    --var-buttonColor: #186251;
-    --var-buttonHoverColor: #1e3431;
-    --var-buttonTextColor: #fff;
-    --var-smallBtnColor: #3f3f3f;
-    --var-smallBtnColor--hover: #515151;
-    --var-first-color: #292929;
-    --var-second-color: #333333;
-  }
-}
 *,
 *::after,
 *::before {
@@ -81,8 +54,8 @@
 body {
   font-family: SF Pro Display, sans-serif, currencies, auto;
   font-size: 24px;
-  color: var(--var-fontColor);
-  background-color: var(--var-bgColor);
+  color: var(--jle-fontColor);
+  background-color: var(--jle-bgColor);
   transition: height 0.25s ease-in-out;
   overflow-y: scroll;
 }
@@ -126,8 +99,8 @@ b {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: var(--var-bgColor);
-  color: var(--var-fontColor);
+  background-color: var(--jle-bgColor);
+  color: var(--jle-fontColor);
   padding: 20px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   z-index: 10;
@@ -161,7 +134,7 @@ b {
 
 .main-section__stats {
   margin-bottom: 16px;
-  transition: opacity 1s ease;
+  transition: opacity 1s ease, color 0.5s ease;
 }
 
 .settings {
@@ -191,6 +164,10 @@ b {
 .lastUpdateDate span {
   font-size: 14px;
   font-weight: 300;
+}
+
+#balance, #balance--clean {
+  transition: color 0.5s ease;
 }
 
 .balance__title,
@@ -242,7 +219,7 @@ b {
 }
 
 .invest-section {
-  background: var(--var-bgColor);
+  background: var(--jle-bgColor);
   position: absolute;
   z-index: 1;
   right: 0;
@@ -312,8 +289,8 @@ b {
 .btn {
   display: block;
   width: 100%;
-  background: var(--var-buttonColor);
-  color: var(--var-buttonTextColor);
+  background: var(--jle-buttonColor);
+  color: var(--jle-buttonTextColor);
   border: 1px solid transparent;
   border-radius: 12px;
   cursor: pointer;
@@ -331,7 +308,7 @@ b {
   transition: all 0.185s ease-in-out;
 }
 .btn:hover {
-  background: var(--var-buttonHoverColor);
+  background: var(--jle-buttonHoverColor);
 }
 
 .swap {
@@ -386,7 +363,7 @@ b {
   font-size: 16px;
   text-align: center;
   display: inline-block;
-  background: var(--var-smallBtnColor);
+  background: var(--jle-smallBtnColor);
   padding: 8px;
   margin: 10px 0;
   border-radius: 12px;
@@ -398,7 +375,7 @@ b {
   transition: background 0.25s ease-in-out, scale 0.05s ease;
 }
 .btn-small:hover {
-  background: var(--var-smallBtnColor--hover);
+  background: var(--jle-smallBtnColor--hover);
 }
 .btn-small:active {
   scale: 0.99;
@@ -417,7 +394,7 @@ b {
   transform: translate(0, -50%) rotate(0deg);
   border-radius: 50%;
   display: inline-block;
-  border-top: 3px solid var(--var-fontColor);
+  border-top: 3px solid var(--jle-fontColor);
   border-right: 3px solid transparent;
   box-sizing: border-box;
   animation: rotation 1s linear infinite;
@@ -431,12 +408,12 @@ b {
 .contrast-bg {
   padding: 12px;
   border-radius: 12px;
-  background: var(--var-secondBgColor);
+  background: var(--jle-secondBgColor);
 }
 
 .load-block-animation {
   border-radius: 4px;
-  background-color: var(--var-first-color);
+  background-color: var(--jle-first-color);
   max-width: 100%;
   display: inline-flex;
   flex-shrink: 0;
@@ -453,7 +430,7 @@ b {
   right: 0;
   height: 100%;
   background-repeat: no-repeat;
-  background-image: linear-gradient(90deg, var(--var-first-color), var(--var-second-color), var(--var-first-color));
+  background-image: linear-gradient(90deg, var(--jle-first-color), var(--jle-second-color), var(--jle-first-color));
   transform: translateX(-100%);
   animation: translateRight normal 1.5s ease-in-out infinite;
 }

@@ -1,0 +1,29 @@
+:root {
+  --jle-bgColor: #fff;
+  --jle-secondBgColor: #F3F4F6;
+  --jle-fontColor: #1e2021;
+  --jle-buttonColor: #1e2021;
+  --jle-buttonHoverColor: #363a3c;
+  --jle-buttonTextColor: #fff;
+  --jle-smallBtnColor: #e0e0e0;;
+  --jle-smallBtnColor--hover: #cecece;
+
+  --jle-first-color: #ededed;
+  --jle-second-color: #e8e8e8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --jle-bgColor: #1F2022;
+    --jle-secondBgColor: #272928;
+    --jle-fontColor: #fff;
+    --jle-buttonColor: #186251;
+    --jle-buttonHoverColor: #1e3431;
+    --jle-buttonTextColor: #fff;
+    --jle-smallBtnColor: #3f3f3f;
+    --jle-smallBtnColor--hover: #515151;
+
+    --jle-first-color: #292929;
+    --jle-second-color: #333333;
+  }
+}

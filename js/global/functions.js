@@ -219,7 +219,7 @@ function sendNotification(title, text) {
   notificationContainer.innerHTML += message;
 }
 
-// Функция свапа рынков на распределении средств
+// Функция свапа рынков в распределении средств
 function marketSwap() {
   if ($.get("#marketMode").textContent === "Первичный рынок") {
     $.get("#marketMode").textContent = "Вторичный рынок";
