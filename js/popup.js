@@ -58,6 +58,11 @@ formsElements.forEach(element => element.addEventListener('change', updateInvest
 btnInvestOpen.addEventListener('click', openInvestPage);
 btnInvestClose.addEventListener('click', closeInvestPage);
 
+$.get('#transactions__open').addEventListener('click', () => {opneModal('#transactions'); document.body.style.height = "650px"; transactionsShow()});
+$.get('#transactions__btn-close').addEventListener('click', () => {closeModal('#transactions'); document.body.style.height = "";});
+$.get('#settings__open').addEventListener('click', () => {opneModal('#settings')});
+$.get('#settings__btn-close').addEventListener('click', () => closeModal('#settings'));
+
 $.get('#fm-btn-update').addEventListener('click', updateFirstMarket);
 $.get('#fm-btn-show').addEventListener('click', () => {opneModal('#fm-list'); fmCompanyShow(fmInvestCompanyArray, '#fm-list-ul')});
 $.get('#fm-btn-stop').addEventListener('click', function() {fmCompanyUpdate = false});
@@ -88,6 +93,47 @@ chrome.storage.local.get("investSettings", function(data) {
     });
   }
 });
+
+async function transactionsShow() {
+  const list = $.get('#transactions__list');
+  const transactionsData = await fetchData('https://jetlend.ru/invest/api/account/transactions');
+  const operations = {
+    purchase: 'Покупка займа',
+    payment: 'Платеж по займу'
+  }
+  if (transactionsData.data) {
+    list.innerHTML = '';
+    transactionsData.data.transactions.forEach(element => {
+      const listItem = document.createElement('div');
+      listItem.classList.add('list-element', 'contrast-bg');
+      listItem.innerHTML = createListElement(element); 
+      list.appendChild(listItem); 
+    })
+  };
+
+  function createListElement(element) {
+    return `
+    <section style="display: flex; margin-top: 6px;">
+      <img class="list-element__img" src="https://jetlend.ru${element.preview_small_url}">
+      <div>
+        <div class="list-element__loan-name" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block;">ООО "АЛЕКС ФРУТ"</div>
+        <div style="font-size: 14px;">${operations[element.operation_type] ? operations[element.operation_type] : element.operation_type}</div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; font-size: 14px;">
+        <div style="font-weight: 600; text-wrap: nowrap;">
+          ${element.income !== null ? `${toCurrencyFormat(element.income)}` : ''}
+        </div>
+        <div style="color: red; font-weight: 600; text-wrap: nowrap;">
+          ${element.expense !== null ? `-${toCurrencyFormat(element.expense)}` : ''}
+        </div> 
+        <div style="color: limegreen; font-weight: 600; text-wrap: nowrap;">
+          ${element.revenue !== null ? `+${toCurrencyFormat(element.revenue)}` : ''}
+        </div> 
+      </div>
+    </section>
+    `
+  }
+}
 
 function fmCompanyShow(arr, blockId) {
   const removeElement = index => arr.splice(index, 1);
@@ -862,16 +908,7 @@ $.get('#secondMarketSubmit').addEventListener('click', function() {
     && freeBalance >= 100
     && smInvestCompanyArray.length >= 1) {
     console.log('Проверка пройдена');
-    function numOfCuts() {
-      let canInvest = Math.floor(valueToInt(smInvestSumAll.value) / valueToInt(smInvestSum.value));
-      if (canInvest > smInvestCompanyArray.length) {
-        return smInvestCompanyArray.length;
-      } else {
-        return canInvest;
-      }
-    }
-    const sliceArray = smInvestCompanyArray.slice(0, numOfCuts());
-    const arrOfCompanyId = sliceArray.map(obj => obj.loan_id);
+    const arrOfCompanyId = smInvestCompanyArray.map(obj => obj.loan_id);
     chrome.storage.local.set({smInvest: {
       array: arrOfCompanyId, 
       sum: valueToInt(smInvestSum.value),

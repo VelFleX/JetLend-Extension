@@ -315,7 +315,6 @@ function currencyToFloat(currency) {
   return parseFloat(result);
 }
 
-
 // let wasOpen = false;
 // if (!wasOpen) {
 //   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {

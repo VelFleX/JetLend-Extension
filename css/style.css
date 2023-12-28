@@ -132,19 +132,26 @@ b {
   font-size: 24px;
 }
 
+.main-section__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
 .main-section__stats {
   margin-bottom: 16px;
   transition: opacity 1s ease, color 0.5s ease;
 }
-
-.settings {
+.main-section__buttons {
+  display: flex;
+  gap: 7px;
   float: right;
   font-size: 14px;
   font-weight: 300;
   letter-spacing: 0.3px;
   line-height: 21px;
-  margin-top: 10px;
 }
+
 .settings__swap {
   cursor: pointer;
   -webkit-user-select: none;
@@ -159,7 +166,6 @@ b {
   font-weight: 600;
   letter-spacing: 0.3px;
   line-height: 21px;
-  margin-top: 10px;
 }
 .lastUpdateDate span {
   font-size: 14px;

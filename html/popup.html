@@ -12,12 +12,15 @@
 
     <section class="main-section">
       <div class="container">
-        <div class="lastUpdateDate">
-          Все активы
-          <span title="Посетите Jetlend чтобы обновить данные" style="color: #e1bb45; cursor: pointer">(Не обновлено)</span>
-        </div>
-        <div class="settings">
-          <span id="time-setting">Отображать данные за <span class="settings__swap">всё время</span></span>
+        <div class="main-section__header">
+          <div class="lastUpdateDate">
+            Все активы
+            <span title="Посетите Jetlend чтобы обновить данные" style="color: #e1bb45; cursor: pointer">(Не обновлено)</span>
+          </div>
+          <div class="main-section__buttons">
+            <span class="btn-small" id="transactions__open" style="font-size: inherit; padding: 4px 10px; margin: 0;">События</span>
+            <span class="btn-small" id="settings__open" style="font-size: inherit; padding: 4px 10px; margin: 0;">Настройки</span>
+          </div>
         </div>
         <section class="main-section__stats">
           <div class="balance">
@@ -52,6 +55,30 @@
       </div>
     </section>
     
+      <div class="modal-container display-none" id="transactions">
+        <section class="modal">
+          <div class="modal__title">
+            <h5>Последние события</h5>
+            <span class="modal__btn-close" id="transactions__btn-close">×</span>
+          </div>
+          <br>
+          <div id="transactions__list">Загрузка...</div>
+        </section>
+      </div> 
+
+      <div class="modal-container display-none" id="settings">
+        <section class="modal">
+          <div class="modal__title">
+            <h5>Настройки</h5>
+            <span class="modal__btn-close" id="settings__btn-close">×</span>
+          </div>
+          <br>
+          <div class="settings">
+            <span id="time-setting">Отображать данные за <span class="settings__swap">всё время</span></span>
+          </div>
+        </section>
+      </div>
+
       <div class="modal-container display-none" id="support-section">
         <section class="modal" >
           <div class="modal__title">
