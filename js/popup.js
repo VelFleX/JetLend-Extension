@@ -116,8 +116,8 @@ async function transactionsShow() {
     <section style="display: flex; margin-top: 6px;">
       <img class="list-element__img" src="https://jetlend.ru${element.preview_small_url}">
       <div>
-        <div class="list-element__loan-name" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block;">ООО "АЛЕКС ФРУТ"</div>
-        <div style="font-size: 14px;">${operations[element.operation_type] ? operations[element.operation_type] : element.operation_type}</div>
+        <div class="list-element__loan-name" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block;">${element.company}</div>
+        <div style="font-size: 14px; margin-top: 5px;">${operations[element.operation_type] ? operations[element.operation_type] : element.operation_type}</div>
       </div>
       <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; font-size: 14px;">
         <div style="font-weight: 600; text-wrap: nowrap;">
