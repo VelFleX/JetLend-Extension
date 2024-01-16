@@ -1,4 +1,3 @@
-@charset "UTF-8";
 @font-face {
   font-family: "SF Pro Display";
   src: url("/fonts/SF-Pro-Display-300.otf") format("opentype");
@@ -91,9 +90,33 @@ b {
   padding: 0 10px;
 }
 
+.tooltip {
+  position: relative;
+}
+.tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  color: var(--jle-fontColor);
+  background: var(--jle-second-color);
+  padding: 4px 8px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  border-radius: 8px;
+  white-space: pre-wrap;
+}
+.tooltip:hover::after {
+  opacity: 1;
+}
+
 .modal {
   width: 480px;
-  max-height: 100%;
+  max-height: calc(100% - 45px);
+  border-radius: 20px;
   overflow-y: auto;
   position: fixed;
   top: 50%;
@@ -110,6 +133,8 @@ b {
 .modal-container {
   position: relative;
   cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 .modal-container::before {
   content: "";
@@ -118,8 +143,7 @@ b {
   left: 0;
   width: 100%;
   height: 100%;
-  -webkit-backdrop-filter: blur(5px);
-          backdrop-filter: blur(5px); /* создаем размытие заднего фона */
+  background: rgba(0, 0, 0, 0.5);
   z-index: 10;
 }
 .modal::-webkit-scrollbar {
@@ -130,6 +154,9 @@ b {
   justify-content: space-between;
   align-items: center;
   font-size: 24px;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
 }
 
 .main-section__header {
@@ -144,7 +171,7 @@ b {
 }
 .main-section__buttons {
   display: flex;
-  gap: 7px;
+  gap: 5px;
   float: right;
   font-size: 14px;
   font-weight: 300;
@@ -162,13 +189,12 @@ b {
 
 .lastUpdateDate {
   display: inline-block;
-  font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.3px;
   line-height: 21px;
 }
 .lastUpdateDate span {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 300;
 }
 
@@ -187,10 +213,6 @@ b {
           user-select: none;
 }
 
-.income__currency {
-  cursor: pointer;
-}
-
 .income__value img {
   width: 14px;
   margin-right: 5px;
@@ -202,6 +224,9 @@ b {
   font-weight: 300;
   letter-spacing: 0.3px;
   line-height: 32px;
+}
+
+.income__title {
   margin-top: 10px;
 }
 
@@ -227,11 +252,8 @@ b {
 .invest-section {
   background: var(--jle-bgColor);
   position: absolute;
-  z-index: 1;
   right: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
   padding-top: 10px;
   top: -1000px;
   transition: 0.25s;
@@ -380,11 +402,21 @@ b {
           user-select: none;
   transition: background 0.25s ease-in-out, scale 0.05s ease;
 }
+.btn-small + .btn-small {
+  margin-left: 4px;
+}
 .btn-small:hover {
   background: var(--jle-smallBtnColor--hover);
 }
 .btn-small:active {
   scale: 0.99;
+}
+.btn-small--active {
+  background: var(--jle-buttonColor);
+  color: var(--jle-buttonTextColor);
+}
+.btn-small--active:hover {
+  background: var(--jle-buttonHoverColor);
 }
 
 .load-opacity-animation {
@@ -409,6 +441,13 @@ b {
   content: "";
   display: block;
   padding-top: 100%;
+}
+.load-spinner__container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 16px;
 }
 
 .contrast-bg {
@@ -466,8 +505,67 @@ b {
   transition: opacity 1.5s ease-in-out, bottom 1.5s ease, top 1.5s ease;
 }
 
+.svg-btn-container {
+  position: relative;
+  background: transparent;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  transition: 0.25s ease-in-out, scale 0.05s ease;
+}
+.svg-btn-container:active {
+  scale: 0.95;
+}
+
+.svg-btn-container::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: var(--jle-svgBgColor);
+  border-radius: 50%;
+  transform: scale(0);
+  transition: transform 0.25s ease-in-out;
+}
+
+.svg-btn-container:hover::before {
+  transform: scale(1);
+}
+
+.svg-btn-container svg {
+  position: relative;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.svg-btn-container path {
+  fill: #C8CED2;
+  transition: 1s;
+}
+
+.svg-btn-container img {
+  position: relative;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+}
+
+#stats__open {
+  transform: scaleY(-1);
+  width: 24px;
+  height: 24px;
+}
+
 @media screen and (min-width: 768px) {
   .stats-section {
     max-height: 1000px;
+  }
+  #stats__open {
+    transform: scaleY(1);
   }
 }/*# sourceMappingURL=style.css.map */

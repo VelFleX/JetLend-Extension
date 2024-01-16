@@ -10,7 +10,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       .then((response) => {
         if (!response.ok) {
           throw new Error(
-            "Проблема с интернет соединением или нет авторизации"
+            'Непредвиденная ошибка. Джет устал, либо проблемы с интернетом.'
           );
         }
         return response.json();

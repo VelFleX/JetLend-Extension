@@ -1,4 +1,4 @@
-const version = "0.8.2";
+const version = "0.8.3";
 
 const $ = {
   get: function(selector) {
@@ -136,6 +136,37 @@ let formsElementsObj = {
   smMaxCompanySum: '#sm-max-company-sum',
   smInvestSum: '#sm-invest-sum',
   smInvestSumAll: '#sm-invest-sum-all'
+};
+
+let investSettingsObj = {
+  fmDaysFrom: 0,
+  fmDaysTo: 0,
+  fmRatingFrom: 0,
+  fmRatingTo: 0,
+  fmRateFrom: 0,
+  fmRateTo: 0,
+  fmLoansFrom: 0,
+  fmLoansTo: 0,
+  fmMaxCompanySum: 0,
+  fmInvestSum: 0,
+  fmInvestSumAll: 0,
+  smDaysFrom: 0,
+  smDaysTo: 0,
+  smRatingFrom : 0,
+  smRatingTo: 0,
+  smRateFrom: 0,
+  smRateTo: 0,
+  smFdFrom: 0,
+  smFdTo: 0,
+  smProgressFrom: 0,
+  smProgressTo: 0,
+  smPriceFrom: 0,
+  smPriceTo: 0,
+  smClassFrom: 0,
+  smClassTo: 0,
+  smMaxCompanySum: 0,
+  smInvestSum: 0,
+  smInvestSumAll: 0
 };
 
 const ratingArray = [,'AAA+', 'AAA', 'AA+', 'AA', 'A+', 'A', 'BBB+', 'BBB', 'BB+', 'BB', 'B+', 'B', 'CCC+', 'CCC', 'CC+', 'CC', 'C+', 'C', 'DDD+', 'DDD', 'DD+', 'DD', 'D+', 'D'];

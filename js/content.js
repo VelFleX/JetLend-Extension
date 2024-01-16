@@ -636,6 +636,3 @@ setInterval(function () {
   updateBadgeInfo();
 }, 60000);
 
-
-
-

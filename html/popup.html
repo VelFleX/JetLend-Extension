@@ -13,13 +13,20 @@
     <section class="main-section">
       <div class="container">
         <div class="main-section__header">
-          <div class="lastUpdateDate">
+          <h5 class="lastUpdateDate">
             Все активы
             <span title="Посетите Jetlend чтобы обновить данные" style="color: #e1bb45; cursor: pointer">(Не обновлено)</span>
-          </div>
+          </h5>
           <div class="main-section__buttons">
-            <span class="btn-small" id="transactions__open" style="font-size: inherit; padding: 4px 10px; margin: 0;">События</span>
-            <span class="btn-small" id="settings__open" style="font-size: inherit; padding: 4px 10px; margin: 0;">Настройки</span>
+            <div class="svg-btn-container tooltip" id="events__open" data-tooltip="События">
+              <img src="/img/events.svg" width="24px" alt="События">
+            </div>
+            <div class="svg-btn-container tooltip" id="settings__open" data-tooltip="Настройки">
+              <img src="/img/settings.svg" width="22px" alt="Настройки">
+            </div>
+            <div class="svg-btn-container tooltip" id="newTab__open" data-tooltip="Открыть в новой вкладке">
+              <img src="/img/newTab.svg" width="22px" alt="Новое окно">
+            </div>
           </div>
         </div>
         <section class="main-section__stats">
@@ -53,85 +60,13 @@
           <div class="btn invest-section__btn-open">Распределение средств</div>
         </div>
       </div>
+      <div style="display: flex; justify-content: center;">
+        <div class="svg-btn-container" id="stats__open">
+          <img src="/img/arrow.svg" width="24px" alt="Статистика">
+        </div>
+      </div>
+
     </section>
-    
-      <div class="modal-container display-none" id="transactions">
-        <section class="modal">
-          <div class="modal__title">
-            <h5>Последние события</h5>
-            <span class="modal__btn-close" id="transactions__btn-close">×</span>
-          </div>
-          <br>
-          <div id="transactions__list">Загрузка...</div>
-        </section>
-      </div> 
-
-      <div class="modal-container display-none" id="settings">
-        <section class="modal">
-          <div class="modal__title">
-            <h5>Настройки</h5>
-            <span class="modal__btn-close" id="settings__btn-close">×</span>
-          </div>
-          <br>
-          <div class="settings">
-            <span id="time-setting">Отображать данные за <span class="settings__swap">всё время</span></span>
-          </div>
-        </section>
-      </div>
-
-      <div class="modal-container display-none" id="support-section">
-        <section class="modal" >
-          <div class="modal__title">
-            <h5>Поддержать разработку</h5><span class="modal__btn-close" id="support-section__btn-close">×</span>
-          </div>
-          <br>
-          <div>Есть несколько способов поддержать разработку:</div>
-          <div style="padding: 10px 0 0 20px;">        
-            <ol>
-              <li>Предложить свои идеи можно отправив личное сообщение JSON'у в телеграме или в группе "JetLend Неофициальный чат".</li>
-              <br>
-              <li>Можно посетить репозиторий на GitHub по <a class="link" href="https://github.com/VelFleX/JetLend-Extension" target="»_blank">ссылке</a>, чтобы ознакомиться с проектом и внести свой вклад.</li>
-              <br>
-              <li>Финансовую поддержку можно осуществить, переводом по номеру карты: 
-                <p>2200 7001 4467 7803</p>
-                <p>Ваше пожертвование будет очень ценным и поможет продолжить разработку. Благодарим вас за вашу поддержку!</p></li>
-            </ol>
-          </div>
-        </section>
-      </div>
-      
-      <div class="modal-container display-none" id="fm-list">
-        <section class="modal">
-          <div class="modal__title">
-            <h5>Список компаний на первичном рынке</h5>
-            <span class="modal__btn-close" id="fm-list__btn-close">×</span>
-          </div>
-          <br>
-          <div id="fm-list-ul"></div>
-        </section>
-      </div>
-
-      <div class="modal-container display-none" id="fmr-list">
-        <section class="modal">
-          <div class="modal__title">
-            <h5>Список компаний на первичном рынке</h5>
-            <span class="modal__btn-close" id="fmr-list__btn-close">×</span>
-          </div>
-          <br>
-          <div id="fmr-list-ul"></div>
-        </section>
-      </div>
-
-      <div class="modal-container display-none" id="sm-list">
-        <section class="modal">
-          <div class="modal__title">
-            <h5>Список компаний на вторичном рынке</h5>
-            <span class="modal__btn-close" id="sm-list__btn-close">×</span>
-          </div>
-          <br>
-          <div id="sm-list-ul"></div>
-        </section>
-      </div>
 
     <section class="invest-section">
       <div class="container">
@@ -228,9 +163,90 @@
 
     <section class="stats-section">
       <div class="container">
-        <p>Загрузка...</p>
+        <div class="load-spinner__container"><span class="load-spinner" style="width: 32px;"></span></div>
       </div>
     </section>
+
+    <div class="modal-container display-none" id="events" style="height: 650px;">
+      <section class="modal">
+        <div class="modal__title">
+          <h5>События</h5>
+          <span class="modal__btn-close">×</span>
+        </div>
+        <div id="events__btn-section">
+          <span class="btn-small" id="event-transactions__open">Последние события</span>
+          <span class="btn-small" id="event-defaults__open">Последние дефолты</span>
+        </div>
+        <div id="events__list"></div>
+      </section>
+    </div> 
+
+    <div class="modal-container display-none" id="settings">
+      <section class="modal">
+        <div class="modal__title">
+          <h5>Настройки</h5>
+          <span class="modal__btn-close">×</span>
+        </div>
+        <br>
+        <div class="settings">
+          <span id="time-setting">Отображать данные за <span class="settings__swap">всё время</span></span>
+        </div>
+      </section>
+    </div>
+
+    <div class="modal-container display-none" id="support-section">
+      <section class="modal" >
+        <div class="modal__title">
+          <h5>Поддержать разработку</h5><span class="modal__btn-close">×</span>
+        </div>
+        <br>
+        <div>Есть несколько способов поддержать разработку:</div>
+        <div style="padding: 10px 0 0 20px;">        
+          <ol>
+            <li>Предложить свои идеи можно отправив личное сообщение JSON'у в телеграме или в группе "JetLend Неофициальный чат".</li>
+            <br>
+            <li>Можно посетить репозиторий на GitHub по <a class="link" href="https://github.com/VelFleX/JetLend-Extension" target="»_blank">ссылке</a>, чтобы ознакомиться с проектом и внести свой вклад.</li>
+            <br>
+            <li>Финансовую поддержку можно осуществить, переводом по номеру карты: 
+              <p>2200 7001 4467 7803</p>
+              <p style="font-weight: inherit;">Ваше пожертвование будет очень ценным и поможет продолжить разработку. Благодарим вас за вашу поддержку!</p></li>
+          </ol>
+        </div>
+      </section>
+    </div>
+    
+    <div class="modal-container display-none" id="fm-list">
+      <section class="modal">
+        <div class="modal__title">
+          <h5>Список компаний на первичном рынке</h5>
+          <span class="modal__btn-close">×</span>
+        </div>
+        <br>
+        <div id="fm-list-ul"></div>
+      </section>
+    </div>
+
+    <div class="modal-container display-none" id="fmr-list">
+      <section class="modal">
+        <div class="modal__title">
+          <h5>Список компаний на первичном рынке</h5>
+          <span class="modal__btn-close">×</span>
+        </div>
+        <br>
+        <div id="fmr-list-ul"></div>
+      </section>
+    </div>
+
+    <div class="modal-container display-none" id="sm-list">
+      <section class="modal">
+        <div class="modal__title">
+          <h5>Список компаний на вторичном рынке</h5>
+          <span class="modal__btn-close">×</span>
+        </div>
+        <br>
+        <div id="sm-list-ul"></div>
+      </section>
+    </div>
     
     <script src="/js/global/variables.js"></script>
     <script src="/js/global/functions.js"></script>

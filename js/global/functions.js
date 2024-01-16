@@ -34,17 +34,25 @@ function toShortCurrencyFormat(num) {
 
 function opneModal(modalId) {
   $.get(`${modalId}`).classList.remove('display-none');
+  setTimeout(() => {
+    $.get(`${modalId}`).style.opacity = '1';
+  }, 0);
+  document.body.style.overflow = "hidden";
 }
 
 function closeModal(modalId) {
-  $.get(`${modalId}`).classList.add('display-none');
+  $.get(`${modalId}`).style.opacity = '0';
+  setTimeout(() => {
+    $.get(`${modalId}`).classList.add('display-none');
+  }, 300);
+  document.body.style.overflow = "auto";
 }
 
 // Функция изменения текста на значке расширения
 function setBadge(text, bgColor = false) {
   let color = bgColor;
   if (darkTheme && !color) {
-    color = "#333";
+    color = "#1F2022";
   } else if (!darkTheme && !color) {
     color = "#fff";
   }
@@ -95,6 +103,7 @@ function updateInvestSettings() {
 function openInvestPage() {
   document.querySelector(".invest-section").style.top = "0";
   document.body.style.height = "650px";
+  $.get('#stats__open').style.transform = 'scaleY(-1)';
   $.get('.stats-section').style.maxHeight = '0px';
 }
 
@@ -117,19 +126,19 @@ function getZaimEnding(n) {
   return ending;
 }
 
-// Функция преобразования unix в читаемую дату вида 20 февраля 2020 г. в 20:20:20
+// Функция преобразования unix в читаемую дату вида 
 function formatReadableDate(dateString) {
   const date = new Date(dateString);
   const options = {
+    day: "2-digit",
+    month: "2-digit",
     year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    second: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   };
-  return date.toLocaleDateString(undefined, options);
+  return date.toLocaleString('ru-RU', options).replace(',', ''); 
 }
+
 
 // Функция отображения времени последнего обновления
 function getUpdateTime(unixTime) {
@@ -194,29 +203,36 @@ function sendNotification(title, text) {
     bgColor = "#333";
   }
 
-  const message = `
-  <div style="display: flex;
-  justify-content: space-between;
-  background: ${bgColor};
-  color: ${color};
-  width: 420px;
-  margin: 10px;
-  padding: 5px 10px;
-  line-height: 1.5; 
-  font-family: 'Open Sans';
-  box-sizing: border-box;">
-    <img style="float: left; margin: 10px 10px 10px 0; width: 60px; height: 60px; filter: none;" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxjbGlwUGF0aCBjbGlwUGF0aFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgaWQ9ImEiPgogICAgICA8cGF0aCBkPSJNMCA2NzYuNDQ3aDE2MzAuNzk3VjBIMHY2NzYuNDQ3eiIvPgogICAgPC9jbGlwUGF0aD4KICA8L2RlZnM+CiAgPGcgY2xhc3M9ImxheWVyIj4KICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEuMzMzMzMgMCAwIC0xLjMzMzMzIDAgOTAxLjkzKSIgY2xpcC1wYXRoPSJ1cmwoI2EpIj4KICAgICAgPHBhdGggZmlsbD0iIzBhZDE5NCIgZD0iTTEyMC45NTIgNjc2LjEzMkwwIDY0MS4xMjZsNTAuNDcxLTUwLjQ3IDM3Ljg4OC0zNi4xNiAzMi41OTMgMTIxLjYzNnoiLz4KICAgIDwvZz4KICA8L2c+Cjwvc3ZnPg==">
-    <div style="flex: 1">
-      <span style="font-size: 18px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; white-space: normal;">
-        ${title}
-        <span class="close-notification" style="cursor: pointer; font-size: 30px; user-select: none">×</span>
-      </span>
-      <div style="font-size: 14px; font-weight: 300; margin-top: -5px">${text}</div>
-      <div style="font-size: 12px; font-weight: 300; color: gray; float: right; margin-top: 5px;">Расширение JetLend</div>
-    </div>
+const message = document.createElement('div');
+Object.assign(message.style, {
+  position: 'relative',
+  display: 'flex',
+  justifyContent: 'space-between',
+  background: bgColor,
+  color: color,
+  width: '420px',
+  margin: '10px',
+  padding: '10px 16px',
+  borderRadius: '16px',
+  lineHeight: '1.5',
+  boxSizing: 'border-box',
+  boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)',
+  animation: 'slideAnimation .25s ease-in-out'
+});
+
+message.innerHTML = `
+  <img style="float: left; margin: 10px 10px 10px 0; width: 60px; height: 60px; filter: none;" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxjbGlwUGF0aCBjbGlwUGF0aFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgaWQ9ImEiPgogICAgICA8cGF0aCBkPSJNMCA2NzYuNDQ3aDE2MzAuNzk3VjBIMHY2NzYuNDQ3eiIvPgogICAgPC9jbGlwUGF0aD4KICA8L2RlZnM+CiAgPGcgY2xhc3M9ImxheWVyIj4KICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEuMzMzMzMgMCAwIC0xLjMzMzMzIDAgOTAxLjkzKSIgY2xpcC1wYXRoPSJ1cmwoI2EpIj4KICAgICAgPHBhdGggZmlsbD0iIzBhZDE5NCIgZD0iTTEyMC45NTIgNjc2LjEzMkwwIDY0MS4xMjZsNTAuNDcxLTUwLjQ3IDM3Ljg4OC0zNi4xNiAzMi41OTMgMTIxLjYzNnoiLz4KICAgIDwvZz4KICA8L2c+Cjwvc3ZnPg==">
+  <div style="flex: 1">
+    <span style="font-size: 18px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; white-space: normal;">
+      ${title}
+      <span class="close-notification" style="cursor: pointer; font-size: 30px; user-select: none">×</span>
+    </span>
+    <div style="font-size: 14px; font-weight: 300; margin-top: -5px">${text}</div>
+    <div style="font-size: 12px; font-weight: 300; color: gray; float: right; margin-top: 5px;">Расширение JetLend</div>
   </div>
-  `;
-  notificationContainer.innerHTML += message;
+`;
+
+notificationContainer.appendChild(message);
 }
 
 // Функция свапа рынков в распределении средств
@@ -315,6 +331,22 @@ function currencyToFloat(currency) {
   return parseFloat(result);
 }
 
+function loadInvestSettings() {
+  chrome.storage.local.get("investSettings", function(data) {
+    if (data.investSettings) {
+      function copyObj(sourceObj, targetObj) {
+        for (let key in sourceObj) {
+          if (key in targetObj) {
+            targetObj[key] = sourceObj[key];
+          }
+        }
+      }
+      const settings = data.investSettings;
+      copyObj(settings, investSettingsObj);
+    }
+  });
+};
+
 // let wasOpen = false;
 // if (!wasOpen) {
 //   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
@@ -324,3 +356,12 @@ function currencyToFloat(currency) {
 //   });
 //   wasOpen = true;
 // }
+
+function dateDiff(date) {
+  const timeDifference = new Date().getTime() - new Date(date).getTime();
+  const dayDifference = Math.ceil(timeDifference / (1000 * 3600 * 24));
+  return dayDifference;
+}
+
+
+

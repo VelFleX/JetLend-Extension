@@ -1,17 +1,22 @@
 let timePeriod = "";
-$.get('.income__currency').addEventListener("click", function (event) {
-  if (event.currentTarget == $.get('.income__currency')) {
-    if($.get('.stats-section').style.maxHeight === '1000px' || (!$.get('.stats-section').style.maxHeight && window.innerHeight >= 768)) {
-      $.get('.stats-section').style.maxHeight = '0px';
-    } else {
-      $.get('.stats-section').style.maxHeight = '1000px';
-    }
+$.get('#stats__open').addEventListener("click", function () {
+  if($.get('.stats-section').style.maxHeight === '1000px' || (!this.style.cssText && window.innerWidth >= 768)) {
+    this.style.transform = 'scaleY(-1)';
+    $.get('.stats-section').style.maxHeight = '0px';
+  } else {
+    this.style.transform = 'scaleY(1)';
+    $.get('.stats-section').style.maxHeight = '1000px';
   }
 });
 
 document.addEventListener("click", function (event) {
   if (event.target.classList.contains('modal-container')) {
-    event.target.classList.add('display-none');
+    closeModal('#'+event.target.id);
+    return;
+  }
+  if (event.target.classList.contains('modal__btn-close')) {
+    closeModal('#'+event.target.parentNode.parentNode.parentNode.id);
+    return;
   }
 });
 
@@ -54,31 +59,28 @@ const formsElements = [fmDaysFrom, fmDaysTo, fmRatingFrom, fmRatingTo, fmRateFro
   smDaysFrom, smDaysTo, smRatingFrom, smRatingTo, smRateFrom, smRateTo, smFdFrom, smFdTo, smProgressFrom,
   smProgressTo, smPriceFrom, smPriceTo, smClassFrom, smClassTo, smMaxCompanySum, smInvestSum];
 
-formsElements.forEach(element => element.addEventListener('change', updateInvestSettings))
+formsElements.forEach(element => element.addEventListener('change', updateInvestSettings));
 btnInvestOpen.addEventListener('click', openInvestPage);
 btnInvestClose.addEventListener('click', closeInvestPage);
 
-$.get('#transactions__open').addEventListener('click', () => {opneModal('#transactions'); document.body.style.height = "650px"; transactionsShow()});
-$.get('#transactions__btn-close').addEventListener('click', () => {closeModal('#transactions'); document.body.style.height = "";});
+$.get('#events__open').addEventListener('click', () => {opneModal('#events'); });
+$.get('#event-transactions__open').addEventListener('click', () => transactionsShow());
+$.get('#event-defaults__open').addEventListener('click', () => lastDefaultsShow());
 $.get('#settings__open').addEventListener('click', () => {opneModal('#settings')});
-$.get('#settings__btn-close').addEventListener('click', () => closeModal('#settings'));
+$.get('#newTab__open').addEventListener('click', () => chrome.tabs.create({url: chrome.runtime.getURL('html/popup.html')}));
 
 $.get('#fm-btn-update').addEventListener('click', updateFirstMarket);
 $.get('#fm-btn-show').addEventListener('click', () => {opneModal('#fm-list'); fmCompanyShow(fmInvestCompanyArray, '#fm-list-ul')});
 $.get('#fm-btn-stop').addEventListener('click', function() {fmCompanyUpdate = false});
-$.get('#fm-list__btn-close').addEventListener('click', () => closeModal('#fm-list'));
 
 $.get('#fmr-btn-update').addEventListener('click', updateFirstMarketReserv);
 $.get('#fmr-btn-show').addEventListener('click', () => {opneModal('#fmr-list'); fmCompanyShow(fmrInvestCompanyArray, '#fmr-list-ul')});
 $.get('#fmr-btn-stop').addEventListener('click', function() {fmrCompanyUpdate = false});
-$.get('#fmr-list__btn-close').addEventListener('click', () => closeModal('#fmr-list'));
 
 $.get('#sm-btn-update').addEventListener('click', updateSecondMarket);
 $.get('#sm-btn-show').addEventListener('click', () => {opneModal('#sm-list'); smCompanyShow(smInvestCompanyArray, '#sm-list-ul')});
 $.get('#sm-btn-stop').addEventListener('click', function() {smCompanyUpdate = false});
-$.get('#sm-list__btn-close').addEventListener('click', () => closeModal('#sm-list'));
 
-$.get("#support-section__btn-close").addEventListener("click", () => $.get("#support-section").classList.add("display-none"));
 $.get('#marketMode').addEventListener('click', marketSwap);
 
 chrome.storage.local.get("investSettings", function(data) {
@@ -95,11 +97,20 @@ chrome.storage.local.get("investSettings", function(data) {
 });
 
 async function transactionsShow() {
-  const list = $.get('#transactions__list');
+  // if ($.get('#event-transactions__open').classList.contains('btn-small--active')) {
+  //   return;
+  // };
+  $.get('#events__btn-section').querySelectorAll('.btn-small').forEach(btn => btn.classList.remove('btn-small--active'));
+  $.get('#event-transactions__open').classList.add('btn-small--active');
+  const list = $.get('#events__list');
+  list.innerHTML = `<div class="load-spinner__container"><span class="load-spinner" style="width: 32px;"></span></div>`;
   const transactionsData = await fetchData('https://jetlend.ru/invest/api/account/transactions');
   const operations = {
     purchase: 'Покупка займа',
-    payment: 'Платеж по займу'
+    payment: 'Платеж по займу',
+    collection: 'Судебное взыскание',
+    contract: 'Выдача займа',
+    default: 'Дефолт'
   }
   if (transactionsData.data) {
     list.innerHTML = '';
@@ -109,9 +120,18 @@ async function transactionsShow() {
       listItem.innerHTML = createListElement(element); 
       list.appendChild(listItem); 
     })
-  };
+  } else {
+    list.textContent = transactionsData.error;
+  }
 
   function createListElement(element) {
+    function setColor(num) {
+      if (num > 0) {
+        return 'limegreen';
+      } else {
+        return 'red';
+      }
+    }
     return `
     <section style="display: flex; margin-top: 6px;">
       <img class="list-element__img" src="https://jetlend.ru${element.preview_small_url}">
@@ -121,18 +141,73 @@ async function transactionsShow() {
       </div>
       <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; font-size: 14px;">
         <div style="font-weight: 600; text-wrap: nowrap;">
-          ${element.income !== null ? `${toCurrencyFormat(element.income)}` : ''}
+          ${element.income !== null && element.income !== 0.00 ? `${toCurrencyFormat(element.income)}` : ''}
         </div>
-        <div style="color: red; font-weight: 600; text-wrap: nowrap;">
-          ${element.expense !== null ? `-${toCurrencyFormat(element.expense)}` : ''}
+        <div style="color: ${setColor(element.expense)}; font-weight: 600; text-wrap: nowrap; margin-top: 5px;">
+          ${element.expense !== null && element.expense !== 0.00 ? element.expense > 0 ? `${+toCurrencyFormat(element.expense)}` : `${toCurrencyFormat(element.expense)}` : ''}
         </div> 
-        <div style="color: limegreen; font-weight: 600; text-wrap: nowrap;">
-          ${element.revenue !== null ? `+${toCurrencyFormat(element.revenue)}` : ''}
+        <div style="color: ${setColor(element.revenue)}; font-weight: 600; text-wrap: nowrap; margin-top: 5px;">
+          ${element.revenue !== null && element.revenue !== 0.00 ? element.revenue > 0 ? `${+toCurrencyFormat(element.revenue)}` : `${toCurrencyFormat(element.revenue)}` : ''}
         </div> 
       </div>
     </section>
     `
   }
+}
+
+async function lastDefaultsShow() {
+  // if ($.get('#event-defaults__open').classList.contains('btn-small--active')) {
+  //   return;
+  // };
+  $.get('#events__btn-section').querySelectorAll('.btn-small').forEach(btn => btn.classList.remove('btn-small--active'));
+  $.get('#event-defaults__open').classList.add('btn-small--active');
+  const list = $.get('#events__list');
+  list.innerHTML = `<div class="load-spinner__container"><span class="load-spinner" style="width: 32px;"></span></div>`;
+  const url = 'https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22default%22%5D%2C%22field%22%3A%22status%22%7D%5D&limit=10000&offset=0&sort_dir=asc&sort_field=status';
+  const res = await fetchData(url);
+  if (res.data) {
+    const sorted = res.data.data.filter(obj => dateDiff(obj.last_payment_date) <= 120);
+    sorted.forEach(elem => {
+      elem.delay_days = dateDiff(elem.last_payment_date);
+    })
+    for (elem of sorted) {
+      const events = await fetchData(`https://jetlend.ru/invest/api/requests/${elem.loan_id}/events`);
+      const defaultEvent = events.data.events.find(obj => obj.event_type === 'default');
+      elem.default_date = defaultEvent.date;
+    }
+    sorted.sort((a, b) => new Date(b.default_date) - new Date(a.default_date));
+    list.innerHTML = '';
+    sorted.forEach(element => {
+      const listItem = document.createElement('div');
+      listItem.classList.add('list-element', 'contrast-bg');
+      listItem.innerHTML = createListElement(element); 
+      list.appendChild(listItem); 
+    })
+  } else {
+    list.textContent = transactionsData.error;
+  }
+
+  function createListElement(element) {
+    return `
+    <section style="display: flex; margin-top: 6px;">
+      <img class="list-element__img" src="https://jetlend.ru${element.preview_small_url}">
+      <div>
+        <a class="list-element__loan-name target-url" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block;" href="https://jetlend.ru/invest/v3/company/${element.loan_id}">
+          ${element.loan_name}
+        </a>
+        <div style="font-size: 14px; margin-top: 5px;">Дефолт</div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; font-size: 14px;">
+        <div style="font-weight: 600; text-wrap: nowrap;">
+          ${formatReadableDate(element.default_date)}
+        </div>
+        <div style="color: orangered; font-weight: 600; text-wrap: nowrap; margin-top: 5px;">
+          ${toCurrencyFormat(-element.principal_debt)}
+        </div> 
+      </div>
+    </section>
+    `
+ }
 }
 
 function fmCompanyShow(arr, blockId) {
@@ -560,7 +635,7 @@ async function mainUpdateFunction() {
       </div>
       <footer style="
       color: gray;
-      font-size: 12px;
+      font-size: 14px;
       padding: 5px 0 5px;
       text-align: center;">JetLend Extension v${version}. 
       <span id="support-btn" style="text-decoration:underline; cursor:pointer; user-select: none;">Поддержать разработку.</span>
@@ -618,15 +693,15 @@ async function mainUpdateFunction() {
       if (investDays() < 365) {
         incomeTitle.innerHTML = `<span>Доход за ${getInvestDays()} (без НПД | чистый доход)</span> <span>Доходность</span>`;
         $.get('.income__currency').innerHTML = `<span id="income">${toCurrencyFormat(allTime.profitWithoutNpd)}</span><span style="opacity: .5;"> | </span><span id="income--clean">${toCurrencyFormat(allTime.cleanProfit)}</span>`;  
-        $.get('.income__percent').innerHTML = `<span><img src="/img/arrow.svg">${toPercentFormat(allTime.percentProfit)}</span>`;
+        $.get('.income__percent').innerHTML = `<span><img src="/img/income.svg">${toPercentFormat(allTime.percentProfit)}</span>`;
       } else if (timePeriod == "allTime") {
         incomeTitle.innerHTML = `<span>Доход за всё время (без НПД | чистый доход)</span> <span>Доходность</span>`;
         $.get('.income__currency').innerHTML = `<span id="income">${toCurrencyFormat(allTime.profitWithoutNpd)}</span><span style="opacity: .5;"> | </span><span id="income--clean">${toCurrencyFormat(allTime.cleanProfit)}</span>`;  
-        $.get('.income__percent').innerHTML = `<span><img src="/img/arrow.svg">${toPercentFormat(allTime.percentProfit)}</span>`;
+        $.get('.income__percent').innerHTML = `<span><img src="/img/income.svg">${toPercentFormat(allTime.percentProfit)}</span>`;
       } else if (timePeriod == "year" && investDays() >= 365) {
         incomeTitle.innerHTML = `<span>Доход за год (без НПД | чистый доход)</span> <span>Доходность</span>`;
         $.get('.income__currency').innerHTML = `<span id="income">${toCurrencyFormat(yearTime.profitWithoutNpd)}</span><span style="opacity: .5;"> | </span><span id="income--clean">${toCurrencyFormat(yearTime.cleanProfit)}</span>`;  
-        $.get('.income__percent').innerHTML = `<span><img src="/img/arrow.svg">${toPercentFormat(yearTime.percentProfit)}</span>`;
+        $.get('.income__percent').innerHTML = `<span><img src="/img/income.svg">${toPercentFormat(yearTime.percentProfit)}</span>`;
       }      
     }
 
@@ -655,7 +730,7 @@ async function mainUpdateFunction() {
     }
 
     if (!$.get("#support-btn").clickListenerAdded) {
-      $.get("#support-btn").addEventListener("click", () => $.get("#support-section").classList.remove("display-none"));
+      $.get("#support-btn").addEventListener("click", () => opneModal('#support-section'));
     }
     
     // if (!userStatsObj.data.status.qualification.passed) {
@@ -708,7 +783,7 @@ chrome.storage.local.get("cacheJetlend", function (result) {
     incomeTitle.innerHTML = `<span>${data.incomeTitle}</span> <span>${data.incomePercent}</span>`;
     
     $.get('.income__currency').innerHTML = `<span class="load-opacity-animation">${data.income}</span><span style="opacity: .5;"> | </span><span class="load-opacity-animation">${data.cleanIncome}</span>`;
-    $.get('.income__percent').innerHTML = `<span class="load-opacity-animation"><img src="/img/arrow.svg">${data.percentIncomeNum}</span>`
+    $.get('.income__percent').innerHTML = `<span class="load-opacity-animation"><img src="/img/income.svg">${data.percentIncomeNum}</span>`
     
     cachedBalance = data.balance;
     cachedCleanBalance = data.cleanBalance;
@@ -721,6 +796,7 @@ chrome.storage.local.get("cacheJetlend", function (result) {
 
 // Обновление списка компаний (первичка)
 async function updateFirstMarket() {
+  loadInvestSettings();
   fmCompanyUpdate = true;
   $.get('#fm-numOfSortedCompany').textContent = `Загрузка...`;
   $.get('#fm-btn-update').classList.add('display-none');
@@ -729,19 +805,22 @@ async function updateFirstMarket() {
   $.get('#market-companyAnaliz').classList.add('load-block-animation');
   const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
   if (res.data) {
+    $.get('#market-averagePercent').textContent = '0%';
+    if (res.data.requests.length) {
+      $.get('#market-averagePercent').textContent = toPercentFormat(res.data.requests.reduce((acc, curr) => acc + curr.interest_rate, 0)/res.data.requests.length);
+    }
     $.get('#market-numOfAllCompany').textContent = res.data.requests.length;
-    $.get('#market-averagePercent').textContent = toPercentFormat(res.data.requests.reduce((acc, curr) => acc + curr.interest_rate, 0)/res.data.requests.length)
     $.get('#market-companyAnaliz').classList.remove('load-block-animation');
     const valueToNum = value => parseFloat((parseFloat((value).toString().replace(',', '.'))/100).toFixed(4));
     const sorted = res.data.requests.filter(obj => (obj.collected_percentage !== 100) /* Полоска сбора не заполнена (меньше 100%) */ 
       && (obj.investing_amount === null) /* Резервация (нет) */ 
       // && (obj.company_investing_amount === null || obj.company_investing_amount === "0.00") /* Есть заёмщик портфеле (нет) */
-      && (obj.term >= parseInt(fmDaysFrom.value) && obj.term <= parseInt(fmDaysTo.value)) /* Срок займа */
-      && (ratingArray.indexOf(obj.rating) >= parseInt(fmRatingFrom.value) && ratingArray.indexOf(obj.rating) <= parseInt(fmRatingTo.value)) /* Рейтинг займа */
-      && (obj.interest_rate >= valueToNum(fmRateFrom.value) && obj.interest_rate <= valueToNum(fmRateTo.value)) /* Процент займа (от 20 до 100) */ 
-      && (obj.loan_order >= parseFloat(fmLoansFrom.value) && obj.loan_order <= parseFloat(fmLoansTo.value))  /* Какой по счёту займ на платформе */
+      && (obj.term >= parseInt(investSettingsObj.fmDaysFrom) && obj.term <= parseInt(investSettingsObj.fmDaysTo)) /* Срок займа */
+      && (ratingArray.indexOf(obj.rating) >= parseInt(investSettingsObj.fmRatingFrom) && ratingArray.indexOf(obj.rating) <= parseInt(investSettingsObj.fmRatingTo)) /* Рейтинг займа */
+      && (obj.interest_rate >= valueToNum(investSettingsObj.fmRateFrom) && obj.interest_rate <= valueToNum(investSettingsObj.fmRateTo)) /* Процент займа (от 20 до 100) */ 
+      && (obj.loan_order >= parseFloat(investSettingsObj.fmLoansFrom) && obj.loan_order <= parseFloat(investSettingsObj.fmLoansTo))  /* Какой по счёту займ на платформе */
       && (obj.company_investing_amount <= (parseFloat(fmMaxCompanySum.value) - parseFloat(fmInvestSum.value))) /* Сумма в одного заёмщика */
-      ) 
+      );
 
     async function updateArray() {
       let count = 0;
@@ -749,7 +828,7 @@ async function updateFirstMarket() {
       for (const element of sorted) {
         const details = await fetchDetails(element.id);
         Object.assign(element, details);
-        count += 1;
+        count++;
         $.get('#fm-numOfSortedCompany').textContent = `Загрузка... Проверяем ФД... (${count}/${sorted.length})`;
         if (element.financial_discipline === 1) { // ФД 100%
           secondSort.push(element);
@@ -793,7 +872,7 @@ async function updateFirstMarketReserv() {
       for (const element of sorted) {
         const details = await fetchDetails(element.id);
         Object.assign(element, details);
-        count += 1;
+        count++;
         secondSort.push(element);
         $.get('#fmr-numOfSortedCompany').textContent = `Загрузка... Проверяем ФД... (${count}/${sorted.length})`;
         if (!fmrCompanyUpdate) {
@@ -816,7 +895,60 @@ async function updateFirstMarketReserv() {
 }
 
 // Обновление списка компаний (вторичка)
+// async function updateSecondMarket() {
+//   smCompanyUpdate = true;
+//   $.get('#sm-numOfSortedCompany').textContent = `Загрузка...`;
+//   $.get('#sm-btn-update').classList.add('display-none');
+//   $.get('#sm-btn-show').classList.add('display-none');
+//   $.get('#sm-btn-stop').classList.remove('display-none');
+//   $.get('#market-companyAnaliz').classList.add('load-block-animation');
+//   const res = await fetchData("https://jetlend.ru/invest/api/exchange/loans?limit=10000&offset=0&sort_dir=desc&sort_field=ytm");
+//   if (res.data) {
+//     const notZeroYtmObj = res.data.data.filter(obj => (obj.ytm !== 0));
+//     $.get('#market-numOfAllCompany').textContent = res.data.data.length;
+//     $.get('#market-averagePercent').textContent = toPercentFormat(notZeroYtmObj.reduce((acc, curr) => acc + curr.ytm, 0)/notZeroYtmObj.length);
+//     $.get('#market-companyAnaliz').classList.remove('load-block-animation');
+//     const valueToPercent = value => parseFloat((parseFloat((value).toString().replace(',', '.'))/100).toFixed(4)); // '12,3456' => 0.1234
+
+//     const sorted = res.data.data.filter(obj => (obj.term_left >= parseFloat(smDaysFrom.value) && obj.term_left <= parseFloat(smDaysTo.value)) /* Остаток срока займа */
+//       && (ratingArray.indexOf(obj.rating) >= parseInt(smRatingFrom.value) && ratingArray.indexOf(obj.rating) <= parseInt(smRatingTo.value)) /* Рейтинг займа */
+//       && (obj.ytm >= valueToPercent(smRateFrom.value) && obj.ytm <= valueToPercent(smRateTo.value)) /* Эффективная ставка (от 20 до 100) */
+//       && (obj.progress >= valueToPercent(smProgressFrom.value) && obj.progress <= valueToPercent(smProgressTo.value)) /* Выплачено (прогресс в %) */
+//       && (obj.loan_class >= parseInt(smClassFrom.value) && obj.loan_class <= parseInt(smClassTo.value)) /* Класс займа */
+//       && (obj.min_price >= valueToPercent(smPriceFrom.value) && obj.min_price <= valueToPercent(smPriceTo.value)) /* Мин прайс от 50% до 90% */
+//       && (obj.invested_company_debt <= (parseFloat(smMaxCompanySum.value) - parseFloat(smInvestSum.value))) /* Сумма в одного заёмщика */
+//       ); 
+
+//     async function updateArray() {
+//       let count = 0;
+//       let secondSort = [];
+//       for (const element of sorted) {
+//         const details = await fetchDetails(element.loan_id);
+//         Object.assign(element, details);
+//         count += 1;
+//         $.get('#sm-numOfSortedCompany').textContent = `Загрузка... Проверяем ФД... (${count}/${sorted.length})`;
+//         if (element.financial_discipline >= valueToPercent(smFdFrom.value) && element.financial_discipline <= valueToPercent(smFdTo.value) /* ФД от до */) {
+//           secondSort.push(element);
+//         }
+//         if (!smCompanyUpdate) {
+//           smCompanyUpdate = true;
+//           break;
+//         }
+//       }
+//       smInvestCompanyArray = secondSort;
+//       $.get('#sm-numOfSortedCompany').textContent = `Доступно: ${secondSort.length} ${getZaimEnding(secondSort.length)} `;
+//       $.get('#sm-btn-update').classList.remove('display-none');
+//       if (smInvestCompanyArray.length >= 1) {
+//         $.get('#sm-btn-show').classList.remove('display-none');
+//       }
+//       $.get('#sm-btn-stop').classList.add('display-none');    
+//     }
+//     updateArray();
+//   };
+// }
+
 async function updateSecondMarket() {
+  loadInvestSettings();
   smCompanyUpdate = true;
   $.get('#sm-numOfSortedCompany').textContent = `Загрузка...`;
   $.get('#sm-btn-update').classList.add('display-none');
@@ -827,16 +959,16 @@ async function updateSecondMarket() {
   if (res.data) {
     const notZeroYtmObj = res.data.data.filter(obj => (obj.ytm !== 0));
     $.get('#market-numOfAllCompany').textContent = res.data.data.length;
-    $.get('#market-averagePercent').textContent = toPercentFormat(notZeroYtmObj.reduce((acc, curr) => acc + curr.ytm, 0)/notZeroYtmObj.length)
+    $.get('#market-averagePercent').textContent = toPercentFormat(notZeroYtmObj.reduce((acc, curr) => acc + curr.ytm, 0)/notZeroYtmObj.length);
     $.get('#market-companyAnaliz').classList.remove('load-block-animation');
     const valueToPercent = value => parseFloat((parseFloat((value).toString().replace(',', '.'))/100).toFixed(4)); // '12,3456' => 0.1234
 
-    const sorted = res.data.data.filter(obj => (obj.term_left >= parseFloat(smDaysFrom.value) && obj.term_left <= parseFloat(smDaysTo.value)) /* Остаток срока займа */
-      && (ratingArray.indexOf(obj.rating) >= parseInt(smRatingFrom.value) && ratingArray.indexOf(obj.rating) <= parseInt(smRatingTo.value)) /* Рейтинг займа */
-      && (obj.ytm >= valueToPercent(smRateFrom.value) && obj.ytm <= valueToPercent(smRateTo.value)) /* Эффективная ставка (от 20 до 100) */
-      && (obj.progress >= valueToPercent(smProgressFrom.value) && obj.progress <= valueToPercent(smProgressTo.value)) /* Выплачено (прогресс в %) */
-      && (obj.loan_class >= parseInt(smClassFrom.value) && obj.loan_class <= parseInt(smClassTo.value)) /* Класс займа */
-      && (obj.min_price >= valueToPercent(smPriceFrom.value) && obj.min_price <= valueToPercent(smPriceTo.value)) /* Мин прайс от 50% до 90% */
+    const sorted = res.data.data.filter(obj => (obj.term_left >= parseFloat(investSettingsObj.smDaysFrom) && obj.term_left <= parseFloat(investSettingsObj.smDaysTo)) /* Остаток срока займа */
+      && (ratingArray.indexOf(obj.rating) >= parseInt(investSettingsObj.smRatingFrom) && ratingArray.indexOf(obj.rating) <= parseInt(investSettingsObj.smRatingTo)) /* Рейтинг займа */
+      && (obj.ytm >= valueToPercent(investSettingsObj.smRateFrom) && obj.ytm <= valueToPercent(investSettingsObj.smRateTo)) /* Эффективная ставка (от 20 до 100) */
+      && (obj.progress >= valueToPercent(investSettingsObj.smProgressFrom) && obj.progress <= valueToPercent(investSettingsObj.smProgressTo)) /* Выплачено (прогресс в %) */
+      && (obj.loan_class >= parseInt(investSettingsObj.smClassFrom) && obj.loan_class <= parseInt(investSettingsObj.smClassTo)) /* Класс займа */
+      && (obj.min_price >= valueToPercent(investSettingsObj.smPriceFrom) && obj.min_price <= valueToPercent(investSettingsObj.smPriceTo)) /* Мин прайс от 50% до 90% */
       && (obj.invested_company_debt <= (parseFloat(smMaxCompanySum.value) - parseFloat(smInvestSum.value))) /* Сумма в одного заёмщика */
       ); 
 
@@ -846,9 +978,9 @@ async function updateSecondMarket() {
       for (const element of sorted) {
         const details = await fetchDetails(element.loan_id);
         Object.assign(element, details);
-        count += 1;
+        count++;
         $.get('#sm-numOfSortedCompany').textContent = `Загрузка... Проверяем ФД... (${count}/${sorted.length})`;
-        if (element.financial_discipline >= valueToPercent(smFdFrom.value) && element.financial_discipline <= valueToPercent(smFdTo.value) /* ФД от до */) {
+        if (element.financial_discipline >= valueToPercent(investSettingsObj.smFdFrom) && element.financial_discipline <= valueToPercent(investSettingsObj.smFdTo) /* ФД от до */) {
           secondSort.push(element);
         }
         if (!smCompanyUpdate) {
@@ -868,6 +1000,7 @@ async function updateSecondMarket() {
   };
 }
 
+
 // Распределение средств (первичка)
 $.get('#firstMarketSubmit').addEventListener('click', function() {
   const valueToInt = value => parseInt((value).toString().replace(',', '.'));
@@ -878,7 +1011,6 @@ $.get('#firstMarketSubmit').addEventListener('click', function() {
     && !$.get('#fm-numOfSortedCompany').textContent.includes("Загрузка...")
     && freeBalance >= 100
     && fmInvestCompanyArray.length >= 1) {
-    console.log('Проверка пройдена');
     function numOfCuts() {
       let canInvest = Math.floor(valueToInt(fmInvestSumAll.value) / valueToInt(fmInvestSum.value));
       if (canInvest > fmInvestCompanyArray.length) {
@@ -892,9 +1024,7 @@ $.get('#firstMarketSubmit').addEventListener('click', function() {
     chrome.storage.local.set({fmInvest: {array: arrOfCompanyId, sum: valueToInt(fmInvestSum.value)}});
     // chrome.tabs.create({ url: "https://jetlend.ru/invest/v3/?state=login" });
     chrome.windows.create({ url: "https://jetlend.ru/invest/v3/?state=login", type: 'popup', focused: true });
-  } else {
-    console.log('Не удовлетворяет условиям');
-  };
+  }
 })
 
 // Распределение средств (вторичка)
@@ -907,7 +1037,6 @@ $.get('#secondMarketSubmit').addEventListener('click', function() {
     && !$.get('#sm-numOfSortedCompany').textContent.includes("Загрузка...")
     && freeBalance >= 100
     && smInvestCompanyArray.length >= 1) {
-    console.log('Проверка пройдена');
     const arrOfCompanyId = smInvestCompanyArray.map(obj => obj.loan_id);
     chrome.storage.local.set({smInvest: {
       array: arrOfCompanyId, 
@@ -917,9 +1046,7 @@ $.get('#secondMarketSubmit').addEventListener('click', function() {
       maxPrice: valueToPercent(smPriceTo.value)}});
     // chrome.tabs.create({ url: "https://jetlend.ru/invest/v3/?state=login", active: true });
     chrome.windows.create({ url: "https://jetlend.ru/invest/v3/?state=login", type: 'popup', focused: true });
-  } else {
-    console.log('Не удовлетворяет условиям');
-  };
+  }
 })
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
