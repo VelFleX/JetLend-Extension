@@ -63,9 +63,14 @@ formsElements.forEach(element => element.addEventListener('change', updateInvest
 btnInvestOpen.addEventListener('click', openInvestPage);
 btnInvestClose.addEventListener('click', closeInvestPage);
 
-$.get('#events__open').addEventListener('click', () => {opneModal('#events'); });
+$.get('#events__open').addEventListener('click', () => opneModal('#events'));
 $.get('#event-transactions__open').addEventListener('click', () => transactionsShow());
 $.get('#event-defaults__open').addEventListener('click', () => lastDefaultsShow());
+
+// $.get('#portfolio__open').addEventListener('click', () => opneModal('#portfolio'));
+
+// $.get('#analytics__open').addEventListener('click', () => opneModal('#analytics'));
+
 $.get('#settings__open').addEventListener('click', () => {opneModal('#settings')});
 $.get('#newTab__open').addEventListener('click', () => chrome.tabs.create({url: chrome.runtime.getURL('html/popup.html')}));
 
@@ -136,18 +141,18 @@ async function transactionsShow() {
     <section style="display: flex; margin-top: 6px;">
       <img class="list-element__img" src="https://jetlend.ru${element.preview_small_url}">
       <div>
-        <div class="list-element__loan-name" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block;">${element.company}</div>
+        <div style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block;">${element.company}</div>
         <div style="font-size: 14px; margin-top: 5px;">${operations[element.operation_type] ? operations[element.operation_type] : element.operation_type}</div>
       </div>
       <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; font-size: 14px;">
         <div style="font-weight: 600; text-wrap: nowrap;">
           ${element.income !== null && element.income !== 0.00 ? `${toCurrencyFormat(element.income)}` : ''}
         </div>
-        <div style="color: ${setColor(element.expense)}; font-weight: 600; text-wrap: nowrap; margin-top: 5px;">
-          ${element.expense !== null && element.expense !== 0.00 ? element.expense > 0 ? `${+toCurrencyFormat(element.expense)}` : `${toCurrencyFormat(element.expense)}` : ''}
+        <div style="color: orangered; font-weight: 600; text-wrap: nowrap; margin-top: 5px;">
+          ${element.expense !== null && element.expense !== 0.00 ? element.expense > 0 ? `-${toCurrencyFormat(element.expense)}` : `${toCurrencyFormat(element.expense)}` : ''}
         </div> 
         <div style="color: ${setColor(element.revenue)}; font-weight: 600; text-wrap: nowrap; margin-top: 5px;">
-          ${element.revenue !== null && element.revenue !== 0.00 ? element.revenue > 0 ? `${+toCurrencyFormat(element.revenue)}` : `${toCurrencyFormat(element.revenue)}` : ''}
+          ${element.revenue !== null && element.revenue !== 0.00 ? element.revenue > 0 ? `+${toCurrencyFormat(element.revenue)}` : `${toCurrencyFormat(element.revenue)}` : ''}
         </div> 
       </div>
     </section>
@@ -167,13 +172,12 @@ async function lastDefaultsShow() {
   const res = await fetchData(url);
   if (res.data) {
     const sorted = res.data.data.filter(obj => dateDiff(obj.last_payment_date) <= 120);
-    sorted.forEach(elem => {
-      elem.delay_days = dateDiff(elem.last_payment_date);
-    })
     for (elem of sorted) {
       const events = await fetchData(`https://jetlend.ru/invest/api/requests/${elem.loan_id}/events`);
       const defaultEvent = events.data.events.find(obj => obj.event_type === 'default');
       elem.default_date = defaultEvent.date;
+      elem.delay_days = dateDiff(elem.last_payment_date, defaultEvent.date);
+
     }
     sorted.sort((a, b) => new Date(b.default_date) - new Date(a.default_date));
     list.innerHTML = '';
@@ -183,6 +187,7 @@ async function lastDefaultsShow() {
       listItem.innerHTML = createListElement(element); 
       list.appendChild(listItem); 
     })
+    console.log(sorted);
   } else {
     list.textContent = transactionsData.error;
   }
@@ -195,17 +200,35 @@ async function lastDefaultsShow() {
         <a class="list-element__loan-name target-url" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block;" href="https://jetlend.ru/invest/v3/company/${element.loan_id}">
           ${element.loan_name}
         </a>
-        <div style="font-size: 14px; margin-top: 5px;">Дефолт</div>
+          <div style="font-size: 14px; margin-top: 3px;">
+            <b style="${element.rating.includes('A') ? 'color: limegreen;' : 
+                        element.rating.includes('B') ? 'color: orange;' : 
+                        'color: orangered;'}">${element.rating}|${ratingArray.indexOf(element.rating)}</b>, 
+            <span> NPL <b>${element.delay_days} д.</b></span>
+          </div>
+          <div style="margin-top: 5px; font-size: 14px; text-wrap: nowrap;">
+            <span>Инвестиция: </span>
+            <b>${toCurrencyFormat(element.amount)}</b>
+          </div>
       </div>
       <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; font-size: 14px;">
-        <div style="font-weight: 600; text-wrap: nowrap;">
-          ${formatReadableDate(element.default_date)}
+        <div style="text-wrap: nowrap;">
+          <b>${formatReadableDate(element.default_date)}</b>
+
         </div>
-        <div style="color: orangered; font-weight: 600; text-wrap: nowrap; margin-top: 5px;">
-          ${toCurrencyFormat(-element.principal_debt)}
+        <div style="text-wrap: nowrap; margin-top: 5px;">
+          <span data-tooltip="Остаток тела долга по займу.">Остаток долга: </span>
+          <b style="color: orangered;">${toCurrencyFormat(-element.principal_debt)}</b>
+        </div> 
+        <div style="text-wrap: nowrap; margin-top: 5px;">
+          <span data-tooltip="Совокупный доход по займу, включая полученный процентный доход, а также пени за просрочку платежей.">Совокупный доход: </span>
+          <span style="font-weight: 600; color: orangered;">${toCurrencyFormat(element.profit)}</span>
         </div> 
       </div>
     </section>
+    <div class="progressbar__container" style="margin-top: 5px;">
+      <div class="progressbar" style="width: ${element.progress*100}%; background: orangered;"></div>
+    </div>
     `
  }
 }
@@ -216,36 +239,43 @@ function fmCompanyShow(arr, blockId) {
   list.innerHTML = ''; // очищаем текущий список
   function createListElement(element) {
     return `
-        <header style="display: flex; margin-top: 6px;">
-          <img class="list-element__img" src="https://jetlend.ru${element.preview_small_url === null ? element.image_url : element.preview_small_url}">
-          <div style="display: flex; flex-direction: column; text-wrap: nowrap;">
-            <a class="list-element__loan-name target-url" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block; width: 0;" 
-              href="https://jetlend.ru/invest/v3/company/${element.id}">${element.loan_name}</a>
-            <span style="font-size: 14px">${element.loan_isin}</span>
-            <span style="font-size: 14px">
-              <b style="${element.rating.includes('A') ? 'color: limegreen;' : 
-                          element.rating.includes('B') ? 'color: orange;' : 
-                          'color: orangered;'}">${element.rating}|${ratingArray.indexOf(element.rating)}
-              </b>, 
-              <b style="${element.financial_discipline === 1 ? 'color: limegreen;' : 
-                          element.financial_discipline <= 0.4 ? 'color: red;' : 
-                          'color: orange;'}">ФД: ${(element.financial_discipline*100).toFixed(0)}%
-              </b> 
-            </span>
-          </div>
-          <div style="display: block; flex: 1; margin-left: -50px; font-size: 14px;">
-            <b style="${element.company_investing_amount === null ? 'color: limegreen;' : 
-                          element.company_investing_amount === '0.00' ? 'color: #8888e6;' : 'color: orange;'}
-                          text-wrap: nowrap; float: right">
-                          ${element.company_investing_amount === null ? 'Заёмщика нет в портфеле' : 
-                          element.company_investing_amount === '0.00' ? 'Заёмщик был в портфеле' : 
-                          `Компания в портфеле: ${toCurrencyFormat(element.company_investing_amount)}`}
-            </b> 
-            <div style="${element.investing_amount !== null ? 'color: orange;' : ''} font-weight: 600; float: right">
-                        ${element.investing_amount !== null ? `Зарезервировано: ${toCurrencyFormat(element.investing_amount)}` : ''}
+        <header>
+          <div style="display: flex; margin-top: 6px;">
+            <img class="list-element__img" src="https://jetlend.ru${element.preview_small_url === null ? element.image_url : element.preview_small_url}">
+            <div style="display: flex; flex-direction: column; text-wrap: nowrap;">
+              <a class="list-element__loan-name target-url" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block; width: 0;" 
+                href="https://jetlend.ru/invest/v3/company/${element.id}">${element.loan_name}</a>
+              <span style="font-size: 14px">${element.loan_isin}</span>
+              <span style="font-size: 14px">
+                <b style="${element.rating.includes('A') ? 'color: limegreen;' : 
+                            element.rating.includes('B') ? 'color: orange;' : 
+                            'color: orangered;'}">${element.rating}|${ratingArray.indexOf(element.rating)}
+                </b>, 
+                <b style="${element.financial_discipline === 1 ? 'color: limegreen;' : 
+                            element.financial_discipline <= 0.4 ? 'color: red;' : 
+                            'color: orange;'}">ФД: ${(element.financial_discipline*100).toFixed(0)}%
+                </b> 
+              </span>
             </div>
+            <div style="display: block; flex: 1; margin-left: -50px; font-size: 14px;">
+              <b style="${element.company_investing_amount === null ? 'color: limegreen;' : 
+                            element.company_investing_amount === '0.00' ? 'color: #8888e6;' : 'color: orange;'}
+                            text-wrap: nowrap; float: right">
+                            ${element.company_investing_amount === null ? 'Заёмщика нет в портфеле' : 
+                            element.company_investing_amount === '0.00' ? 'Заёмщик был в портфеле' : 
+                            `Компания в портфеле: ${toCurrencyFormat(element.company_investing_amount)}`}
+              </b> 
+              <div style="${element.investing_amount !== null ? 'color: orange;' : ''} font-weight: 600; float: right">
+                          ${element.investing_amount !== null ? `Зарезервировано: ${toCurrencyFormat(element.investing_amount)}` : ''}
+              </div>
+            </div>
+
+          </div>
+          <div class="progressbar__container" style="margin-bottom: 8px;">
+            <div class="progressbar" style="width: ${element.collected_percentage}%; background: limegreen;"></div>
           </div>
         </header>
+
         
         <main>
           <p>${element.company}</p>
@@ -386,6 +416,9 @@ function smCompanyShow(arr, blockId) {
                     ${element.invested_debt !== null ? `Займ в портфеле: ${toCurrencyFormat(element.invested_debt)}` : ''}
           </div>
         </div>
+      </div>
+      <div class="progressbar__container" style="margin-bottom: 8px">
+        <div class="progressbar" style="width: ${element.progress*100}%; background: limegreen;"></div>
       </div>
     </header>
 
@@ -895,58 +928,6 @@ async function updateFirstMarketReserv() {
 }
 
 // Обновление списка компаний (вторичка)
-// async function updateSecondMarket() {
-//   smCompanyUpdate = true;
-//   $.get('#sm-numOfSortedCompany').textContent = `Загрузка...`;
-//   $.get('#sm-btn-update').classList.add('display-none');
-//   $.get('#sm-btn-show').classList.add('display-none');
-//   $.get('#sm-btn-stop').classList.remove('display-none');
-//   $.get('#market-companyAnaliz').classList.add('load-block-animation');
-//   const res = await fetchData("https://jetlend.ru/invest/api/exchange/loans?limit=10000&offset=0&sort_dir=desc&sort_field=ytm");
-//   if (res.data) {
-//     const notZeroYtmObj = res.data.data.filter(obj => (obj.ytm !== 0));
-//     $.get('#market-numOfAllCompany').textContent = res.data.data.length;
-//     $.get('#market-averagePercent').textContent = toPercentFormat(notZeroYtmObj.reduce((acc, curr) => acc + curr.ytm, 0)/notZeroYtmObj.length);
-//     $.get('#market-companyAnaliz').classList.remove('load-block-animation');
-//     const valueToPercent = value => parseFloat((parseFloat((value).toString().replace(',', '.'))/100).toFixed(4)); // '12,3456' => 0.1234
-
-//     const sorted = res.data.data.filter(obj => (obj.term_left >= parseFloat(smDaysFrom.value) && obj.term_left <= parseFloat(smDaysTo.value)) /* Остаток срока займа */
-//       && (ratingArray.indexOf(obj.rating) >= parseInt(smRatingFrom.value) && ratingArray.indexOf(obj.rating) <= parseInt(smRatingTo.value)) /* Рейтинг займа */
-//       && (obj.ytm >= valueToPercent(smRateFrom.value) && obj.ytm <= valueToPercent(smRateTo.value)) /* Эффективная ставка (от 20 до 100) */
-//       && (obj.progress >= valueToPercent(smProgressFrom.value) && obj.progress <= valueToPercent(smProgressTo.value)) /* Выплачено (прогресс в %) */
-//       && (obj.loan_class >= parseInt(smClassFrom.value) && obj.loan_class <= parseInt(smClassTo.value)) /* Класс займа */
-//       && (obj.min_price >= valueToPercent(smPriceFrom.value) && obj.min_price <= valueToPercent(smPriceTo.value)) /* Мин прайс от 50% до 90% */
-//       && (obj.invested_company_debt <= (parseFloat(smMaxCompanySum.value) - parseFloat(smInvestSum.value))) /* Сумма в одного заёмщика */
-//       ); 
-
-//     async function updateArray() {
-//       let count = 0;
-//       let secondSort = [];
-//       for (const element of sorted) {
-//         const details = await fetchDetails(element.loan_id);
-//         Object.assign(element, details);
-//         count += 1;
-//         $.get('#sm-numOfSortedCompany').textContent = `Загрузка... Проверяем ФД... (${count}/${sorted.length})`;
-//         if (element.financial_discipline >= valueToPercent(smFdFrom.value) && element.financial_discipline <= valueToPercent(smFdTo.value) /* ФД от до */) {
-//           secondSort.push(element);
-//         }
-//         if (!smCompanyUpdate) {
-//           smCompanyUpdate = true;
-//           break;
-//         }
-//       }
-//       smInvestCompanyArray = secondSort;
-//       $.get('#sm-numOfSortedCompany').textContent = `Доступно: ${secondSort.length} ${getZaimEnding(secondSort.length)} `;
-//       $.get('#sm-btn-update').classList.remove('display-none');
-//       if (smInvestCompanyArray.length >= 1) {
-//         $.get('#sm-btn-show').classList.remove('display-none');
-//       }
-//       $.get('#sm-btn-stop').classList.add('display-none');    
-//     }
-//     updateArray();
-//   };
-// }
-
 async function updateSecondMarket() {
   loadInvestSettings();
   smCompanyUpdate = true;
@@ -1043,7 +1024,10 @@ $.get('#secondMarketSubmit').addEventListener('click', function() {
       sum: valueToInt(smInvestSum.value),
       sumAll: currencyToFloat(smInvestSumAll.value), 
       minPrice: valueToPercent(smPriceFrom.value), 
-      maxPrice: valueToPercent(smPriceTo.value)}});
+      maxPrice: valueToPercent(smPriceTo.value),
+      ytmMin: valueToPercent(smRateFrom.value),
+      ytmMax: valueToPercent(smRateTo.value)
+    }});
     // chrome.tabs.create({ url: "https://jetlend.ru/invest/v3/?state=login", active: true });
     chrome.windows.create({ url: "https://jetlend.ru/invest/v3/?state=login", type: 'popup', focused: true });
   }

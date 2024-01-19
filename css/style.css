@@ -394,6 +394,7 @@ b {
   background: var(--jle-smallBtnColor);
   padding: 8px;
   margin: 10px 0;
+  margin-right: 4px;
   border-radius: 12px;
   text-decoration: none;
   cursor: pointer;
@@ -402,8 +403,8 @@ b {
           user-select: none;
   transition: background 0.25s ease-in-out, scale 0.05s ease;
 }
-.btn-small + .btn-small {
-  margin-left: 4px;
+.btn-small:last-child {
+  margin-right: 0px;
 }
 .btn-small:hover {
   background: var(--jle-smallBtnColor--hover);
@@ -559,6 +560,17 @@ b {
   transform: scaleY(-1);
   width: 24px;
   height: 24px;
+}
+
+.progressbar {
+  height: inherit;
+  border-radius: inherit;
+}
+.progressbar__container {
+  background: var(--jle-universalColor);
+  width: 100%;
+  height: 4px;
+  border-radius: 5px;
 }
 
 @media screen and (min-width: 768px) {

@@ -12,6 +12,9 @@
 
   --jle-first-color: #ededed;
   --jle-second-color: #e8e8e8;
+  --jle-universalColor: #C8CED2;
+
+  --jle-green: #00BA88;
 }
 
 @media (prefers-color-scheme: dark) {

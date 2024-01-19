@@ -357,11 +357,29 @@ function loadInvestSettings() {
 //   wasOpen = true;
 // }
 
-function dateDiff(date) {
-  const timeDifference = new Date().getTime() - new Date(date).getTime();
+function dateDiff(firstDate, secondDate = 0) {
+  let timeDifference = 0;
+  if (!secondDate) {
+    timeDifference = new Date().getTime() - new Date(firstDate).getTime();
+  } else {
+    timeDifference = new Date(secondDate).getTime() - new Date(firstDate).getTime();
+  }
+  
   const dayDifference = Math.ceil(timeDifference / (1000 * 3600 * 24));
   return dayDifference;
 }
 
-
+// Чанки
+async function fetchChanks(offset, limit, total = 0) {
+  if (offset > total) {
+      return
+  }
+  const url = `https://jetlend.ru/invest/api/exchange/loans?limit=${limit}&offset=${offset}&sort_dir=desc&sort_field=ytm`
+  const res = await fetch(url);
+  const data = await res.json();
+  console.log(data)
+  offset += limit
+  total = data.total
+  fetchChanks(offset, limit, total)
+}
 

@@ -60,40 +60,10 @@ chrome.storage.local.get("smInvest", function (data) {
     let companyCount = 0;
     let companyArrayLength = data.smInvest.array.length;
     let errorCount = 0;
-    async function smInvest(min, max, all, sum, companyArray) {
+    async function smInvest(min, max, ytmMin, ytmMax, all, sum, companyArray) {
       chrome.storage.local.remove("smInvest");
       console.log('Массив компаний: ', companyArray);
       let sumAll = all; // Свободные средства
-      // async function invest(companyId, count, price) {
-      //   let user = {
-      //     count: count,
-      //     max_price: price, // Процент
-      //   };
-      //   await fetch(`https://jetlend.ru/invest/api/exchange/loans/${companyId}/buy/preview`, {
-      //     method: "POST",
-      //     headers: {
-      //       "Content-Type": "application/json;charset=UTF-8",
-      //       "X-Csrftoken": getCookie("csrftoken"),
-      //     },
-      //     credentials: "include",
-      //     body: JSON.stringify(user),
-      //   })
-      //     .then((response) => response.json())
-      //     .then((data) => {
-      //       if (data.status.toLowerCase() === 'ok') {
-      //         sendNotification('Успешная инвестиция', `Сумма: ${toCurrencyFormat(data.data.amount)}`);
-      //         sumAll = parseFloat((sumAll - data.data.amount).toFixed(2))
-      //         // sendNotification('Info2', sumAll)
-      //         investedSum += data.data.amount;
-      //         companyCount++;
-      //       } else {
-      //         sendNotification('Ошибка', `${data.error}\nID займа: ${companyId}.`);
-      //         errorCount++;
-      //       }
-      //       console.log(data);
-      //     });
-      // }
-
       async function invest(companyId, count, price) {
         let user = {
           count: count,
@@ -137,9 +107,12 @@ chrome.storage.local.get("smInvest", function (data) {
       for (companyId of companyArray) {
         const resp = await fetchData(`https://jetlend.ru/invest/api/exchange/loans/${companyId}/dom/records`);
         if (resp.data) {
-          const sort = resp.data.data.filter(obj => (obj.count > 0) && (obj.price >= min && obj.price <= max)).reverse();
+          const sort = resp.data.data.filter(obj => (obj.count > 0)
+            && (obj.price >= min && obj.price <= max) 
+            && (obj.ytm >= ytmMin && obj.ytm <= ytmMax)).reverse();
           const secondSort = [];
           let sumOne = sum; // Сумма в один займ
+          console.log(sort);
           for (element of sort) {
             const getPrice = element => currencyToFloat(element.amount / element.count); // Цена
             if (sumOne > 0) {
@@ -165,7 +138,7 @@ chrome.storage.local.get("smInvest", function (data) {
     }  
     async function mainFunction() {
       sendNotification("Ожидайте", "Средства распределяются, не закрывайте вкладку.");
-      await smInvest(data.smInvest.minPrice, data.smInvest.maxPrice, data.smInvest.sumAll, data.smInvest.sum, data.smInvest.array);
+      await smInvest(data.smInvest.minPrice, data.smInvest.maxPrice, data.smInvest.ytmMin, data.smInvest.ytmMax, data.smInvest.sumAll, data.smInvest.sum, data.smInvest.array);
       sendNotification("Распределение заверешено", `Общая сумма: ${toCurrencyFormat(investedSum)}. 
                                   Количество займов: ${companyCount} из ${companyArrayLength}. Ошибки: ${errorCount}.`);
       setBadge("");

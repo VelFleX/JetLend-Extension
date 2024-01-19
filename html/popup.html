@@ -21,6 +21,12 @@
             <div class="svg-btn-container tooltip" id="events__open" data-tooltip="События">
               <img src="/img/events.svg" width="24px" alt="События">
             </div>
+            <!-- <div class="svg-btn-container tooltip" id="portfolio__open" data-tooltip="Портфель">
+              <img src="/img/portfolio.svg" width="24px" alt="Портфель">
+            </div>
+            <div class="svg-btn-container tooltip" id="analytics__open" data-tooltip="Аналитика">
+              <img src="/img/analytics.svg" width="24px" alt="Аналитика">
+            </div> -->
             <div class="svg-btn-container tooltip" id="settings__open" data-tooltip="Настройки">
               <img src="/img/settings.svg" width="22px" alt="Настройки">
             </div>
@@ -163,7 +169,7 @@
 
     <section class="stats-section">
       <div class="container">
-        <div class="load-spinner__container"><span class="load-spinner" style="width: 32px;"></span></div>
+        <div class="load-spinner__container" style="margin-bottom: 32px;"><span class="load-spinner" style="width: 32px;"></span></div>
       </div>
     </section>
 
@@ -178,6 +184,97 @@
           <span class="btn-small" id="event-defaults__open">Последние дефолты</span>
         </div>
         <div id="events__list"></div>
+      </section>
+    </div> 
+
+    <div class="modal-container display-none" id="portfolio" style="height: 650px;">
+      <section class="modal">
+        <div class="modal__title">
+          <h5>Портфель</h5>
+          <span class="modal__btn-close">×</span>
+        </div>
+        <div id="portfolio__btn-section">
+          <span class="btn-small" id="portfolio-1__open">Все активы</span>
+          <span class="btn-small" id="portfolio-2__open">Просрочка 5+</span>
+          <span class="btn-small" id="portfolio-3__open">Просрочка 15+</span>
+          <span class="btn-small" id="portfolio-4__open">Рестракты</span>
+          <span class="btn-small" id="portfolio-5__open">Дефолты</span>
+          <span class="btn-small" id="portfolio-6__open">Скрытые просрочки</span>
+        </div>
+        <div id="portfolio__list"></div>
+      </section>
+    </div> 
+
+    <div class="modal-container display-none" id="analytics" style="height: 650px;">
+      <section class="modal">
+        <div class="modal__title">
+          <h5>Аналитика</h5>
+          <span class="modal__btn-close">×</span>
+        </div>
+        <div id="analytics__btn-section">
+          <span class="btn-small" id="analytics-1__open">Поступления</span>
+          <span class="btn-small" id="analytics-2__open">Ожидаемые поступления</span>
+        </div>
+        <div id="analytics__list">
+          <div style="background: var(--jle-secondBgColor); width: 100%; height: 200px; display: flex; align-items: flex-end; padding: 0 15px; gap: 5px; border-radius: 16px;">
+            <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
+              <div class="tooltip__content">
+                <p>Текст первой строки</p>
+                <p>Текст второй строки</p>
+              </div>
+              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 70%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+              <div style="background: var(--jle-green); width: 100%; height: 55%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+            </div>
+            <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
+              <div class="tooltip__content">
+                <p>Текст первой строки</p>
+                <p>Текст второй строки</p>
+              </div>
+              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 70%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+              <div style="background: var(--jle-green); width: 100%; height: 55%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+            </div>
+            <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
+              <div class="tooltip__content">
+                <p>Текст первой строки</p>
+                <p>Текст второй строки</p>
+              </div>
+              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 70%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+              <div style="background: var(--jle-green); width: 100%; height: 55%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+            </div>
+            <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
+              <div class="tooltip__content">
+                <p>Текст первой строки</p>
+                <p>Текст второй строки</p>
+              </div>
+              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 70%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+              <div style="background: var(--jle-green); width: 100%; height: 55%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+            </div>
+            <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
+              <div class="tooltip__content">
+                <p>Текст первой строки</p>
+                <p>Текст второй строки</p>
+              </div>
+              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 70%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+              <div style="background: var(--jle-green); width: 100%; height: 55%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+            </div>
+            <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
+              <div class="tooltip__content">
+                <p>Текст первой строки</p>
+                <p>Текст второй строки</p>
+              </div>
+              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 70%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+              <div style="background: var(--jle-green); width: 100%; height: 55%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+            </div>
+            <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
+              <div class="tooltip__content">
+                <p>Текст первой строки</p>
+                <p>Текст второй строки</p>
+              </div>
+              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 70%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+              <div style="background: var(--jle-green); width: 100%; height: 55%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+            </div>
+          </div>
+        </div>
       </section>
     </div> 
 
