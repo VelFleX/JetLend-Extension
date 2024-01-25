@@ -42,9 +42,7 @@ document.addEventListener("click", function (event) {
     }
   }
 });
-let fmInvestCompanyArray = [];
-let fmrInvestCompanyArray = [];
-let smInvestCompanyArray = [];
+
 let freeBalance = 0;
 let cleanBalance = 0;
 let balance = 0;
@@ -192,42 +190,42 @@ async function lastDefaultsShow() {
     list.textContent = transactionsData.error;
   }
 
-  function createListElement(element) {
+  function createListElement(company) {
     return `
     <section style="display: flex; margin-top: 6px;">
-      <img class="list-element__img" src="https://jetlend.ru${element.preview_small_url}">
+      <img class="list-element__img" src="https://jetlend.ru${company.preview_small_url}">
       <div>
-        <a class="list-element__loan-name target-url" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block;" href="https://jetlend.ru/invest/v3/company/${element.loan_id}">
-          ${element.loan_name}
+        <a class="list-element__loan-name target-url" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block;" href="https://jetlend.ru/invest/v3/company/${company.loan_id}">
+          ${company.loan_name}
         </a>
           <div style="font-size: 14px; margin-top: 3px;">
-            <b style="${element.rating.includes('A') ? 'color: limegreen;' : 
-                        element.rating.includes('B') ? 'color: orange;' : 
-                        'color: orangered;'}">${element.rating}|${ratingArray.indexOf(element.rating)}</b>, 
-            <span> NPL <b>${element.delay_days} д.</b></span>
+            <b style="${company.rating.includes('A') ? 'color: limegreen;' : 
+                        company.rating.includes('B') ? 'color: orange;' : 
+                        'color: orangered;'}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
+            <span> NPL <b>${company.delay_days} д.</b></span>
           </div>
           <div style="margin-top: 5px; font-size: 14px; text-wrap: nowrap;">
             <span>Инвестиция: </span>
-            <b>${toCurrencyFormat(element.amount)}</b>
+            <b>${toCurrencyFormat(company.amount)}</b>
           </div>
       </div>
       <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; font-size: 14px;">
         <div style="text-wrap: nowrap;">
-          <b>${formatReadableDate(element.default_date)}</b>
+          <b>${formatReadableDate(company.default_date)}</b>
 
         </div>
         <div style="text-wrap: nowrap; margin-top: 5px;">
           <span data-tooltip="Остаток тела долга по займу.">Остаток долга: </span>
-          <b style="color: orangered;">${toCurrencyFormat(-element.principal_debt)}</b>
+          <b style="color: orangered;">${toCurrencyFormat(-company.principal_debt)}</b>
         </div> 
         <div style="text-wrap: nowrap; margin-top: 5px;">
           <span data-tooltip="Совокупный доход по займу, включая полученный процентный доход, а также пени за просрочку платежей.">Совокупный доход: </span>
-          <span style="font-weight: 600; color: orangered;">${toCurrencyFormat(element.profit)}</span>
+          <span style="font-weight: 600; color: orangered;">${toCurrencyFormat(company.profit)}</span>
         </div> 
       </div>
     </section>
     <div class="progressbar__container" style="margin-top: 5px;">
-      <div class="progressbar" style="width: ${element.progress*100}%; background: orangered;"></div>
+      <div class="progressbar" style="width: ${company.progress*100}%; background: orangered;"></div>
     </div>
     `
  }
@@ -237,106 +235,82 @@ function fmCompanyShow(arr, blockId) {
   const removeElement = index => arr.splice(index, 1);
   const list = $.get(`${blockId}`);
   list.innerHTML = ''; // очищаем текущий список
-  function createListElement(element) {
+  function createListElement(company, details) {
     return `
         <header>
           <div style="display: flex; margin-top: 6px;">
-            <img class="list-element__img" src="https://jetlend.ru${element.preview_small_url === null ? element.image_url : element.preview_small_url}">
+            <img class="list-element__img" src="https://jetlend.ru${company.preview_small_url === null ? company.image_url : company.preview_small_url}">
             <div style="display: flex; flex-direction: column; text-wrap: nowrap;">
               <a class="list-element__loan-name target-url" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block; width: 0;" 
-                href="https://jetlend.ru/invest/v3/company/${element.id}">${element.loan_name}</a>
-              <span style="font-size: 14px">${element.loan_isin}</span>
+                href="https://jetlend.ru/invest/v3/company/${company.id}">${company.loan_name}</a>
+              <span style="font-size: 14px">${company.loan_isin}</span>
               <span style="font-size: 14px">
-                <b style="${element.rating.includes('A') ? 'color: limegreen;' : 
-                            element.rating.includes('B') ? 'color: orange;' : 
-                            'color: orangered;'}">${element.rating}|${ratingArray.indexOf(element.rating)}
+                <b style="${company.rating.includes('A') ? 'color: limegreen;' : 
+                            company.rating.includes('B') ? 'color: orange;' : 
+                            'color: orangered;'}">${company.rating}|${ratingArray.indexOf(company.rating)}
                 </b>, 
-                <b style="${element.financial_discipline === 1 ? 'color: limegreen;' : 
-                            element.financial_discipline <= 0.4 ? 'color: red;' : 
-                            'color: orange;'}">ФД: ${(element.financial_discipline*100).toFixed(0)}%
+                <b style="${company.financial_discipline === 1 ? 'color: limegreen;' : 
+                            company.financial_discipline <= 0.4 ? 'color: red;' : 
+                            'color: orange;'}">ФД: ${(company.financial_discipline*100).toFixed(0)}%
                 </b> 
               </span>
             </div>
             <div style="display: block; flex: 1; margin-left: -50px; font-size: 14px;">
-              <b style="${element.company_investing_amount === null ? 'color: limegreen;' : 
-                            element.company_investing_amount === '0.00' ? 'color: #8888e6;' : 'color: orange;'}
+              <b style="${company.company_investing_amount === null ? 'color: limegreen;' : 
+                            company.company_investing_amount === '0.00' ? 'color: #8888e6;' : 'color: orange;'}
                             text-wrap: nowrap; float: right">
-                            ${element.company_investing_amount === null ? 'Заёмщика нет в портфеле' : 
-                            element.company_investing_amount === '0.00' ? 'Заёмщик был в портфеле' : 
-                            `Компания в портфеле: ${toCurrencyFormat(element.company_investing_amount)}`}
+                            ${company.company_investing_amount === null ? 'Заёмщика нет в портфеле' : 
+                            company.company_investing_amount === '0.00' ? 'Заёмщик был в портфеле' : 
+                            `Компания в портфеле: ${toCurrencyFormat(company.company_investing_amount)}`}
               </b> 
-              <div style="${element.investing_amount !== null ? 'color: orange;' : ''} font-weight: 600; float: right">
-                          ${element.investing_amount !== null ? `Зарезервировано: ${toCurrencyFormat(element.investing_amount)}` : ''}
+              <div style="${company.investing_amount !== null ? 'color: orange;' : ''} font-weight: 600; float: right">
+                          ${company.investing_amount !== null ? `Зарезервировано: ${toCurrencyFormat(company.investing_amount)}` : ''}
               </div>
             </div>
 
           </div>
           <div class="progressbar__container" style="margin-bottom: 8px;">
-            <div class="progressbar" style="width: ${element.collected_percentage}%; background: limegreen;"></div>
+            <div class="progressbar" style="width: ${company.collected_percentage}%; background: limegreen;"></div>
           </div>
         </header>
 
         
         <main>
-          <p>${element.company}</p>
-          <p>ИНН: <b>${element.inn}</b>, ОГРН: <b>${element.ogrn}</b></p>
-          <p>Ставка: <b>${(element.interest_rate*100).toFixed(2)}%</b>, срок: <b>${element.term}</b> ${daysEnding(element.term)}</p>
-          <p>Сумма: <b>${toShortCurrencyFormat(element.amount)}</b>, собрано: <b>(${element.collected_percentage.toFixed(0)}%/100%)</b></p>
-          <p>Выручка за год: <b>${toShortCurrencyFormat(element.revenueForPastYear)}</b>, прибыль за год: <b>${toShortCurrencyFormat(element.profitForPastYear)}</b></p>
-          <p>Дата регистрации: <b>${element.registrationDate}</b></p>
-          <p>Адрес: ${element.address}</p>
-          <p>Деятельность: ${element.primaryCatergory}.</p> 
-          <div style="margin: 5px 0px 10px">${element.site ? `<a class="target-url link" href="${element.site}">Сайт компании </a>` : 'Cайта нет '}|
-            <a class="target-url link" href="${element.profile}"> Контур. Фокус </a>|
-            <a class="target-url link" href="https://vbankcenter.ru/contragent/search?searchStr=${element.inn}"> ВБЦ </a>|
-            <a class="target-url link" href="https://checko.ru/search?query=${element.inn}"> Чекко </a>|
-            <a class="target-url link" href="https://www.rusprofile.ru/search?query=${element.inn}"> Rusprofile </a>
+          <p>${company.company}</p>
+          <p>Ставка: <b>${(company.interest_rate*100).toFixed(2)}%</b>, срок: <b>${company.term}</b> ${daysEnding(company.term)}</p>
+          <p>Сумма: <b>${toShortCurrencyFormat(company.amount)}</b>, собрано: <b>(${company.collected_percentage.toFixed(0)}%/100%)</b></p>
+          ${details ? 
+            `<p>ИНН: <b>${details.inn}</b>, ОГРН: <b>${details.ogrn}</b></p>
+            <p>Выручка за год: <b>${toShortCurrencyFormat(details.revenueForPastYear)}</b>, прибыль за год: <b>${toShortCurrencyFormat(details.profitForPastYear)}</b></p>
+            <p>Дата регистрации: <b>${details.registrationDate}</b></p>
+            <p>Адрес: ${details.address}</p>
+            <p>Деятельность: ${details.primaryCatergory}.</p> 
+            <div style="margin-top: 5px">${details.site ? `<a class="target-url link" href="${details.site}">Сайт компании </a>` : 'Cайта нет '}|
+              <a class="target-url link" href="${details.profile}"> Контур. Фокус </a>|
+              <a class="target-url link" href="https://vbankcenter.ru/contragent/search?searchStr=${details.inn}"> ВБЦ </a>|
+              <a class="target-url link" href="https://checko.ru/search?query=${details.inn}"> Чекко </a>|
+              <a class="target-url link" href="https://www.rusprofile.ru/search?query=${details.inn}"> Rusprofile </a>
+            </div>` 
+            : ''}
           </div> 
         </main>
 
+
   `;
   }
-  arr.forEach((element, index) => {
+  arr.forEach((company, index) => {
     const listItem = document.createElement('div');
     listItem.classList.add('list-element', 'contrast-bg');
-    listItem.innerHTML = createListElement(element); 
-    // listItem.addEventListener('click', async function() {
-    //   const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
-    //   const load = document.createElement('div');
-    //   load.classList.add('list-element__load-block');
-    //   load.textContent = 'Загрузка...';
-    //   listItem.appendChild(load);
-    //   if (res.data) {
-    //     const company = res.data.requests.find(item => item.id === element.id);
-    //     const details = await fetchDetails(element.id);
-    //     Object.assign(company, details);
-    //     listItem.innerHTML = createListElement(company); 
-    //     const buttons = document.createElement('div');
-    //     buttons.classList.add('buttons-section')
-    //     const removeButton = document.createElement('span');
-    //     removeButton.textContent = 'Удалить';
-    //     removeButton.classList.add('btn');
-    //     removeButton.onclick = function() {
-    //       removeElement(index);
-    //       if (arr.length === 0) {
-    //         closeModal('#fm-list')
-    //       }
-    //       updateFmArrayText();
-    //       fmCompanyShow(arr, blockId);
-    //     }; 
-    //     listItem.appendChild(buttons);
-    //     // buttons.appendChild(focus);
-    //     buttons.appendChild(removeButton); 
-    //     listItem.style.filter = '';
-    //   }
-    // });
+    listItem.innerHTML = createListElement(company); 
+   
     if (arr !== fmrInvestCompanyArray) {
       const buttons = document.createElement('div');
       buttons.classList.add('buttons-section');
-      const removeButton = document.createElement('span');
-      removeButton.textContent = 'Удалить';
-      removeButton.classList.add('btn');
-      removeButton.onclick = function() {
+      const removeBtn = document.createElement('span');
+      removeBtn.textContent = 'Удалить';
+      removeBtn.classList.add('btn');
+      removeBtn.style.marginTop = '10px';
+      removeBtn.onclick = function() {
         removeElement(index);
         if (arr.length === 0) {
           closeModal('#fm-list')
@@ -344,10 +318,28 @@ function fmCompanyShow(arr, blockId) {
         updateFmArrayText();
         fmCompanyShow(arr, blockId);
       }; 
+      const detailsBtn = document.createElement('span');
+      detailsBtn.textContent = 'Подробнее';
+      detailsBtn.classList.add('btn');
+      detailsBtn.style.marginTop = '10px';
+      detailsBtn.onclick = async function() {
+        const load = document.createElement('div');
+        load.classList.add('list-element__load-block');
+        const spin = document.createElement('div');
+        spin.classList.add('load-spinner');
+        spin.style.width = '64px';
+        load.appendChild(spin);
+        listItem.appendChild(load);
+        const res = await fetchData(`https://jetlend.ru/invest/api/requests/${company.id}/details`);
+        if (res.data) {
+          listItem.innerHTML = createListElement(company, res.data.data.details);
+          listItem.appendChild(removeBtn);
+        }
+      };
       listItem.appendChild(buttons);
-      buttons.appendChild(removeButton); 
+      buttons.appendChild(detailsBtn);
+      buttons.appendChild(removeBtn); 
     }
-
     list.appendChild(listItem); 
   });
 };
@@ -377,74 +369,80 @@ function updateSmArrayText() {
 function smCompanyShow(arr, blockId) {
   const removeElement = index => arr.splice(index, 1);
   const list = $.get(`${blockId}`);
-  list.innerHTML = ''; // очищаем текущий список
-  arr.forEach((element, index) => {
-    const listItem = document.createElement('div');
-    listItem.classList.add('list-element', 'contrast-bg');
-    listItem.innerHTML = `
-    <header>
-      <div style="display: flex; margin-top: 6px;">
-        <img class="list-element__img" src="https://jetlend.ru${element.preview_small_url === null ? element.image_url : element.preview_small_url}">
-        <div style="display: flex; flex-direction: column; text-wrap: nowrap;">
-          <a class="list-element__loan-name target-url" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block; width: 0;" 
-            href="https://jetlend.ru/invest/v3/company/${element.loan_id}">${element.loan_name}</a>
-          <span style="font-size: 14px">${element.loan_isin}</span>
-          <span style="font-size: 14px">
-            <b style="${element.rating.includes('A') ? 'color: limegreen;' : 
-                        element.rating.includes('B') ? 'color: orange;' : 
-                        'color: orangered;'}">${element.rating}|${ratingArray.indexOf(element.rating)}
-            </b>, 
-            <b style="${element.financial_discipline === 1 ? 'color: limegreen;' : 
-                        element.financial_discipline <= 0.4 ? 'color: red;' : 
-                        'color: orange;'}">ФД: ${(element.financial_discipline*100).toFixed(0)}%
-            </b>, 
-            <b style="${element.loan_class === 0 ? 'color: limegreen;' : 
-                        element.loan_class === 1 ? 'color: orange;' : 
-                        'color: orangered;'}">Класс: ${element.loan_class}
-            </b>  
-          </span>
-        </div>
-        <div style="display: block; flex: 1; margin-left: -50px; font-size: 14px;">
-          <b style="${element.invested_company_debt === null ? 'color: limegreen;' : 
-                        element.invested_company_debt === 0 ? 'color: #8888e6;' :  'color: orange;'}
-                         text-wrap: nowrap; float: right">
-                        ${(element.invested_company_debt === null ? 'Заёмщика нет в портфеле' : 
-                        element.invested_company_debt === 0 ? 'Заёмщик был в портфеле' : 
-                        `Компания в портфеле: ${toCurrencyFormat(element.invested_company_debt)}`)}
-          </b> 
-          <div style="${element.invested_debt !== null ? 'color: orange;' : ''} font-weight: 600; float: right">
-                    ${element.invested_debt !== null ? `Займ в портфеле: ${toCurrencyFormat(element.invested_debt)}` : ''}
+  list.innerHTML = ''; 
+  function createListElement(company, details) {
+    return `
+      <header>
+        <div style="display: flex; margin-top: 6px;">
+          <img class="list-element__img" src="https://jetlend.ru${company.preview_small_url === null ? company.image_url : company.preview_small_url}">
+          <div style="display: flex; flex-direction: column; text-wrap: nowrap;">
+            <a class="list-element__loan-name target-url" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block; width: 0;" 
+              href="https://jetlend.ru/invest/v3/company/${company.loan_id}">${company.loan_name}</a>
+            <span style="font-size: 14px">${company.loan_isin}</span>
+            <span style="font-size: 14px">
+              <b style="${company.rating.includes('A') ? 'color: limegreen;' : 
+                          company.rating.includes('B') ? 'color: orange;' : 
+                          'color: orangered;'}">${company.rating}|${ratingArray.indexOf(company.rating)}
+              </b>, 
+              <b style="${company.financial_discipline === 1 ? 'color: limegreen;' : 
+                          company.financial_discipline <= 0.4 ? 'color: red;' : 
+                          'color: orange;'}">ФД: ${(company.financial_discipline*100).toFixed(0)}%
+              </b>, 
+              <b style="${company.loan_class === 0 ? 'color: limegreen;' : 
+                          company.loan_class === 1 ? 'color: orange;' : 
+                          'color: orangered;'}">Класс: ${company.loan_class}
+              </b>  
+            </span>
+          </div>
+          <div style="display: block; flex: 1; margin-left: -50px; font-size: 14px;">
+            <b style="${company.invested_company_debt === null ? 'color: limegreen;' : 
+                          company.invested_company_debt === 0 ? 'color: #8888e6;' :  'color: orange;'}
+                          text-wrap: nowrap; float: right">
+                          ${(company.invested_company_debt === null ? 'Заёмщика нет в портфеле' : 
+                          company.invested_company_debt === 0 ? 'Заёмщик был в портфеле' : 
+                          `Компания в портфеле: ${toCurrencyFormat(company.invested_company_debt)}`)}
+            </b> 
+            <div style="${company.invested_debt !== null ? 'color: orange;' : ''} font-weight: 600; float: right">
+                      ${company.invested_debt !== null ? `Займ в портфеле: ${toCurrencyFormat(company.invested_debt)}` : ''}
+            </div>
           </div>
         </div>
-      </div>
-      <div class="progressbar__container" style="margin-bottom: 8px">
-        <div class="progressbar" style="width: ${element.progress*100}%; background: limegreen;"></div>
-      </div>
-    </header>
+        <div class="progressbar__container" style="margin-bottom: 8px">
+          <div class="progressbar" style="width: ${company.progress*100}%; background: limegreen;"></div>
+        </div>
+      </header>
 
-    <main>
-      <p>${element.company}</p>
-      <p>ИНН: <b>${element.inn}</b>, ОГРН: <b>${element.ogrn}</b></p>
-      <p>Ставка: <b>${(element.interest_rate*100).toFixed(2)}% (${(element.ytm*100).toFixed(2)}%)</b>, минимальная цена: <b>${(element.min_price*100).toFixed(2)}%</b></p>
-      <p>Cрок: <b>${element.term + daysEnding(element.term)}</b>, остаток: <b>${element.term_left + daysEnding(element.term_left)}</b>, выплачено: <b>${(element.progress*100).toFixed(2)}%</b></p>
-      <p>Выручка за год: <b>${toShortCurrencyFormat(element.revenueForPastYear)}</b>, прибыль за год: <b>${toShortCurrencyFormat(element.profitForPastYear)}</b></p>
-      <p>Дата регистрации: <b>${element.registrationDate}</b></p>
-      <p>Адрес: ${element.address}</p>
-      <p>Деятельность: ${element.primaryCatergory}.</p> 
-      <div style="margin: 5px 0px 10px">${element.site ? `<a class="target-url link" href="${element.site}">Сайт компании </a>` : 'Cайта нет '}|
-        <a class="target-url link" href="${element.profile}"> Контур. Фокус </a>|
-        <a class="target-url link" href="https://vbankcenter.ru/contragent/search?searchStr=${element.inn}"> ВБЦ </a>|
-        <a class="target-url link" href="https://checko.ru/search?query=${element.inn}"> Чекко </a>|
-        <a class="target-url link" href="https://www.rusprofile.ru/search?query=${element.inn}"> Rusprofile </a>
-      </div> 
-    </main>
-    `; 
+      <main>
+        <p>${company.company}</p>
+        <p>Ставка: <b>${(company.interest_rate*100).toFixed(2)}% (${(company.ytm*100).toFixed(2)}%)</b>, минимальная цена: <b>${(company.min_price*100).toFixed(2)}%</b></p>
+        <p>Cрок: <b>${company.term + daysEnding(company.term)}</b>, остаток: <b>${company.term_left + daysEnding(company.term_left)}</b>, выплачено: <b>${(company.progress*100).toFixed(2)}%</b></p>
+        ${details ? 
+          `<p>ИНН: <b>${details.inn}</b>, ОГРН: <b>${details.ogrn}</b></p>
+          <p>Выручка за год: <b>${toShortCurrencyFormat(details.revenueForPastYear)}</b>, прибыль за год: <b>${toShortCurrencyFormat(details.profitForPastYear)}</b></p>
+          <p>Дата регистрации: <b>${details.registrationDate}</b></p>
+          <p>Адрес: ${details.address}</p>
+          <p>Деятельность: ${details.primaryCatergory}.</p> 
+          <div style="margin-top: 5px">${details.site ? `<a class="target-url link" href="${details.site}">Сайт компании </a>` : 'Cайта нет '}|
+            <a class="target-url link" href="${details.profile}"> Контур. Фокус </a>|
+            <a class="target-url link" href="https://vbankcenter.ru/contragent/search?searchStr=${details.inn}"> ВБЦ </a>|
+            <a class="target-url link" href="https://checko.ru/search?query=${details.inn}"> Чекко </a>|
+            <a class="target-url link" href="https://www.rusprofile.ru/search?query=${details.inn}"> Rusprofile </a>
+          </div>` 
+          : ''}
+      </main>
+    `;
+  }
+  arr.forEach((company, index) => {
+    const listItem = document.createElement('div');
+    listItem.classList.add('list-element', 'contrast-bg');
+    listItem.innerHTML = createListElement(company);
     const buttons = document.createElement('div');
     buttons.classList.add('buttons-section')
-    const removeButton = document.createElement('span');
-    removeButton.textContent = 'Удалить';
-    removeButton.classList.add('btn');
-    removeButton.onclick = function() {
+    const removeBtn = document.createElement('span');
+    removeBtn.textContent = 'Удалить';
+    removeBtn.classList.add('btn');
+    removeBtn.style.marginTop = '10px';
+    removeBtn.onclick = function() {
       removeElement(index);
       if (arr.length === 0) {
         closeModal('#sm-list')
@@ -452,8 +450,29 @@ function smCompanyShow(arr, blockId) {
       updateSmArrayText();
       smCompanyShow(arr, blockId);
     }; 
+    const detailsBtn = document.createElement('span');
+    detailsBtn.textContent = 'Подробнее';
+    detailsBtn.classList.add('btn');
+    detailsBtn.style.marginTop = '10px';
+    detailsBtn.onclick = async function() {
+      const load = document.createElement('div');
+      load.classList.add('list-element__load-block');
+      const spin = document.createElement('div');
+      spin.classList.add('load-spinner');
+      spin.style.width = '64px';
+      load.appendChild(spin);
+      listItem.appendChild(load);
+      const res = await fetchData(`https://jetlend.ru/invest/api/requests/${company.loan_id}/details`);
+      
+      if (res.data) {
+        listItem.innerHTML = createListElement(company, res.data.data.details);
+        listItem.appendChild(removeBtn);
+      }
+      
+    };
     listItem.appendChild(buttons);
-    buttons.appendChild(removeButton); 
+    buttons.appendChild(detailsBtn);
+    buttons.appendChild(removeBtn); 
     list.appendChild(listItem); 
   });
 }
@@ -831,63 +850,35 @@ chrome.storage.local.get("cacheJetlend", function (result) {
 async function updateFirstMarket() {
   loadInvestSettings();
   fmCompanyUpdate = true;
+  fmInvestCompanyArray = [];
   $.get('#fm-numOfSortedCompany').textContent = `Загрузка...`;
   $.get('#fm-btn-update').classList.add('display-none');
   $.get('#fm-btn-show').classList.add('display-none');
   $.get('#fm-btn-stop').classList.remove('display-none');
   $.get('#market-companyAnaliz').classList.add('load-block-animation');
-  const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
-  if (res.data) {
-    $.get('#market-averagePercent').textContent = '0%';
-    if (res.data.requests.length) {
-      $.get('#market-averagePercent').textContent = toPercentFormat(res.data.requests.reduce((acc, curr) => acc + curr.interest_rate, 0)/res.data.requests.length);
-    }
-    $.get('#market-numOfAllCompany').textContent = res.data.requests.length;
-    $.get('#market-companyAnaliz').classList.remove('load-block-animation');
-    const valueToNum = value => parseFloat((parseFloat((value).toString().replace(',', '.'))/100).toFixed(4));
-    const sorted = res.data.requests.filter(obj => (obj.collected_percentage !== 100) /* Полоска сбора не заполнена (меньше 100%) */ 
-      && (obj.investing_amount === null) /* Резервация (нет) */ 
-      // && (obj.company_investing_amount === null || obj.company_investing_amount === "0.00") /* Есть заёмщик портфеле (нет) */
-      && (obj.term >= parseInt(investSettingsObj.fmDaysFrom) && obj.term <= parseInt(investSettingsObj.fmDaysTo)) /* Срок займа */
-      && (ratingArray.indexOf(obj.rating) >= parseInt(investSettingsObj.fmRatingFrom) && ratingArray.indexOf(obj.rating) <= parseInt(investSettingsObj.fmRatingTo)) /* Рейтинг займа */
-      && (obj.interest_rate >= valueToNum(investSettingsObj.fmRateFrom) && obj.interest_rate <= valueToNum(investSettingsObj.fmRateTo)) /* Процент займа (от 20 до 100) */ 
-      && (obj.loan_order >= parseFloat(investSettingsObj.fmLoansFrom) && obj.loan_order <= parseFloat(investSettingsObj.fmLoansTo))  /* Какой по счёту займ на платформе */
-      && (obj.company_investing_amount <= (parseFloat(fmMaxCompanySum.value) - parseFloat(fmInvestSum.value))) /* Сумма в одного заёмщика */
-      );
 
-    async function updateArray() {
-      let count = 0;
-      let secondSort = [];
-      for (const element of sorted) {
-        const details = await fetchDetails(element.id);
-        Object.assign(element, details);
-        count++;
-        $.get('#fm-numOfSortedCompany').textContent = `Загрузка... Проверяем ФД... (${count}/${sorted.length})`;
-        if (element.financial_discipline === 1) { // ФД 100%
-          secondSort.push(element);
-        }
-        if (!fmCompanyUpdate) {
-          fmCompanyUpdate = true;
-          break;
-        }
-      }
-      fmInvestCompanyArray = secondSort;
-      $.get('#fm-numOfSortedCompany').textContent = `Доступно: ${secondSort.length} ${getZaimEnding(secondSort.length)} `;
-      $.get('#fm-btn-update').classList.remove('display-none');
-      if (fmInvestCompanyArray.length >= 1) {
-        $.get('#fm-btn-show').classList.remove('display-none');
-      }
-      $.get('#fm-btn-stop').classList.add('display-none');
-    }
-    updateArray()
+  await fmLoadLoans();
+  
+  $.get('#fm-numOfSortedCompany').textContent = `Доступно: ${fmInvestCompanyArray.length} ${getZaimEnding(fmInvestCompanyArray.length)} `;
+  $.get('#fm-btn-update').classList.remove('display-none');
+  if (fmInvestCompanyArray.length >= 1) {
+    $.get('#fm-btn-show').classList.remove('display-none');
+  }
+  $.get('#fm-btn-stop').classList.add('display-none');
+
+  const updateTotal = await fetchData('https://jetlend.ru/invest/api/requests/waiting');
+  if (updateTotal .data) {
+    $.get('#market-numOfAllCompany').textContent = updateTotal.data.requests.length;
+    $.get('#market-companyAnaliz').classList.remove('load-block-animation');
   };
-}
+};
 updateFirstMarket();
 
 // Обновление списка компаний (первичка, резерв)
 async function updateFirstMarketReserv() {
   fmrCompanyUpdate = true;
   fmCompanyUpdate = false;
+  fmrInvestCompanyArray = [];
   $.get('#fmr-numOfSortedCompany').textContent = `Загрузка...`;
   $.get('#fmr-btn-update').classList.add('display-none');
   $.get('#fmr-btn-show').classList.add('display-none');
@@ -895,35 +886,22 @@ async function updateFirstMarketReserv() {
   const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
 
   if (res.data) {
-    const sorted = res.data.requests.filter(obj => (obj.collected_percentage !== 100) /* Полоска сбора не заполнена (меньше 100%) */ 
+    fmrInvestCompanyArray = res.data.requests.filter(obj => (obj.collected_percentage !== 100) /* Полоска сбора не заполнена (меньше 100%) */ 
       && (obj.investing_amount !== null) /* Резервация */ 
       ) 
-
-    async function updateArray() {
-      let count = 0;
-      let secondSort = [];
-      for (const element of sorted) {
-        const details = await fetchDetails(element.id);
-        Object.assign(element, details);
-        count++;
-        secondSort.push(element);
-        $.get('#fmr-numOfSortedCompany').textContent = `Загрузка... Проверяем ФД... (${count}/${sorted.length})`;
+        $.get('#fmr-numOfSortedCompany').textContent = `Загрузка... ()`;
         if (!fmrCompanyUpdate) {
           fmrCompanyUpdate = true;
-          break;
+          return;
         }
-      }
-      fmrInvestCompanyArray = secondSort;
       $.get('#fmr-numOfSortedCompany').textContent =
-        `Загружено: ${secondSort.length} ${getZaimEnding(secondSort.length)} ${sorted.length > count ? `(всего:  ${sorted.length})` : ''}`;
+        `Загружено: ${fmrInvestCompanyArray.length} ${getZaimEnding(fmrInvestCompanyArray.length)}`;
       $.get('#fmr-btn-update').classList.remove('display-none');
       $.get('#fmr-btn-update').textContent = 'Обновить';
       if (fmrInvestCompanyArray.length >= 1) {
         $.get('#fmr-btn-show').classList.remove('display-none');
       }
       $.get('#fmr-btn-stop').classList.add('display-none');
-    }
-    updateArray()
   };
 }
 
@@ -931,56 +909,28 @@ async function updateFirstMarketReserv() {
 async function updateSecondMarket() {
   loadInvestSettings();
   smCompanyUpdate = true;
+  smInvestCompanyArray = [];
   $.get('#sm-numOfSortedCompany').textContent = `Загрузка...`;
   $.get('#sm-btn-update').classList.add('display-none');
   $.get('#sm-btn-show').classList.add('display-none');
   $.get('#sm-btn-stop').classList.remove('display-none');
   $.get('#market-companyAnaliz').classList.add('load-block-animation');
-  const res = await fetchData("https://jetlend.ru/invest/api/exchange/loans?limit=10000&offset=0&sort_dir=desc&sort_field=ytm");
-  if (res.data) {
-    const notZeroYtmObj = res.data.data.filter(obj => (obj.ytm !== 0));
-    $.get('#market-numOfAllCompany').textContent = res.data.data.length;
-    $.get('#market-averagePercent').textContent = toPercentFormat(notZeroYtmObj.reduce((acc, curr) => acc + curr.ytm, 0)/notZeroYtmObj.length);
+  
+  await smLoadLoans('popup', 0, 100);
+
+  $.get('#sm-numOfSortedCompany').textContent = `Доступно: ${smInvestCompanyArray.length} ${getZaimEnding(smInvestCompanyArray.length)}`;
+  $.get('#sm-btn-update').classList.remove('display-none');
+  if (smInvestCompanyArray.length >= 1) {
+    $.get('#sm-btn-show').classList.remove('display-none');
+  }
+  $.get('#sm-btn-stop').classList.add('display-none'); 
+
+  const updateTotal = await fetchData('https://jetlend.ru/invest/api/exchange/loans?limit=1&offset=0');
+  if (updateTotal .data) {
+    $.get('#market-numOfAllCompany').textContent = updateTotal .data.total;
     $.get('#market-companyAnaliz').classList.remove('load-block-animation');
-    const valueToPercent = value => parseFloat((parseFloat((value).toString().replace(',', '.'))/100).toFixed(4)); // '12,3456' => 0.1234
-
-    const sorted = res.data.data.filter(obj => (obj.term_left >= parseFloat(investSettingsObj.smDaysFrom) && obj.term_left <= parseFloat(investSettingsObj.smDaysTo)) /* Остаток срока займа */
-      && (ratingArray.indexOf(obj.rating) >= parseInt(investSettingsObj.smRatingFrom) && ratingArray.indexOf(obj.rating) <= parseInt(investSettingsObj.smRatingTo)) /* Рейтинг займа */
-      && (obj.ytm >= valueToPercent(investSettingsObj.smRateFrom) && obj.ytm <= valueToPercent(investSettingsObj.smRateTo)) /* Эффективная ставка (от 20 до 100) */
-      && (obj.progress >= valueToPercent(investSettingsObj.smProgressFrom) && obj.progress <= valueToPercent(investSettingsObj.smProgressTo)) /* Выплачено (прогресс в %) */
-      && (obj.loan_class >= parseInt(investSettingsObj.smClassFrom) && obj.loan_class <= parseInt(investSettingsObj.smClassTo)) /* Класс займа */
-      && (obj.min_price >= valueToPercent(investSettingsObj.smPriceFrom) && obj.min_price <= valueToPercent(investSettingsObj.smPriceTo)) /* Мин прайс от 50% до 90% */
-      && (obj.invested_company_debt <= (parseFloat(smMaxCompanySum.value) - parseFloat(smInvestSum.value))) /* Сумма в одного заёмщика */
-      ); 
-
-    async function updateArray() {
-      let count = 0;
-      let secondSort = [];
-      for (const element of sorted) {
-        const details = await fetchDetails(element.loan_id);
-        Object.assign(element, details);
-        count++;
-        $.get('#sm-numOfSortedCompany').textContent = `Загрузка... Проверяем ФД... (${count}/${sorted.length})`;
-        if (element.financial_discipline >= valueToPercent(investSettingsObj.smFdFrom) && element.financial_discipline <= valueToPercent(investSettingsObj.smFdTo) /* ФД от до */) {
-          secondSort.push(element);
-        }
-        if (!smCompanyUpdate) {
-          smCompanyUpdate = true;
-          break;
-        }
-      }
-      smInvestCompanyArray = secondSort;
-      $.get('#sm-numOfSortedCompany').textContent = `Доступно: ${secondSort.length} ${getZaimEnding(secondSort.length)} `;
-      $.get('#sm-btn-update').classList.remove('display-none');
-      if (smInvestCompanyArray.length >= 1) {
-        $.get('#sm-btn-show').classList.remove('display-none');
-      }
-      $.get('#sm-btn-stop').classList.add('display-none');    
-    }
-    updateArray();
   };
-}
-
+};
 
 // Распределение средств (первичка)
 $.get('#firstMarketSubmit').addEventListener('click', function() {
@@ -1011,7 +961,6 @@ $.get('#firstMarketSubmit').addEventListener('click', function() {
 // Распределение средств (вторичка)
 $.get('#secondMarketSubmit').addEventListener('click', function() {
   const valueToInt = value => parseInt((value).toString().replace(',', '.'));
-  const valueToPercent = value => parseFloat((parseFloat((value).toString().replace(',', '.'))/100).toFixed(4));
   if ($.get('#smInvestAgree').checked 
     && valueToInt(smInvestSum.value) <= freeBalance 
     && valueToInt(smInvestSum.value) >= 100 

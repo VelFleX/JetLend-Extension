@@ -159,6 +159,7 @@ function getUpdateTime(unixTime) {
 const toCurrencyFormat = (element) =>
   parseFloat(element).toLocaleString("ru-RU", { style: "currency", currency: "RUB" });
 
+const valueToPercent = value => parseFloat((parseFloat((value).toString().replace(',', '.'))/100).toFixed(4)); // '12,3456' => 0.1234
 
 // Функция перевода из числа в проценты (0.2 => 20 %)
 const toPercentFormat = (element) =>
@@ -369,17 +370,61 @@ function dateDiff(firstDate, secondDate = 0) {
   return dayDifference;
 }
 
-// Чанки
-async function fetchChanks(offset, limit, total = 0) {
-  if (offset > total) {
-      return
-  }
-  const url = `https://jetlend.ru/invest/api/exchange/loans?limit=${limit}&offset=${offset}&sort_dir=desc&sort_field=ytm`
-  const res = await fetch(url);
-  const data = await res.json();
-  console.log(data)
-  offset += limit
-  total = data.total
-  fetchChanks(offset, limit, total)
-}
+async function fmLoadLoans(mode) {
+  const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
+  if (res.data) {
+    fmInvestCompanyArray = res.data.requests.filter(obj => (obj.collected_percentage !== 100) /* Полоска сбора не заполнена (меньше 100%) */ 
+      && (obj.investing_amount === null) /* Резервация (нет) */ 
+      && (obj.term >= parseInt(investSettingsObj.fmDaysFrom) && obj.term <= parseInt(investSettingsObj.fmDaysTo)) /* Срок займа */
+      && (ratingArray.indexOf(obj.rating) >= parseInt(investSettingsObj.fmRatingFrom) && ratingArray.indexOf(obj.rating) <= parseInt(investSettingsObj.fmRatingTo)) /* Рейтинг займа */
+      && (obj.interest_rate >= valueToPercent(investSettingsObj.fmRateFrom) && obj.interest_rate <= valueToPercent(investSettingsObj.fmRateTo)) /* Процент займа (от 20 до 100) */ 
+      && (obj.loan_order >= parseFloat(investSettingsObj.fmLoansFrom) && obj.loan_order <= parseFloat(investSettingsObj.fmLoansTo))  /* Какой по счёту займ на платформе */
+      && (obj.company_investing_amount <= (parseFloat(investSettingsObj.fmMaxCompanySum) - parseFloat(investSettingsObj.fmInvestSum))) /* Сумма в одного заёмщика */
+      && (obj.financial_discipline >= 1 && obj.financial_discipline <= 1) /* ФД заёмщика */
+    );
+    if (!fmCompanyUpdate && mode !== 'badge') {
+      fmCompanyUpdate = true;
+      return;
+    };
+    if (mode === 'badge') {
+      setBadge('50%');
+    };
+  };
+};
 
+async function smLoadLoans(mode, offset, limit, total = 0) {
+  if (!smCompanyUpdate && mode !== 'badge') {
+    smCompanyUpdate = true;
+    return;
+  };
+  if (offset > total) {
+    return;
+  };
+  const url = `https://jetlend.ru/invest/api/exchange/loans?limit=${limit}&offset=${offset}&sort_dir=desc&sort_field=ytm`;
+  const res = await fetchData(url);
+  if (res.data) {
+    smInvestCompanyArray = smInvestCompanyArray.concat(res.data.data.filter(obj => (obj.term_left >= parseFloat(investSettingsObj.smDaysFrom) && obj.term_left <= parseFloat(investSettingsObj.smDaysTo)) /* Остаток срока займа */
+      && (ratingArray.indexOf(obj.rating) >= parseInt(investSettingsObj.smRatingFrom) && ratingArray.indexOf(obj.rating) <= parseInt(investSettingsObj.smRatingTo)) /* Рейтинг займа */
+      && (obj.ytm >= valueToPercent(investSettingsObj.smRateFrom) && obj.ytm <= valueToPercent(investSettingsObj.smRateTo)) /* Эффективная ставка в % */
+      && (obj.progress >= valueToPercent(investSettingsObj.smProgressFrom) && obj.progress <= valueToPercent(investSettingsObj.smProgressTo)) /* Выплачено (прогресс в %) */
+      && (obj.loan_class >= parseInt(investSettingsObj.smClassFrom) && obj.loan_class <= parseInt(investSettingsObj.smClassTo)) /* Класс займа */
+      && (obj.min_price >= valueToPercent(investSettingsObj.smPriceFrom) && obj.min_price <= valueToPercent(investSettingsObj.smPriceTo)) /* Мин прайс в % */
+      && (obj.invested_company_debt <= (parseFloat(investSettingsObj.smMaxCompanySum) - parseFloat(investSettingsObj.smInvestSum))) /* Сумма в одного заёмщика */
+      && (obj.financial_discipline >= valueToPercent(investSettingsObj.smFdFrom) && obj.financial_discipline <= valueToPercent(investSettingsObj.smFdTo)) /* ФД заёмщика */
+    ));    
+    // Удаление дубликатов
+    smInvestCompanyArray = smInvestCompanyArray.filter((obj, index, self) => index === self.findIndex((t) => (t.loan_id === obj.loan_id)));
+    if (res.data.data[res.data.data.length - 1].ytm < valueToPercent(investSettingsObj.smRateFrom)) {
+      return;
+    };
+    offset += limit;
+    if (mode === 'popup') {
+      $.get('#sm-numOfSortedCompany').textContent = `Загрузка... (${toPercentFormat(offset/res.data.total)})`;
+    };
+
+    if (mode === 'badge') {
+      setBadge((offset/res.data.total*50 + 50).toFixed(0)+'%');
+    };
+    await smLoadLoans(mode, offset, limit, res.data.total);
+  };
+};

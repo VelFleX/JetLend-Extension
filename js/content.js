@@ -152,311 +152,51 @@ chrome.storage.local.get("smInvest", function (data) {
   }
 });
 
-async function updateBadgeInfo() {
+async function updateBadge() {
   if (document.hidden) {
     return;
-  }
-  
+  };
   const timeCd = 6;
-  
   try {
-    const topData = await new Promise((resolve, reject) => {
+    const lastData = await new Promise((res, rej) => {
       chrome.storage.local.get("JLE_content", function (result) {
         if (chrome.runtime.lastError) {
-          reject(chrome.runtime.lastError);
+          rej(chrome.runtime.lastError);
         } else {
-          resolve(result);
-        }
+          res(result);
+        };
       });
     });
 
-    if (
-      !topData.JLE_content ||
-      topData.JLE_content.lastUpdate + 60000 * timeCd <= new Date().getTime()
-    ) {
-      const data = await new Promise((resolve, reject) => {
-        chrome.storage.local.get("investSettings", function (result) {
-          if (chrome.runtime.lastError) {
-            reject(chrome.runtime.lastError);
-          } else {
-            resolve(result);
-          }
-        });
-      });
-
-      let fm = {
-        daysFrom: 0,
-        daysTo: 2000,
-        ratingFrom: 1,
-        ratingTo: 20,
-        rateFrom: 0,
-        rateTo: 35,
-        loansFrom: 1,
-        loansTo: 100,
-        maxCompanySum: 357,
-        investSum: 100,
-      };
-
-      let sm = {
-        daysFrom: 0,
-        daysTo: 2000,
-        ratingFrom: 1,
-        ratingTo: 20,
-        rateFrom: 0,
-        rateTo: 100,
-        fdFrom: 0,
-        fdTo: 100,
-        progressFrom: 0,
-        progressTo: 100,
-        classFrom: 0,
-        classTo: 0,
-        maxCompanySum: 357,
-        priceFrom: 1,
-        priceTo: 100,
-        investSum: 100,
-      };
-      if (data.investSettings) {
-        if (data.investSettings.fmDaysFrom) {
-          fm.daysFrom = parseFloat(data.investSettings.fmDaysFrom);
-        }
-        if (data.investSettings.fmDaysTo) {
-          fm.daysTo = parseFloat(data.investSettings.fmDaysTo);
-        }
-        if (data.investSettings.fmRatingFrom) {
-          fm.ratingFrom = parseFloat(data.investSettings.fmRatingFrom);
-        }
-        if (data.investSettings.fmRatingTo) {
-          fm.ratingTo = parseFloat(data.investSettings.fmRatingTo);
-        }
-        if (data.investSettings.fmRateFrom) {
-          fm.rateFrom = parseFloat(data.investSettings.fmRateFrom);
-        }
-        if (data.investSettings.fmRateTo) {
-          fm.rateTo = parseFloat(data.investSettings.fmRateTo);
-        }
-        if (data.investSettings.fmLoansFrom) {
-          fm.loansFrom = parseFloat(data.investSettings.fmLoansFrom);
-        }
-        if (data.investSettings.fmLoansTo) {
-          fm.loansTo = parseFloat(data.investSettings.fmLoansTo);
-        }
-        if (data.investSettings.fmMaxCompanySum) {
-          fm.maxCompanySum = parseFloat(data.investSettings.fmMaxCompanySum);
-        }
-        if (data.investSettings.fmInvestSum) {
-          fm.investSum = parseFloat(data.investSettings.fmInvestSum);
-        }
-        // Вторичка
-        if (data.investSettings.smDaysFrom) {
-          sm.daysFrom = parseFloat(data.investSettings.smDaysFrom);
-        }
-        if (data.investSettings.smDaysTo) {
-          sm.daysTo = parseFloat(data.investSettings.smDaysTo);
-        }
-        if (data.investSettings.smRatingFrom) {
-          sm.ratingFrom = parseFloat(data.investSettings.smRatingFrom);
-        }
-        if (data.investSettings.smRatingTo) {
-          sm.ratingTo = parseFloat(data.investSettings.smRatingTo);
-        }
-        if (data.investSettings.smRateFrom) {
-          sm.rateFrom = parseFloat(data.investSettings.smRateFrom);
-        }
-        if (data.investSettings.smRateTo) {
-          sm.rateTo = parseFloat(data.investSettings.smRateTo);
-        }
-        if (data.investSettings.smFdFrom) {
-          sm.fdFrom = parseFloat(data.investSettings.smFdFrom);
-        }
-        if (data.investSettings.smFdTo) {
-          sm.fdTo = parseFloat(data.investSettings.smFdTo);
-        }
-        if (data.investSettings.smProgressFrom) {
-          sm.progressFrom = parseFloat(data.investSettings.smProgressFrom);
-        }
-        if (data.investSettings.smProgressTo) {
-          sm.progressTo = parseFloat(data.investSettings.smProgressTo);
-        }
-        if (data.investSettings.smClassFrom) {
-          sm.classFrom = parseFloat(data.investSettings.smClassFrom);          
-        }
-        if (data.investSettings.smClassTo) {
-          sm.classTo = parseFloat(data.investSettings.smClassTo);      
-        }
-        if (data.investSettings.smMaxCompanySum) {
-          sm.maxCompanySum = parseFloat(data.investSettings.smMaxCompanySum);
-        }
-        if (data.investSettings.smPriceFrom) {
-          sm.priceFrom = parseFloat(data.investSettings.smPriceFrom);
-        }
-        if (data.investSettings.smPriceTo) {
-          sm.priceTo = parseFloat(data.investSettings.smPriceTo);
-        }
-        if (data.investSettings.smInvestSum) {
-          sm.investSum = parseFloat(data.investSettings.smInvestSum);
-        }
-      }
-
-      sortCompanyUpdate(fm, sm);
-    }
-  } catch (error) {
-    console.error(error); // Скорее всего контекст инвалид из-за обновления приложения и не обновления страницы после этого
-  }
-}
-
-async function sortCompanyUpdate(fm, sm) {
-  setBadge("⌛");
-  const fmUrl = "https://jetlend.ru/invest/api/requests/waiting";
-  const smUrl = "https://jetlend.ru/invest/api/exchange/loans?limit=10000&offset=0&sort_dir=desc&sort_field=ytm";
-  const statsUrl = "https://jetlend.ru/invest/api/account/details";
-  const fmData = await fetchData(fmUrl);
-  const smData = await fetchData(smUrl);
-  const statsData = await fetchData(statsUrl);
-
-  async function fetchDetails(companyId) {
-    const response = await fetchData(
-      `https://jetlend.ru/invest/api/requests/${companyId}/details`
-    );
-    if (response.data) {
-      return response.data.data.details.financial_discipline;
-    }
-  }
-
-  if (fmData.data && smData.data && statsData.data) {
-
-    chrome.storage.local.set({
-      JLE_content: { lastUpdate: new Date().getTime() },
-    });
-
-    const freeBalance = statsData.data.data.balance.free;
-    let fmSortedLength = 0;
-    let smSortedLength = 0;
-    let fmCount = 0;
-    let smCount = 0;
-    let fmInvestCompanyArray = [];
-    let smInvestCompanyArray = [];
-    const sortCap = 25;
+    if (!lastData.JLE_content || lastData.JLE_content.lastUpdate + 60000 * timeCd <= new Date().getTime()) {
+      setBadge('⌛');
+      const statsUrl = "https://jetlend.ru/invest/api/account/details";
+      const statsData = await fetchData(statsUrl);
     
-    async function updateFirstMarket() {
-      if (fmData.data) {
-        const valueToNum = (value) =>
-          parseFloat(
-            (parseFloat(value.toString().replace(",", ".")) / 100).toFixed(4)
-          );
-        const fmSorted = fmData.data.requests.filter(
-          (obj) =>
-            (obj.collected_percentage !== 100) /* Полоска сбора не заполнена (меньше 100%) */ 
-            && (obj.investing_amount === null) /* Резервация (нет) */ 
-            && (ratingArray.indexOf(obj.rating) >= parseInt(fm.ratingFrom) && ratingArray.indexOf(obj.rating) <= parseInt(fm.ratingTo)) /* Рейтинг займа */
-            && (obj.term >= fm.daysFrom && obj.term <= fm.daysTo) /* Срок займа */ 
-            && (obj.interest_rate >= valueToNum(fm.rateFrom)) && (obj.interest_rate <= valueToNum(fm.rateTo)) /* Процент займа (от 20 до 100) */ 
-            && (obj.loan_order >= fm.loansFrom) && (obj.loan_order <= fm.loansTo) /* Какой по счёту займ на платформе */
-            && (obj.company_investing_amount <= (parseFloat(fm.maxCompanySum) - parseFloat(fm.investSum)))) /* Сумма в одного заёмщика */ 
-        fmSortedLength = Math.min(sortCap, fmSorted.length);
+      if (statsData.data) {
+        const freeBalance = statsData.data.data.balance.free;
+        chrome.storage.local.set({
+          JLE_content: { lastUpdate: new Date().getTime() },
+        });
 
-          let fmSecondSort = [];
-          for (const element of fmSorted) {
-            const fd = await fetchDetails(element.id);
-            element.financial_discipline = fd;
-            if (fd === 1) {
-              fmSecondSort.push(element);
-            }
-            fmCount++;
-            if (
-              fmCount === sortCap ||
-              fmSecondSort.length >= Math.floor(freeBalance / fm.investSum)
-            ) {
-              break;
-            }
-            setBadge(
-              `${((fmCount / fmSortedLength ) * 50).toFixed(0)}%`
-            );
-            
-
-          }
-          
-          fmInvestCompanyArray = fmSecondSort;
-          
-        
-      }
-      setBadge(`50%`);
-      fmUpdate = true;
-    }
-
-    // Обновление списка компаний (вторичка)
-    async function updateSecondMarket() {
-      if (smData.data) {
-        const valueToPercent = (value) =>
-          parseFloat(
-            (parseFloat(value.toString().replace(",", ".")) / 100).toFixed(4)
-          ); // '12,3456' => 0.1234
-        const smFilters = {
-          daysFrom: sm.daysFrom,
-          daysTo: sm.daysTo,
-          ratingFrom: parseInt(sm.ratingFrom),
-          ratingTo: parseInt(sm.ratingTo),
-          ytmFrom: valueToPercent(sm.rateFrom),
-          ytmTo: valueToPercent(sm.rateTo),
-          progressFrom: valueToPercent(sm.progressFrom),
-          progressTo: valueToPercent(sm.progressTo),
-          classFrom: parseInt(sm.classFrom),
-          classTo: parseInt(sm.classTo),
-          investDebt: parseFloat(sm.maxCompanySum)
-        }
-        const smSorted = smData.data.data.filter(
-          (obj) =>
-            (obj.invested_debt === null || obj.invested_debt === 0.00) /* Есть в портфеле (нет) */ 
-            && (obj.term_left >= sm.daysFrom && obj.term_left <= sm.daysTo) /* Остаток срока займа */ 
-            && (ratingArray.indexOf(obj.rating) >= parseInt(sm.ratingFrom) && ratingArray.indexOf(obj.rating) <= parseInt(sm.ratingTo)) /* Рейтинг займа */
-            && (obj.ytm >= valueToPercent(sm.rateFrom) && obj.ytm <= valueToPercent(sm.rateTo)) /* Эффективная ставка (от 20 до 100) */ 
-            && (obj.progress >= valueToPercent(sm.progressFrom) && obj.progress <= valueToPercent(sm.progressTo)) /* Выплачено (прогресс в %) */ 
-            && (obj.min_price >= valueToPercent(sm.priceFrom) && obj.min_price <= valueToPercent(sm.priceTo)) /* Мин прайс от 50% до 90% */ 
-            && (obj.loan_class >= parseInt(sm.classFrom) && obj.loan_class <= parseInt(sm.classTo)) /* Класс займа */
-            && (obj.invested_company_debt <= (parseFloat(sm.maxCompanySum) - parseFloat(sm.investSum))) /* Сумма в одного заёмщика */
-            && (obj.status === "active"));
-        smSortedLength = Math.min(sortCap, smSorted.length);
-
-          let smSecondSort = [];
-          for (const element of smSorted) {
-            const fd = await fetchDetails(element.loan_id);
-            element.financial_discipline = fd;
-            if (
-              fd >= valueToPercent(sm.fdFrom) &&
-              fd <= valueToPercent(sm.fdTo) /* ФД от до */
-            ) {
-              smSecondSort.push(element);
-            }
-            smCount++;
-            if (
-              smCount === sortCap ||
-              smSecondSort.length >= Math.floor(freeBalance / sm.investSum)
-            ) {
-              break;
-            }
-            setBadge(
-              `${((smCount / smSortedLength ) * 50 + 50).toFixed(0)}%`
-            );
-          }
-          smInvestCompanyArray = smSecondSort;
-      }
-      setBadge(`100%`);
-    }
-
-    await updateFirstMarket();
-    await updateSecondMarket();
-    setBadge(
-      `${Math.min(
-        fmInvestCompanyArray.length,
-        Math.floor(freeBalance / fm.investSum)
-      )}/${Math.min(
-        smInvestCompanyArray.length,
-        Math.floor(freeBalance / sm.investSum)
-      )}`
-    );
-  } else {
-    setBadge('🔒❌');
-  }
-}
+        loadInvestSettings();
+        await fmLoadLoans('badge');
+        await smLoadLoans('badge', 0, 100);
+        setBadge(`${Math.min(fmInvestCompanyArray.length, 
+          Math.floor(freeBalance / investSettingsObj.fmInvestSum))}/${Math.min(smInvestCompanyArray.length, 
+          Math.floor(freeBalance / investSettingsObj.smInvestSum))}`
+        );
+        console.log(`${Math.min(fmInvestCompanyArray.length, 
+          Math.floor(freeBalance / investSettingsObj.fmInvestSum))}/${Math.min(smInvestCompanyArray.length, 
+          Math.floor(freeBalance / investSettingsObj.smInvestSum))}`);
+      } else {
+          setBadge('🔒❌');
+      };
+    };
+  } catch (error) {
+    console.error('Ошибка: ', error);
+  };
+};
 
 async function mainUpdate() {
   if (
@@ -601,11 +341,11 @@ async function mainUpdate() {
   }
 }
 
-updateBadgeInfo();
+updateBadge();
 mainUpdate();
 
 setInterval(function () {
   mainUpdate();
-  updateBadgeInfo();
+  updateBadge();
 }, 60000);
 

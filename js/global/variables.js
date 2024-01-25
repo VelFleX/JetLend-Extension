@@ -106,6 +106,9 @@ let smInvestSumAll = $.get('#sm-invest-sum-all');
 let fmCompanyUpdate = true;
 let fmrCompanyUpdate = false;
 let smCompanyUpdate = false;
+let fmInvestCompanyArray = [];
+let fmrInvestCompanyArray = [];
+let smInvestCompanyArray = [];
 
 let formsElementsObj = {
   fmDaysFrom: '#fm-invest-days-from',
@@ -140,32 +143,32 @@ let formsElementsObj = {
 
 let investSettingsObj = {
   fmDaysFrom: 0,
-  fmDaysTo: 0,
-  fmRatingFrom: 0,
-  fmRatingTo: 0,
+  fmDaysTo: 2000,
+  fmRatingFrom: 1,
+  fmRatingTo: 20,
   fmRateFrom: 0,
-  fmRateTo: 0,
-  fmLoansFrom: 0,
-  fmLoansTo: 0,
-  fmMaxCompanySum: 0,
-  fmInvestSum: 0,
+  fmRateTo: 35,
+  fmLoansFrom: 1,
+  fmLoansTo: 100,
+  fmMaxCompanySum: 10000,
+  fmInvestSum: 100,
   fmInvestSumAll: 0,
   smDaysFrom: 0,
-  smDaysTo: 0,
-  smRatingFrom : 0,
-  smRatingTo: 0,
+  smDaysTo: 2000,
+  smRatingFrom: 1,
+  smRatingTo: 20,
   smRateFrom: 0,
-  smRateTo: 0,
+  smRateTo: 100,
   smFdFrom: 0,
-  smFdTo: 0,
+  smFdTo: 10,
   smProgressFrom: 0,
-  smProgressTo: 0,
+  smProgressTo: 100,
   smPriceFrom: 0,
-  smPriceTo: 0,
+  smPriceTo: 100,
   smClassFrom: 0,
-  smClassTo: 0,
-  smMaxCompanySum: 0,
-  smInvestSum: 0,
+  smClassTo: 3,
+  smMaxCompanySum: 10000,
+  smInvestSum: 100,
   smInvestSumAll: 0
 };
 
