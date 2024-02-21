@@ -1,4 +1,3 @@
-let timePeriod = "";
 $.get('#stats__open').addEventListener("click", function () {
   if($.get('.stats-section').style.maxHeight === '1000px' || (!this.style.cssText && window.innerWidth >= 768)) {
     this.style.transform = 'scaleY(-1)';
@@ -7,6 +6,48 @@ $.get('#stats__open').addEventListener("click", function () {
     this.style.transform = 'scaleY(1)';
     $.get('.stats-section').style.maxHeight = '1000px';
   }
+});
+
+
+document.addEventListener('mouseover', function(e) {
+  let tooltipHtml = e.target.closest('.tooltip');
+  if (!tooltipHtml) {
+    return;
+  }
+  let tooltipContent = tooltipHtml.querySelector('.tooltip-content');
+
+  let tooltipElem = document.createElement('div');
+  tooltipElem.className = 'tooltip-content'; 
+  tooltipElem.innerHTML = tooltipContent.innerHTML;
+  setTimeout(() => {
+    tooltipElem.style.opacity = '1';
+  }, 0);
+  document.body.append(tooltipElem);
+
+  let targetCoords = tooltipHtml.getBoundingClientRect();
+  let left = targetCoords.left + (tooltipHtml.offsetWidth - tooltipElem.offsetWidth) / 2;
+  if (left < 0) {
+    left = 5;
+  }
+  let tooltipRight = left + tooltipElem.offsetWidth;
+  if (tooltipRight > window.innerWidth) {
+    left = window.innerWidth - tooltipElem.offsetWidth - 5;
+  }
+
+  let top = targetCoords.top - tooltipElem.offsetHeight - 5;
+  if (top < 0) {
+    top = targetCoords.top + tooltipHtml.offsetHeight + 5;
+  }
+
+  tooltipElem.style.left = left + 'px';
+  tooltipElem.style.top = top + 'px';
+
+  tooltipHtml.addEventListener('mouseleave', function() {
+        tooltipElem.style.opacity = '0';
+        setTimeout(() => {
+          tooltipElem.remove();
+        }, 300);
+    });
 });
 
 document.addEventListener("click", function (event) {
@@ -49,13 +90,14 @@ let balance = 0;
 let cachedBalance = 0;
 let cachedCleanBalance = 0;
 
+let timePeriod = '';
 let dataTextAllTime = '';
 let dataTextYearTime = '';
 let sameDataText = '';
 
-const formsElements = [fmDaysFrom, fmDaysTo, fmRatingFrom, fmRatingTo, fmRateFrom, fmRateTo, fmLoansFrom, fmLoansTo, fmMaxCompanySum, fmInvestSum,
+const formsElements = [fmDaysFrom, fmDaysTo, fmRatingFrom, fmRatingTo, fmRateFrom, fmRateTo, fmLoansFrom, fmLoansTo, fmMaxCompanySum, fmMaxLoanSum, fmInvestSum,
   smDaysFrom, smDaysTo, smRatingFrom, smRatingTo, smRateFrom, smRateTo, smFdFrom, smFdTo, smProgressFrom,
-  smProgressTo, smPriceFrom, smPriceTo, smClassFrom, smClassTo, smMaxCompanySum, smInvestSum];
+  smProgressTo, smPriceFrom, smPriceTo, smClassFrom, smClassTo, smMaxCompanySum, smMaxLoanSum, smInvestSum];
 
 formsElements.forEach(element => element.addEventListener('change', updateInvestSettings));
 btnInvestOpen.addEventListener('click', openInvestPage);
@@ -63,11 +105,15 @@ btnInvestClose.addEventListener('click', closeInvestPage);
 
 $.get('#events__open').addEventListener('click', () => opneModal('#events'));
 $.get('#event-transactions__open').addEventListener('click', () => transactionsShow());
-$.get('#event-defaults__open').addEventListener('click', () => lastDefaultsShow());
 
-// $.get('#portfolio__open').addEventListener('click', () => opneModal('#portfolio'));
+$.get('#portfolio__open').addEventListener('click', () => opneModal('#portfolio'));
+$.get('#portfolio-all__open').addEventListener('click', () => portfolioAllShow());
+$.get('#npl1__open').addEventListener('click', () => nplShow(1));
+$.get('#npl15__open').addEventListener('click', () => nplShow(15));
+$.get('#restructs__open').addEventListener('click', () => restructsShow());
+$.get('#defaults__open').addEventListener('click', () => defaultsShow());
 
-// $.get('#analytics__open').addEventListener('click', () => opneModal('#analytics'));
+$.get('#analytics__open').addEventListener('click', () => opneModal('#analytics'));
 
 $.get('#settings__open').addEventListener('click', () => {opneModal('#settings')});
 $.get('#newTab__open').addEventListener('click', () => chrome.tabs.create({url: chrome.runtime.getURL('html/popup.html')}));
@@ -85,6 +131,8 @@ $.get('#sm-btn-show').addEventListener('click', () => {opneModal('#sm-list'); sm
 $.get('#sm-btn-stop').addEventListener('click', function() {smCompanyUpdate = false});
 
 $.get('#marketMode').addEventListener('click', marketSwap);
+$.get('#checkCompany__open').addEventListener('click', () => opneModal('#checkCompany__section'));
+$.get('#checkCompany__btn').addEventListener('click', () => checkCompany());
 
 chrome.storage.local.get("investSettings", function(data) {
   if (data.investSettings) {
@@ -113,7 +161,8 @@ async function transactionsShow() {
     payment: 'Платеж по займу',
     collection: 'Судебное взыскание',
     contract: 'Выдача займа',
-    default: 'Дефолт'
+    default: 'Дефолт',
+    investment: 'Пополнение или вывод средтсв'
   }
   if (transactionsData.data) {
     list.innerHTML = '';
@@ -136,21 +185,21 @@ async function transactionsShow() {
       }
     }
     return `
-    <section style="display: flex; margin-top: 6px;">
-      <img class="list-element__img" src="https://jetlend.ru${element.preview_small_url}">
+    <section style="display: flex;">
+      ${element.preview_small_url ? `<img class="list-element__img" src="https://jetlend.ru${element.preview_small_url}">` : ''}
       <div>
-        <div style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block;">${element.company}</div>
+        <div style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block;">${element.company || 'Прочее'}</div>
         <div style="font-size: 14px; margin-top: 5px;">${operations[element.operation_type] ? operations[element.operation_type] : element.operation_type}</div>
       </div>
       <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; font-size: 14px;">
         <div style="font-weight: 600; text-wrap: nowrap;">
-          ${element.income !== null && element.income !== 0.00 ? `${toCurrencyFormat(element.income)}` : ''}
+          ${element.income && element.income !== 0.00 ? `${toCurrencyFormat(element.income)}` : ''}
         </div>
         <div style="color: orangered; font-weight: 600; text-wrap: nowrap; margin-top: 5px;">
-          ${element.expense !== null && element.expense !== 0.00 ? element.expense > 0 ? `-${toCurrencyFormat(element.expense)}` : `${toCurrencyFormat(element.expense)}` : ''}
+          ${element.expense && element.expense !== 0.00 ? element.expense > 0 ? `-${toCurrencyFormat(element.expense)}` : `${toCurrencyFormat(element.expense)}` : ''}
         </div> 
         <div style="color: ${setColor(element.revenue)}; font-weight: 600; text-wrap: nowrap; margin-top: 5px;">
-          ${element.revenue !== null && element.revenue !== 0.00 ? element.revenue > 0 ? `+${toCurrencyFormat(element.revenue)}` : `${toCurrencyFormat(element.revenue)}` : ''}
+          ${element.revenue && element.revenue !== 0.00 ? element.revenue > 0 ? `+${toCurrencyFormat(element.revenue)}` : `${toCurrencyFormat(element.revenue)}` : ''}
         </div> 
       </div>
     </section>
@@ -158,41 +207,73 @@ async function transactionsShow() {
   }
 }
 
-async function lastDefaultsShow() {
-  // if ($.get('#event-defaults__open').classList.contains('btn-small--active')) {
-  //   return;
-  // };
-  $.get('#events__btn-section').querySelectorAll('.btn-small').forEach(btn => btn.classList.remove('btn-small--active'));
-  $.get('#event-defaults__open').classList.add('btn-small--active');
-  const list = $.get('#events__list');
+async function portfolioAllShow() {
+  $.get('#portfolio__btn-section').querySelectorAll('.btn-small').forEach(btn => btn.classList.remove('btn-small--active'));
+  $.get('#portfolio-all__open').classList.add('btn-small--active');
+  const list = $.get('#portfolio__list');
   list.innerHTML = `<div class="load-spinner__container"><span class="load-spinner" style="width: 32px;"></span></div>`;
-  const url = 'https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22default%22%5D%2C%22field%22%3A%22status%22%7D%5D&limit=10000&offset=0&sort_dir=asc&sort_field=status';
-  const res = await fetchData(url);
-  if (res.data) {
-    const sorted = res.data.data.filter(obj => dateDiff(obj.last_payment_date) <= 120);
-    for (elem of sorted) {
-      const events = await fetchData(`https://jetlend.ru/invest/api/requests/${elem.loan_id}/events`);
-      const defaultEvent = events.data.events.find(obj => obj.event_type === 'default');
-      elem.default_date = defaultEvent.date;
-      elem.delay_days = dateDiff(elem.last_payment_date, defaultEvent.date);
+  const allCompays = await fetchData('https://jetlend.ru/invest/api/portfolio/loans?limit=1&offset=0');
+  if (allCompays.data) {
+    list.innerHTML = list.innerHTML = `<div class="contrast-bg" style="margin-bottom: 12px">
+      <p>Всего займов: <b>${allCompays.data.total}<b> шт.</p>
+    </div>`;
+  }
+}
 
-    }
-    sorted.sort((a, b) => new Date(b.default_date) - new Date(a.default_date));
-    list.innerHTML = '';
+async function nplShow(nplNum) {
+  $.get('#portfolio__btn-section').querySelectorAll('.btn-small').forEach(btn => btn.classList.remove('btn-small--active'));
+  $.get(`#npl${nplNum}__open`).classList.add('btn-small--active');
+  const list = $.get('#portfolio__list');
+  list.innerHTML = `<div class="load-spinner__container"><span class="load-spinner" style="width: 32px;"></span></div>`;
+  const url = 'https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22delayed%22%5D%2C%22field%22%3A%22status%22%7D%5D&limit=10000&offset=0&sort_dir=asc&sort_field=company';
+  const res = await fetchData(url);
+
+  if (res.data) {
+    let debtSum = 0;
+    let sorted = res.data.data.filter(obj => dateDiff(obj.next_payment_date) >= nplNum);
+    if (nplNum === 1) {
+      sorted = sorted.filter(obj => dateDiff(obj.next_payment_date) < 15);
+    };
+    if (!sorted.length) {
+      list.textContent = 'Нет просрочек.'
+      return;
+    };
+    for (elem of sorted) {
+      debtSum += elem.principal_debt;
+      elem.npl = dateDiff(elem.next_payment_date);
+    };
+    sorted.sort((a, b) => new Date(b.npl) - new Date(a.npl));
+    list.innerHTML = `<div class="contrast-bg" style="margin-bottom: 12px">
+        <p>Всего задержанных займов: <b>${res.data.total}</b> шт.</p>
+        <p>Сумма NPL${nplNum}+ задержек: <b>${toCurrencyFormat(debtSum)}</b> 
+          (<b class="tooltip">${toPercentFormat(debtSum / cleanBalance)}
+            <template class="tooltip-content"><b>${toPercentFormat(debtSum / balance)}</b>, если делить на баланс с НПД.</template>
+          </b> от портфеля).
+        </p>
+        <p>Сумма всех задержек: <b class="tooltip">${toCurrencyFormat(res.data.aggregation.principal_debt)}
+            <template class="tooltip-content">Сумма инвестиций: <b>${toCurrencyFormat(res.data.aggregation.purchased_amount)}</b>.</template>
+          </b> 
+          (<b class="tooltip">${toPercentFormat(res.data.aggregation.principal_debt / cleanBalance)}
+            <template class="tooltip-content"><b>${toPercentFormat(res.data.aggregation.principal_debt / balance)}</b>, если делить на баланс с НПД.</template>
+          </b> от портфеля).
+        </p>
+        <p>Выплаченные проценты: <b>${toCurrencyFormat(res.data.aggregation.paid_interest)}</b>.</p>
+        <p>Выплаченные пени: <b>${toCurrencyFormat(res.data.aggregation.paid_fine)}</b>.</p>
+        <p>НПД: <b>${toCurrencyFormat(res.data.aggregation.nkd)}</b>.</p>
+      </div>`;
     sorted.forEach(element => {
       const listItem = document.createElement('div');
       listItem.classList.add('list-element', 'contrast-bg');
       listItem.innerHTML = createListElement(element); 
       list.appendChild(listItem); 
     })
-    console.log(sorted);
   } else {
     list.textContent = transactionsData.error;
-  }
+  };
 
   function createListElement(company) {
     return `
-    <section style="display: flex; margin-top: 6px;">
+    <section style="display: flex;">
       <img class="list-element__img" src="https://jetlend.ru${company.preview_small_url}">
       <div>
         <a class="list-element__loan-name target-url" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block;" href="https://jetlend.ru/invest/v3/company/${company.loan_id}">
@@ -202,7 +283,12 @@ async function lastDefaultsShow() {
             <b style="${company.rating.includes('A') ? 'color: limegreen;' : 
                         company.rating.includes('B') ? 'color: orange;' : 
                         'color: orangered;'}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
-            <span> NPL <b>${company.delay_days} д.</b></span>
+            <span class="tooltip"> 
+              NPL <b>${company.npl} д.</b>
+              <template class="tooltip-content">
+                Срок просрочки.
+              </template>
+            </span>
           </div>
           <div style="margin-top: 5px; font-size: 14px; text-wrap: nowrap;">
             <span>Инвестиция: </span>
@@ -210,26 +296,255 @@ async function lastDefaultsShow() {
           </div>
       </div>
       <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; font-size: 14px;">
-        <div style="text-wrap: nowrap;">
-          <b>${formatReadableDate(company.default_date)}</b>
-
+        <div class="tooltip" style="text-wrap: nowrap;">
+          <b>${formatReadableDate(company.next_payment_date, 'short')}</b>
+          <template class="tooltip-content">
+            Дата следующего платежа.
+          </template>
         </div>
-        <div style="text-wrap: nowrap; margin-top: 5px;">
-          <span data-tooltip="Остаток тела долга по займу.">Остаток долга: </span>
-          <b style="color: orangered;">${toCurrencyFormat(-company.principal_debt)}</b>
+        <div class="tooltip" style="text-wrap: nowrap; margin-top: 5px;">
+          <span>Остаток долга: </span>
+          <b style="color: orange;">${toCurrencyFormat(company.principal_debt)}</b>
+          <template class="tooltip-content">
+            Остаток тела долга по займу.
+          </template>
         </div> 
-        <div style="text-wrap: nowrap; margin-top: 5px;">
-          <span data-tooltip="Совокупный доход по займу, включая полученный процентный доход, а также пени за просрочку платежей.">Совокупный доход: </span>
-          <span style="font-weight: 600; color: orangered;">${toCurrencyFormat(company.profit)}</span>
+        <div class="tooltip" style="text-wrap: nowrap; margin-top: 5px;">
+          <span>Совокупный доход: </span>
+          <b>${toCurrencyFormat(company.profit)}</b>
+          <template class="tooltip-content">
+            Совокупный доход по займу, включая полученный процентный доход, а также пени за просрочку платежей. 
+          </template>
+        </div> 
+      </div>
+    </section>
+    <div class="progressbar__container" style="margin-top: 5px;">
+      <div class="progressbar" style="width: ${company.progress*100}%; background: ${company.status === 'delayed' ? 'orange' : 'var(--jle-lightGreen)'};"></div>
+    </div>
+    `;
+ };
+};
+
+
+async function restructsShow() {
+  $.get('#portfolio__btn-section').querySelectorAll('.btn-small').forEach(btn => btn.classList.remove('btn-small--active'));
+  $.get('#restructs__open').classList.add('btn-small--active');
+  const list = $.get('#portfolio__list');
+  list.innerHTML = `<div class="load-spinner__container"><span class="load-spinner" style="width: 32px;"></span></div>`;
+  const url = 'https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22restructured%22%5D%2C%22field%22%3A%22status%22%7D%5D&limit=10000&offset=0&sort_dir=desc&sort_field=principal_debt';
+  const res = await fetchData(url);
+  if (res.data) {
+    let sorted = res.data.data;
+    if (!sorted.length) {
+      list.textContent = 'Нет реструктуризированых займов.'
+      return;
+    };
+    sorted.sort((a, b) => new Date(a.next_payment_date) - new Date(b.next_payment_date));
+    list.innerHTML = `<div class="contrast-bg" style="margin-bottom: 12px">
+      <p>Всего реструктуризаций: <b>${res.data.total}</b> шт.</p>
+      <p>Сумма: <b class="tooltip">${toCurrencyFormat(res.data.aggregation.principal_debt)}
+          <template class="tooltip-content">Сумма инвестиций: <b>${toCurrencyFormat(res.data.aggregation.purchased_amount)}</b>.</template>
+        </b> 
+        (<b class="tooltip">${toPercentFormat(res.data.aggregation.principal_debt / cleanBalance)}
+          <template class="tooltip-content"><b>${toPercentFormat(res.data.aggregation.principal_debt / balance)}</b>, если делить на баланс с НПД.</template>
+        </b> от портфеля).
+      </p>
+      <p>Выплаченные проценты: <b>${toCurrencyFormat(res.data.aggregation.paid_interest)}</b>.</p>
+      <p>Выплаченные пени: <b>${toCurrencyFormat(res.data.aggregation.paid_fine)}</b>.</p>
+      <p>НПД: <b>${toCurrencyFormat(res.data.aggregation.nkd)}</b>.</p>
+    </div>`;
+    sorted.forEach(element => {
+      const listItem = document.createElement('div');
+      listItem.classList.add('list-element', 'contrast-bg');
+      listItem.innerHTML = createListElement(element); 
+      list.appendChild(listItem); 
+    })
+    console.log(sorted);
+  } else {
+    list.textContent = transactionsData.error;
+  };
+
+  function createListElement(company) {
+    return `
+    <section style="display: flex;">
+      <img class="list-element__img" src="https://jetlend.ru${company.preview_small_url}">
+      <div>
+        <a class="list-element__loan-name target-url" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block;" href="https://jetlend.ru/invest/v3/company/${company.loan_id}">
+          ${company.loan_name}
+        </a>
+          <div style="font-size: 14px; margin-top: 3px;">
+            <b style="${company.rating.includes('A') ? 'color: limegreen;' : 
+                        company.rating.includes('B') ? 'color: orange;' : 
+                        'color: orangered;'}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>
+            
+          </div>
+          <div style="margin-top: 5px; font-size: 14px; text-wrap: nowrap;">
+            <span>Инвестиция: </span>
+            <b>${toCurrencyFormat(company.amount)}</b>
+          </div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; font-size: 14px;">
+        <div class="tooltip" style="text-wrap: nowrap;">
+          <b>${formatReadableDate(company.next_payment_date, 'short')}</b>
+          <template class="tooltip-content">
+            Дата следующего платежа.
+          </template>
+        </div>
+        <div class="tooltip" style="text-wrap: nowrap; margin-top: 5px;">
+          <span>Остаток долга: </span>
+          <b style="color: orange;">${toCurrencyFormat(company.principal_debt)}</b>
+          <template class="tooltip-content">
+            Остаток тела долга по займу.
+          </template>
+        </div> 
+        <div class="tooltip" style="text-wrap: nowrap; margin-top: 5px;">
+          <span>Совокупный доход: </span>
+          <b>${toCurrencyFormat(company.profit)}</b>
+          <template class="tooltip-content">
+            Совокупный доход по займу, включая полученный процентный доход, а также пени за просрочку платежей. 
+          </template>
+        </div> 
+      </div>
+    </section>
+    <div class="progressbar__container" style="margin-top: 5px;">
+      <div class="progressbar" style="width: ${company.progress*100}%; background: var(--jle-lightGreen);"></div>
+    </div>
+    `;
+ };
+};
+
+
+async function defaultsShow() {
+  $.get('#portfolio__btn-section').querySelectorAll('.btn-small').forEach(btn => btn.classList.remove('btn-small--active'));
+  $.get('#defaults__open').classList.add('btn-small--active');
+  const list = $.get('#portfolio__list');
+  list.innerHTML = spinLoad.innerHTML;
+  let cache = [];
+  chrome.storage.local.get('defaults', function(date) {
+    if(date.defaults) {
+      cache = date.defaults;
+    }
+  })
+
+  const url = 'https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22default%22%5D%2C%22field%22%3A%22status%22%7D%5D&limit=10000&offset=0';
+  const res = await fetchData(url);
+  if (res.data) {
+    let companysArr = res.data.data;
+    if (!companysArr.length) {
+      list.textContent = 'Нет дефолтных займов.'
+      return;
+    };
+
+    async function memoDefaultsDate(company) {
+      const index = cache.findIndex(cacheElem => cacheElem.id === company.loan_id);
+      if (index !== -1) {
+        company.default_date = cache[index].default_date;
+        company.npl = cache[index].npl;
+        return;
+      };
+      const events = await fetchData(`https://jetlend.ru/invest/api/requests/${company.loan_id}/events`);
+      const defaultEvent = events.data.events.find(obj => obj.event_type === 'default');
+      company.default_date = defaultEvent.date; // Дата дефолта
+      if (company.last_payment_date === null) {
+        company.last_payment_date = company.date;
+      };
+      company.npl = dateDiff(company.last_payment_date, company.default_date);
+      cache.push({id: company.loan_id, default_date: company.default_date, npl: company.npl});
+      return;
+    }
+
+    for (company of companysArr) {
+      await memoDefaultsDate(company);
+    };
+
+    chrome.storage.local.set({ defaults: cache });
+
+    companysArr.sort((a, b) => new Date(b.default_date) - new Date(a.default_date));
+    list.innerHTML = `<div class="contrast-bg" style="margin-bottom: 12px">
+      <p>Всего дефолтов: <b>${res.data.total}</b> шт.</p>
+      <p>Сумма инвестиций: <b>${toCurrencyFormat(res.data.aggregation.purchased_amount)}</b></p>
+      <p>Выплаченные проценты: <b>${toCurrencyFormat(res.data.aggregation.paid_interest)}</b>.</p>
+      <p>Выплаченные пени: <b>${toCurrencyFormat(res.data.aggregation.paid_fine)}</b>.</p>
+      <p>Потери: <b>${toCurrencyFormat(res.data.aggregation.principal_debt)}</b>.</p>
+    </div>`;
+    companysArr.forEach(element => {
+      const listItem = document.createElement('div');
+      listItem.classList.add('list-element', 'contrast-bg');
+      listItem.innerHTML = createListElement(element); 
+      list.appendChild(listItem); 
+    });
+  } else {
+    list.textContent = transactionsData.error;
+  };
+
+  function createListElement(company) {
+    return `
+    <section style="display: flex;">
+      <img class="list-element__img" src="https://jetlend.ru${company.preview_small_url}">
+      <div>
+        <a class="list-element__loan-name target-url" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block;" href="https://jetlend.ru/invest/v3/company/${company.loan_id}">
+          ${company.loan_name}
+        </a>
+          <div style="font-size: 14px; margin-top: 3px;">
+            <b style="${company.rating.includes('A') ? 'color: limegreen;' : 
+                        company.rating.includes('B') ? 'color: orange;' : 
+                        'color: orangered;'}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
+            <span class="tooltip"> 
+              NPL <b>${company.npl} д.</b>
+              <template class="tooltip-content">
+                Срок просрочки.
+              </template>
+            </span>
+          </div>
+          <div style="margin-top: 5px; font-size: 14px; text-wrap: nowrap;">
+            <span>Инвестиция: </span>
+            <b>${toCurrencyFormat(company.purchased_amount)}</b>
+          </div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; font-size: 14px;">
+        <div class="tooltip" style="text-wrap: nowrap;">
+          <b>${formatReadableDate(company.default_date)}</b>
+          <template class="tooltip-content">
+            Дата дефолта.
+          </template>
+        </div>
+        <div class="tooltip" style="text-wrap: nowrap; margin-top: 5px;">
+          <span>Остаток долга: </span>
+          <b style="color: orangered;">${toCurrencyFormat(-company.principal_debt)}</b>
+          <template class="tooltip-content">
+            Остаток тела долга по займу.
+          </template>
+        </div> 
+        <div class="tooltip" style="text-wrap: nowrap; margin-top: 5px;">
+          <span>Совокупный доход: </span>
+          <b style="color: orangered;">${toCurrencyFormat(company.profit)}</b>
+          <template class="tooltip-content">
+            Совокупный доход по займу, включая полученный процентный доход, а также пени за просрочку платежей. 
+          </template>
         </div> 
       </div>
     </section>
     <div class="progressbar__container" style="margin-top: 5px;">
       <div class="progressbar" style="width: ${company.progress*100}%; background: orangered;"></div>
     </div>
-    `
- }
-}
+    `;
+ };
+};
+
+async function checkCompany() {
+  if (!checkCompany__input.value) {
+    return;
+  };
+  $.get('#checkCompany__list').innerHTML = '';
+  $.get('#checkCompany__spin').innerHTML = spinLoad.innerHTML;
+  const companysArr = checkCompany__input.value.split(' ');
+  checkCompany__input.value = null;
+  for (const company of companysArr) {
+    const res = await checkingCompany(parseInt(company.replace(/\D/g,'')));
+    $.get('#checkCompany__list').innerHTML += res;
+  }
+  $.get('#checkCompany__spin').innerHTML = '';
+};
 
 function fmCompanyShow(arr, blockId) {
   const removeElement = index => arr.splice(index, 1);
@@ -592,21 +907,33 @@ async function mainUpdateFunction() {
         const timeYearAgo = new Date().getTime()-31536000000; // Время в unix год назад
         let cashFlows = [];
         let dates = [];
-        let sumYear = 0;
+        let sumYear = 0; // Сумма транзакций за год
+        let beforeFlows = 0; // Сумма транзакций до текущего года
+        let profitSum = allTime.cleanProfit - this.cleanProfit; // Профит год назад
         if (type === 'npd') {
-          type = this.cleanProfit + balanceStats.nkd;
+          type = balance;
+          // profitSum = allTime.cleanProfit - this.cleanProfit;
         } else if (type === 'clean') {
-          type = this.cleanProfit;
+          type = cleanBalance;
         }
         for (element of xirrData.data.data) {
           if (timeYearAgo < new Date(element.date).getTime()) {
             sumYear += element.amount;
             cashFlows.push(element.amount);
             dates.push(new Date(element.date));
+            
+          }
+          else {
+            beforeFlows += element.amount;
           }
         }
-        cashFlows.push(-(sumYear + type));
+        cashFlows.unshift(beforeFlows + profitSum);
+        dates.unshift(new Date(timeYearAgo));
+        // cashFlows[0] += beforeFlows;
+        cashFlows.push(-(type));
         dates.push(new Date());
+        console.log('Транзакции: ', cashFlows);
+        console.log('Даты: ', dates);
         return calculateXIRR(cashFlows, dates);
       },
       get incomeSum() {

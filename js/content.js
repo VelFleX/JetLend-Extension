@@ -91,7 +91,7 @@ chrome.storage.local.get("smInvest", function (data) {
         try {
           let data = await Promise.race([fetchPromise, timeoutPromise]);
             if (data.status.toLowerCase() === 'ok') {
-              sendNotification('Успешная инвестиция', `Сумма: ${toCurrencyFormat(data.data.amount)}`);
+              sendNotification('Успешная инвестиция', `Сумма: ${toCurrencyFormat(data.data.amount)}. ID займа: ${companyId}.`);
               sumAll = parseFloat((sumAll - data.data.amount).toFixed(2))
               investedSum += data.data.amount;
               companyCount++;
@@ -180,8 +180,8 @@ async function updateBadge() {
         });
 
         loadInvestSettings();
-        await fmLoadLoans('badge');
         await smLoadLoans('badge', 0, 100);
+        await fmLoadLoans('badge');
         setBadge(`${Math.min(fmInvestCompanyArray.length, 
           Math.floor(freeBalance / investSettingsObj.fmInvestSum))}/${Math.min(smInvestCompanyArray.length, 
           Math.floor(freeBalance / investSettingsObj.smInvestSum))}`

@@ -15,13 +15,14 @@
   --jle-universalColor: #C8CED2;
 
   --jle-green: #00BA88;
+  --jle-lightGreen: #97D8CA;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --jle-bgColor: #1F2022;
     --jle-secondBgColor: #272928;
-    --jle-fontColor: #fff;
+    --jle-fontColor: #fefefe;
     --jle-buttonColor: #186251;
     --jle-buttonHoverColor: #1e3431;
     --jle-buttonTextColor: #fff;
@@ -31,6 +32,8 @@
 
     --jle-first-color: #292929;
     --jle-second-color: #333333;
+
+    --jle-lightGreen: #00e7b5;
   }
 }
 

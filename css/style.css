@@ -91,26 +91,20 @@ b {
 }
 
 .tooltip {
-  position: relative;
+  cursor: help;
 }
-.tooltip::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  top: calc(100% + 5px);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 100;
+.tooltip-content {
+  position: fixed;
+  max-width: 450px;
   color: var(--jle-fontColor);
+  font-size: 14px;
   background: var(--jle-second-color);
   padding: 4px 8px;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.3s;
   border-radius: 8px;
-  white-space: pre-wrap;
-}
-.tooltip:hover::after {
-  opacity: 1;
+  z-index: 100;
+  transition: opacity 0.3s;
 }
 
 .modal {
@@ -277,14 +271,9 @@ b {
   border-radius: 10px;
   padding-left: 10px;
   padding-top: 1px;
-}
-.invest-section__btn {
-  font-size: 16px;
-  text-decoration: underline;
-  cursor: pointer;
-  -webkit-user-select: none;
-     -moz-user-select: none;
-          user-select: none;
+  border: 1px solid var(--jle-second-color);
+  background: var(--jle-smallBtnColor);
+  color: var(--jle-fontColor);
 }
 .invest-section__input-btn {
   width: 40px;
@@ -337,6 +326,23 @@ b {
 }
 .btn:hover {
   background: var(--jle-buttonHoverColor);
+}
+
+.btn-orb {
+  background: var(--jle-smallBtnColor);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  position: relative;
+  display: inline-block;
+  padding: 5px;
+  text-align: center;
+  vertical-align: bottom;
+  transition: all 0.185s ease-in-out;
+}
+.btn-orb:hover {
+  background: var(--jle-smallBtnColor--hover);
 }
 
 .swap {
@@ -395,7 +401,6 @@ b {
   background: var(--jle-smallBtnColor);
   padding: 8px;
   margin: 10px 0;
-  margin-right: 4px;
   border-radius: 12px;
   text-decoration: none;
   cursor: pointer;
@@ -404,8 +409,12 @@ b {
           user-select: none;
   transition: background 0.25s ease-in-out, scale 0.05s ease;
 }
-.btn-small:last-child {
-  margin-right: 0px;
+.btn-small__wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  -moz-column-gap: 6px;
+       column-gap: 6px;
+  align-items: center;
 }
 .btn-small:hover {
   background: var(--jle-smallBtnColor--hover);
@@ -453,7 +462,7 @@ b {
 }
 
 .contrast-bg {
-  padding: 12px;
+  padding: 14px 12px;
   border-radius: 12px;
   background: var(--jle-secondBgColor);
 }
@@ -487,7 +496,6 @@ b {
 
 .market-analiz-block {
   flex: 1;
-  margin-left: 10px;
   height: 35px;
   border-radius: 12px;
   font-size: 16px;

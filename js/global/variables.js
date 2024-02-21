@@ -1,4 +1,4 @@
-const version = "0.8.3";
+const version = "0.9.0 beta-1";
 
 const $ = {
   get: function(selector) {
@@ -82,6 +82,7 @@ let fmRateTo = $.get('#fm-rate-to');
 let fmLoansFrom = $.get('#fm-loans-from');
 let fmLoansTo = $.get('#fm-loans-to');
 let fmMaxCompanySum = $.get('#fm-max-company-sum');
+let fmMaxLoanSum = $.get('#fm-max-loan-sum');
 let fmInvestSum = $.get('#fm-invest-sum');
 let fmInvestSumAll = $.get('#fm-invest-sum-all');
 
@@ -100,6 +101,7 @@ let smPriceTo = $.get('#sm-price-to');
 let smClassFrom = $.get('#sm-class-from');
 let smClassTo = $.get('#sm-class-to');
 let smMaxCompanySum = $.get('#sm-max-company-sum');
+let smMaxLoanSum = $.get('#sm-max-loan-sum');
 let smInvestSum = $.get('#sm-invest-sum');
 let smInvestSumAll = $.get('#sm-invest-sum-all');
 
@@ -120,6 +122,7 @@ let formsElementsObj = {
   fmLoansFrom: '#fm-loans-from',
   fmLoansTo: '#fm-loans-to',
   fmMaxCompanySum: '#fm-max-company-sum',
+  fmMaxLoanSum: '#fm-max-loan-sum',
   fmInvestSum: '#fm-invest-sum',
   fmInvestSumAll: '#fm-invest-sum-all',
   smDaysFrom: '#sm-invest-days-from',
@@ -137,6 +140,7 @@ let formsElementsObj = {
   smClassFrom: '#sm-class-from',
   smClassTo: '#sm-class-to',
   smMaxCompanySum: '#sm-max-company-sum',
+  smMaxLoanSum: '#sm-max-loan-sum',
   smInvestSum: '#sm-invest-sum',
   smInvestSumAll: '#sm-invest-sum-all'
 };
@@ -151,6 +155,7 @@ let investSettingsObj = {
   fmLoansFrom: 1,
   fmLoansTo: 100,
   fmMaxCompanySum: 10000,
+  fmMaxLoanSum: 10000,
   fmInvestSum: 100,
   fmInvestSumAll: 0,
   smDaysFrom: 0,
@@ -168,8 +173,12 @@ let investSettingsObj = {
   smClassFrom: 0,
   smClassTo: 3,
   smMaxCompanySum: 10000,
+  smMaxLoanSum: 10000,
   smInvestSum: 100,
   smInvestSumAll: 0
 };
 
 const ratingArray = [,'AAA+', 'AAA', 'AA+', 'AA', 'A+', 'A', 'BBB+', 'BBB', 'BB+', 'BB', 'B+', 'B', 'CCC+', 'CCC', 'CC+', 'CC', 'C+', 'C', 'DDD+', 'DDD', 'DD+', 'DD', 'D+', 'D'];
+
+const spinLoad = document.createElement('div');
+spinLoad.innerHTML = `<div class="load-spinner__container"><span class="load-spinner" style="width: 32px;"></span></div>`;

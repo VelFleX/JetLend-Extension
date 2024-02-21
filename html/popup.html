@@ -18,20 +18,25 @@
             <span title="Посетите Jetlend чтобы обновить данные" style="color: #e1bb45; cursor: pointer">(Не обновлено)</span>
           </h5>
           <div class="main-section__buttons">
-            <div class="svg-btn-container tooltip" id="events__open" data-tooltip="События">
+            <div class="svg-btn-container tooltip" id="events__open">
               <img src="/img/events.svg" width="24px" alt="События">
+              <template class="tooltip-content">События</template>
             </div>
-            <!-- <div class="svg-btn-container tooltip" id="portfolio__open" data-tooltip="Портфель">
+            <div class="svg-btn-container tooltip" id="portfolio__open">
               <img src="/img/portfolio.svg" width="24px" alt="Портфель">
+              <template class="tooltip-content">Портфель</template>
             </div>
-            <div class="svg-btn-container tooltip" id="analytics__open" data-tooltip="Аналитика">
+            <div class="svg-btn-container tooltip" id="analytics__open">
               <img src="/img/analytics.svg" width="24px" alt="Аналитика">
-            </div> -->
-            <div class="svg-btn-container tooltip" id="settings__open" data-tooltip="Настройки">
-              <img src="/img/settings.svg" width="22px" alt="Настройки">
+              <template class="tooltip-content">Аналитика</template>
             </div>
-            <div class="svg-btn-container tooltip" id="newTab__open" data-tooltip="Открыть в новой вкладке">
+            <div class="svg-btn-container tooltip" id="settings__open">
+              <img src="/img/settings.svg" width="22px" alt="Настройки">
+              <template class="tooltip-content">Настройки</template>
+            </div>
+            <div class="svg-btn-container tooltip" id="newTab__open">
               <img src="/img/newTab.svg" width="22px" alt="Новое окно">
+              <template class="tooltip-content">Открыть в новой вкладке</template>
             </div>
           </div>
         </div>
@@ -81,8 +86,9 @@
           <span class="invest-section__btn-close">×</span>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="btn-small__wrapper">
           <span class="btn-small" id="marketMode">Первичный рынок</span>
+          <span class="btn-small" id="checkCompany__open">Проверка займов</span>
           <div class="load-block-animation market-analiz-block" id="market-companyAnaliz">
             <div>
               Всего компаний: <span id="market-numOfAllCompany">Загрузка...</span>
@@ -91,76 +97,109 @@
           </div>
         </div>
 
-        <div class="contrast-bg" id="firstMarket">
-          <div class="invest-section__input-title">Срок займа в днях (от / до):</div>
-          <input class="invest-section__input" id="fm-invest-days-from" type="number" min="0" max="5000" step="50" value="0"> / <input class="invest-section__input" id="fm-invest-days-to" type="number" min="0" max="5000" step="50" value="2000">
-          <div class="invest-section__input-title">Рейтинг (от / до):</div>
-          <input class="invest-section__input" id="fm-rating-from" type="number" min="1" max="20" value="1"> / <input class="invest-section__input" id="fm-rating-to" type="number" min="1" max="20" value="18">
-          <div class="invest-section__input-title">Ставка (от / до):</div>
-          <input class="invest-section__input" id="fm-rate-from" type="number" min="0" max="200" value="0"> / <input class="invest-section__input" id="fm-rate-to" type="number" min="0" max="200" value="35">
-          <div class="invest-section__input-title">Количество займов у заёмщика (от / до):</div>
-          <input class="invest-section__input" id="fm-loans-from" type="number" min="1" max="100" value="1"> / <input class="invest-section__input" id="fm-loans-to" type="number" min="1" max="100" value="100">
-          <div class="invest-section__input-title">Сумма в одного заёмщика (до):</div>
-          <input class="invest-section__input" id="fm-max-company-sum" style="width: 308px" type="number" min="100" max="100000000" step="100" value="100">
-          
-          
-          <div class="invest-section__input-title">Сумма (в один займ / всего распределить средств):</div>
-          <input class="invest-section__input" id="fm-invest-sum" type="number" min="100" step="100" value="100"> / <input class="invest-section__input" id="fm-invest-sum-all" type="number" min="100" step="100" value="100">
-          <div>
-            <span style="font-size: 16px;" id="fm-numOfSortedCompany">Загрузка...</span>
-            <span class="invest-section__btn btn-small display-none" id="fm-btn-update">Обновить</span>
-            <span class="invest-section__btn btn-small display-none" id="fm-btn-show">Показать список</span>
-            <span class="invest-section__btn btn-small" id="fm-btn-stop">Остановить</span>
+        <section id="firstMarket">
+          <div class="contrast-bg" style="margin-bottom: 10px;">
+            <h5 style="margin-bottom: 10px;">Фильтры</h5>
+            <div class="invest-section__input-title">Срок займа в днях (от / до):</div>
+            <input class="invest-section__input" id="fm-invest-days-from" type="number" min="0" max="5000" step="50" value="0"> / <input class="invest-section__input" id="fm-invest-days-to" type="number" min="0" max="5000" step="50" value="2000">
+            <div class="invest-section__input-title">Рейтинг (от / до):</div>
+            <input class="invest-section__input" id="fm-rating-from" type="number" min="1" max="20" value="1"> / <input class="invest-section__input" id="fm-rating-to" type="number" min="1" max="20" value="18">
+            <div class="invest-section__input-title">Ставка (от / до):</div>
+            <input class="invest-section__input" id="fm-rate-from" type="number" min="0" max="200" value="0"> / <input class="invest-section__input" id="fm-rate-to" type="number" min="0" max="200" value="35">
+            <div class="invest-section__input-title">Количество займов у заёмщика (от / до):</div>
+            <input class="invest-section__input" id="fm-loans-from" type="number" min="1" max="100" value="1"> / <input class="invest-section__input" id="fm-loans-to" type="number" min="1" max="100" value="100">
+            <div class="invest-section__input-title">Сумма в один займ (до) / одного заёмщика (до):</div>
+            <input class="invest-section__input" id="fm-max-loan-sum" type="number" min="0" max="100000000" step="100" value="0"> / <input class="invest-section__input" id="fm-max-company-sum" type="number" min="0" max="100000000" step="100" value="0">
+            <div class="btn-small__wrapper">
+              <span style="font-size: 16px;" id="fm-numOfSortedCompany">Загрузка...</span>
+              <span class="btn-small display-none" id="fm-btn-update">Обновить</span>
+              <span class="btn-small display-none" id="fm-btn-show">Показать список</span>
+              <span class="btn-small" id="fm-btn-stop">Остановить</span>           
+            </div>
+            <div class="btn-small__wrapper">
+              <span style="font-size: 16px;" id="fmr-numOfSortedCompany"></span>
+              <span class="btn-small" id="fmr-btn-update">Загрузить список зарезервированных займов</span>
+              <span class="btn-small display-none" id="fmr-btn-show">Показать список</span>
+              <span class="btn-small display-none" id="fmr-btn-stop">Остановить</span>
+            </div>
           </div>
-          <div>
-            <span style="font-size: 16px;" id="fmr-numOfSortedCompany"></span>
-            <span class="invest-section__btn btn-small" id="fmr-btn-update">Загрузить список зарезервированных займов</span>
-            <span class="invest-section__btn btn-small display-none" id="fmr-btn-show">Показать список</span>
-            <span class="invest-section__btn btn-small display-none" id="fmr-btn-stop">Остановить</span>
+          <div class="contrast-bg" style="margin-bottom: 10px;">
+            <h5 style="margin-bottom: 10px;">Распределение</h5>
+              
+            <div class="invest-section__input-title">Сумма (в один займ / всего распределить средств):</div>
+            <input class="invest-section__input" id="fm-invest-sum" type="number" min="100" step="100" value="100"> / <input class="invest-section__input" id="fm-invest-sum-all" type="number" min="100" step="100" value="100">
+            
+            <label style="display: block; font-size: 12px; margin: 10px 0; user-select: none; cursor: pointer;">
+              <input style="margin-right: 5px;" id="fmInvestAgree" type="checkbox" checked>
+              <span id="fmInvestAgreeText">Подтверждаю, что ознакомился с <a style="text-decoration: underline; color: #8888e6;" href="https://jetlend.ru/doc-view/rules" target="»_blank">правилами</a> и принимаю риски, связанные с инвестициями, а также, что сумма инвестиций с начала текущего года на всех инвестиционных платформах не превышает 600 000 ₽. Кроме того, я не предъявляю никаких претензий к разработчикам данного расширения и несу ответственность за все свои инвестиционные операции, выполненные с использованием данного расширения.</span>
+            </label>
+            <button class="btn" id="firstMarketSubmit">Распределить средства</button>
           </div>
-          <label style="display: block; font-size: 12px; margin: 10px 0; user-select: none; cursor: pointer;">
-            <input style="margin-right: 5px;" id="fmInvestAgree" type="checkbox" checked>
-            <span id="fmInvestAgreeText">Подтверждаю, что ознакомился с <a style="text-decoration: underline; color: #8888e6;" href="https://jetlend.ru/doc-view/rules" target="»_blank">правилами</a> и принимаю риски, связанные с инвестициями, а также, что сумма инвестиций с начала текущего года на всех инвестиционных платформах не превышает 600 000 ₽. Кроме того, я не предъявляю никаких претензий к разработчикам данного расширения и несу ответственность за все свои инвестиционные операции, выполненные с использованием данного расширения.</span>
-          </label>
-          <button class="btn" id="firstMarketSubmit">Распределить средства</button>
-        </div>
+        </section>
 
-        <div class="contrast-bg display-none" id="secondMarket">
-          <div class="invest-section__input-title">Остаток срока займа в днях (от / до):</div>
-          <input class="invest-section__input" id="sm-invest-days-from" type="number" min="0" max="5000" step="50" value="0"> / <input class="invest-section__input" id="sm-invest-days-to" type="number" min="0" max="5000" step="50" value="2000">
-          <div class="invest-section__input-title">Рейтинг (от / до):</div>
-          <input class="invest-section__input" id="sm-rating-from" type="number" min="1" max="20" value="1"> / <input class="invest-section__input" id="sm-rating-to" type="number" min="1" max="20" value="18">
-          <div class="invest-section__input-title">Эффективная ставка (от / до):</div>
-          <input class="invest-section__input" id="sm-rate-from" type="number" min="0" max="200" step="1" value="0"> / <input class="invest-section__input" id="sm-rate-to" type="number" min="0" max="200" step="1" value="100">
-          <div class="invest-section__input-title">ФД заёмщика (от / до):</div>
-          <input class="invest-section__input" id="sm-fd-from" type="number" min="0" max="100" step="1" value="0"> / <input class="invest-section__input" id="sm-fd-to" type="number" min="0" max="100" step="1" value="100">
-          <div class="invest-section__input-title">Процент закрытия займа (от / до):</div>
-          <input class="invest-section__input" id="sm-progress-from" type="number" min="0" max="100" step="1" value="0"> / <input class="invest-section__input" id="sm-progress-to" type="number" min="0" max="100" step="1" value="100">
-          <div class="invest-section__input-title">Цена в процентах (от / до):</div>
-          <input class="invest-section__input" id="sm-price-from" type="number" min="0" max="200" step="0.1" value="1"> / <input class="invest-section__input" id="sm-price-to" type="number" min="1" max="200" step="0.1" value="100">
-          <div class="invest-section__input-title">Класс займа (от / до):</div>
-          <input class="invest-section__input" id="sm-class-from" type="number" min="0" max="3" step="1" value="0"> / <input class="invest-section__input" id="sm-class-to" type="number" min="0" max="3" step="1" value="0">
-          <div class="invest-section__input-title">Сумма в одного заёмщика (до):</div>
-          <input class="invest-section__input" id="sm-max-company-sum" style="width: 308px" type="number" min="100" max="100000000" step="100" value="100">
-          
-          
-          <div class="invest-section__input-title">Сумма (в один займ / всего распределить средств):</div>
-          <input class="invest-section__input" id="sm-invest-sum" type="number" min="100" step="100" value="100"> / <input class="invest-section__input" id="sm-invest-sum-all" type="number" min="100" step="100" value="100">
-          
-          <div>
-            <span style="font-size: 16px;" id="sm-numOfSortedCompany">Загрузка...</span>
-            <span class="invest-section__btn btn-small display-none" id="sm-btn-update">Обновить</span>
-            <span class="invest-section__btn btn-small display-none" id="sm-btn-show">Показать список</span>
-            <span class="invest-section__btn btn-small" id="sm-btn-stop">Остановить</span>
+        <section class="display-none" id="secondMarket">
+          <div class="contrast-bg" style="margin-bottom: 10px;">
+            <h5 style="margin-bottom: 10px;">Фильтры</h5>
+            <div class="invest-section__input-title">Остаток срока займа в днях (от / до):</div>
+            <input class="invest-section__input" id="sm-invest-days-from" type="number" min="0" max="5000" step="50" value="0"> / <input class="invest-section__input" id="sm-invest-days-to" type="number" min="0" max="5000" step="50" value="2000">
+            <div class="invest-section__input-title">Рейтинг (от / до):</div>
+            <input class="invest-section__input" id="sm-rating-from" type="number" min="1" max="20" value="1"> / <input class="invest-section__input" id="sm-rating-to" type="number" min="1" max="20" value="18">
+            <div class="invest-section__input-title">Эффективная ставка (от / до):
+              <span class="btn-orb tooltip">?
+                <template class="tooltip-content">
+                  <p>Эффективная ставка — это доход, выраженный в процентах годовых, который получит инвестор, если купит данный заем по указанной цене.</p>
+                  <p>Эффективная ставка учитывает разницу между стоимостью займа и ценой покупки, а также проценты, которые будут начислены по данному займу.</p>
+                </template>
+              </span>
+            </div>
+            <input class="invest-section__input" id="sm-rate-from" type="number" min="0" max="200" step="1" value="0"> / <input class="invest-section__input" id="sm-rate-to" type="number" min="0" max="200" step="1" value="100">
+            <div class="invest-section__input-title">ФД заёмщика (от / до):
+              <span class="btn-orb tooltip">?
+                <template class="tooltip-content">
+                  <p>Финансовая дисциплина заёмщика отражает, насколько своевременно заёмщик погашает долг.</p>
+                  <p>Дисциплина снижается на 10% при допущении просрочки на 1 день от даты платежа по графику.</p>
+                </template>
+              </span>
+            </div>
+            <input class="invest-section__input" id="sm-fd-from" type="number" min="0" max="100" step="1" value="0"> / <input class="invest-section__input" id="sm-fd-to" type="number" min="0" max="100" step="1" value="100">
+            <div class="invest-section__input-title">Процент закрытия займа (от / до):</div>
+            <input class="invest-section__input" id="sm-progress-from" type="number" min="0" max="100" step="1" value="0"> / <input class="invest-section__input" id="sm-progress-to" type="number" min="0" max="100" step="1" value="100">
+            <div class="invest-section__input-title">Цена в процентах (от / до):</div>
+            <input class="invest-section__input" id="sm-price-from" type="number" min="0" max="200" step="0.1" value="1"> / <input class="invest-section__input" id="sm-price-to" type="number" min="1" max="200" step="0.1" value="100">
+            <div class="invest-section__input-title">Класс займа (от / до):
+              <span class="btn-orb tooltip">?
+                <template class="tooltip-content">
+                  <p>Класс займа указывает была реструктуризация или нет:</p>
+                  <p>0 - реструктуризации не было.</p> 
+                  <p>1 - займ реструктуризирован.</p>
+                  <p>2 и 3 — разные виды дефолтов (управляемый и неуправляемый оператором).</p> 
+                  <p>Детально классы займа описаны в правилах платформы.</p>
+                </template>
+              </span>
+            </div>
+            <input class="invest-section__input" id="sm-class-from" type="number" min="0" max="3" step="1" value="0"> / <input class="invest-section__input" id="sm-class-to" type="number" min="0" max="3" step="1" value="0">
+            <div class="invest-section__input-title">Сумма в один займ (до) / одного заёмщика (до):</div>
+            <input class="invest-section__input" id="sm-max-loan-sum" type="number" min="0" max="100000000" step="100" value="0"> / <input class="invest-section__input" id="sm-max-company-sum" type="number" min="0" max="100000000" step="100" value="0">
+            <div class="btn-small__wrapper">
+              <span style="font-size: 16px;" id="sm-numOfSortedCompany">Загрузка...</span>
+              <span class="btn-small display-none" id="sm-btn-update">Обновить</span>
+              <span class="btn-small display-none" id="sm-btn-show">Показать список</span>
+              <span class="btn-small" id="sm-btn-stop">Остановить</span>
+            </div>
           </div>
-          <label style="display: block; font-size: 12px; margin: 10px 0; user-select: none; cursor: pointer;">
-            <input style="margin-right: 5px;" id="smInvestAgree" type="checkbox" checked>
-            <span id="smInvestAgreeText">Подтверждаю, что я не предъявляю никаких претензий к разработчикам данного расширения и несу ответственность за все свои инвестиционные операции, выполненные с использованием данного расширения.</span>
-          </label>
-          <button class="btn" id="secondMarketSubmit">Распределить средства</button>
-          
-        </div>
-      
+          <div class="contrast-bg" style="margin-bottom: 10px;">
+            <h5 style="margin-bottom: 10px;">Распределение</h5>
+            <div class="invest-section__input-title">Сумма (в один займ / всего распределить средств):</div>
+            <input class="invest-section__input" id="sm-invest-sum" type="number" min="100" step="100" value="100"> / <input class="invest-section__input" id="sm-invest-sum-all" type="number" min="100" step="100" value="100">
+            
+            
+            <label style="display: block; font-size: 12px; margin: 10px 0; user-select: none; cursor: pointer;">
+              <input style="margin-right: 5px;" id="smInvestAgree" type="checkbox" checked>
+              <span id="smInvestAgreeText">Подтверждаю, что я не предъявляю никаких претензий к разработчикам данного расширения и несу ответственность за все свои инвестиционные операции, выполненные с использованием данного расширения.</span>
+            </label>
+            <button class="btn" id="secondMarketSubmit">Распределить средства</button>
+          </div>
+        </section>
       </div>
     </section>
 
@@ -176,9 +215,8 @@
           <h5>События</h5>
           <span class="modal__btn-close">×</span>
         </div>
-        <div id="events__btn-section">
+        <div class="btn-small__wrapper" id="events__btn-section">
           <span class="btn-small" id="event-transactions__open">Последние события</span>
-          <span class="btn-small" id="event-defaults__open">Последние дефолты</span>
         </div>
         <div id="events__list"></div>
       </section>
@@ -190,12 +228,12 @@
           <h5>Портфель</h5>
           <span class="modal__btn-close">×</span>
         </div>
-        <div id="portfolio__btn-section">
-          <span class="btn-small" id="portfolio-1__open">Все активы</span>
-          <span class="btn-small" id="portfolio-2__open">Просрочка 5+</span>
-          <span class="btn-small" id="portfolio-3__open">Просрочка 15+</span>
-          <span class="btn-small" id="portfolio-4__open">Рестракты</span>
-          <span class="btn-small" id="portfolio-5__open">Дефолты</span>
+        <div class="btn-small__wrapper" id="portfolio__btn-section">
+          <span class="btn-small" id="portfolio-all__open">Все активы</span>
+          <span class="btn-small" id="npl1__open">NPL1+</span>
+          <span class="btn-small" id="npl15__open">NPL15+</span>
+          <span class="btn-small" id="restructs__open">Реструктуризации</span>
+          <span class="btn-small" id="defaults__open">Дефолты</span>
           <span class="btn-small" id="portfolio-6__open">Скрытые просрочки</span>
         </div>
         <div id="portfolio__list"></div>
@@ -208,66 +246,66 @@
           <h5>Аналитика</h5>
           <span class="modal__btn-close">×</span>
         </div>
-        <div id="analytics__btn-section">
+        <div class="btn-small__wrapper" id="analytics__btn-section">
           <span class="btn-small" id="analytics-1__open">Поступления</span>
           <span class="btn-small" id="analytics-2__open">Ожидаемые поступления</span>
         </div>
         <div id="analytics__list">
           <div style="background: var(--jle-secondBgColor); width: 100%; height: 200px; display: flex; align-items: flex-end; padding: 0 15px; gap: 5px; border-radius: 16px;">
             <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
-              <div class="tooltip__content">
+              <template class="tooltip-content">
                 <p>Текст первой строки</p>
                 <p>Текст второй строки</p>
-              </div>
+              </template>
+              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 70%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+              <div style="background: var(--jle-green); width: 100%; height: 58%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+            </div>
+            <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
+              <template class="tooltip-content">
+                <p>Текст первой строки</p>
+                <p>Текст второй строки</p>
+              </template>
+              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 77%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+              <div style="background: var(--jle-green); width: 100%; height: 65%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+            </div>
+            <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
+              <template class="tooltip-content">
+                <p>Текст первой строки</p>
+                <p>Текст второй строки</p>
+              </template>
+              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 90%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+              <div style="background: var(--jle-green); width: 100%; height: 45%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+            </div>
+            <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
+              <template class="tooltip-content">
+                <p>Текст первой строки</p>
+                <p>Текст второй строки</p>
+              </template>
+              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 80%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+              <div style="background: var(--jle-green); width: 100%; height: 68%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+            </div>
+            <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
+              <template class="tooltip-content">
+                <p>Текст первой строки</p>
+                <p>Текст второй строки</p>
+              </template>
               <div style="background: var(--jle-smallBtnColor); width: 100%; height: 70%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
               <div style="background: var(--jle-green); width: 100%; height: 55%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
             </div>
             <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
-              <div class="tooltip__content">
+              <template class="tooltip-content">
                 <p>Текст первой строки</p>
                 <p>Текст второй строки</p>
-              </div>
-              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 70%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+              </template>
+              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 75%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
               <div style="background: var(--jle-green); width: 100%; height: 55%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
             </div>
             <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
-              <div class="tooltip__content">
+              <template class="tooltip-content">
                 <p>Текст первой строки</p>
                 <p>Текст второй строки</p>
-              </div>
-              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 70%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
-              <div style="background: var(--jle-green); width: 100%; height: 55%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
-            </div>
-            <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
-              <div class="tooltip__content">
-                <p>Текст первой строки</p>
-                <p>Текст второй строки</p>
-              </div>
-              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 70%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
-              <div style="background: var(--jle-green); width: 100%; height: 55%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
-            </div>
-            <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
-              <div class="tooltip__content">
-                <p>Текст первой строки</p>
-                <p>Текст второй строки</p>
-              </div>
-              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 70%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
-              <div style="background: var(--jle-green); width: 100%; height: 55%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
-            </div>
-            <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
-              <div class="tooltip__content">
-                <p>Текст первой строки</p>
-                <p>Текст второй строки</p>
-              </div>
-              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 70%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
-              <div style="background: var(--jle-green); width: 100%; height: 55%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
-            </div>
-            <div class="tooltip" style="flex: 1; max-width: 100%; height: 100%; position: relative;">
-              <div class="tooltip__content">
-                <p>Текст первой строки</p>
-                <p>Текст второй строки</p>
-              </div>
-              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 70%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
+              </template>
+              <div style="background: var(--jle-smallBtnColor); width: 100%; height: 55%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
               <div style="background: var(--jle-green); width: 100%; height: 55%; position: absolute; bottom: 0; border-radius: 10px 10px 0 0;"></div>
             </div>
           </div>
@@ -323,7 +361,7 @@
     <div class="modal-container display-none" id="fmr-list">
       <section class="modal">
         <div class="modal__title">
-          <h5>Список компаний на первичном рынке</h5>
+          <h5>Список зарезервированных займов</h5>
           <span class="modal__btn-close">×</span>
         </div>
         <br>
@@ -339,6 +377,21 @@
         </div>
         <br>
         <div id="sm-list-ul"></div>
+      </section>
+    </div>
+
+    <div class="modal-container display-none" id="checkCompany__section">
+      <section class="modal">
+        <div class="modal__title">
+          <h5>Проверка займов</h5>
+          <span class="modal__btn-close">×</span>
+        </div>
+        <div class="btn-small__wrapper">
+          <input class="invest-section__input" id="checkCompany__input" style="height: 34.4px; padding: 8px; align-self: self-end; flex: 1;" type="text" placeholder="id займов в формате JL00012345 или 12345">
+          <span class="btn-small" id="checkCompany__btn">Проверить</span>
+        </div>
+        <div id="checkCompany__list"></div>
+        <div id="checkCompany__spin"></div>
       </section>
     </div>
     
