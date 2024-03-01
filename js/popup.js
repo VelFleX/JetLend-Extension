@@ -1,26 +1,25 @@
-$.get('#stats__open').addEventListener("click", function () {
-  if($.get('.stats-section').style.maxHeight === '1000px' || (!this.style.cssText && window.innerWidth >= 768)) {
-    this.style.transform = 'scaleY(-1)';
-    $.get('.stats-section').style.maxHeight = '0px';
+$.get("#stats__open").addEventListener("click", function () {
+  if ($.get(".stats-section").style.maxHeight === "1000px" || (!this.style.cssText && window.innerWidth >= 768)) {
+    this.style.transform = "scaleY(-1)";
+    $.get(".stats-section").style.maxHeight = "0px";
   } else {
-    this.style.transform = 'scaleY(1)';
-    $.get('.stats-section').style.maxHeight = '1000px';
+    this.style.transform = "scaleY(1)";
+    $.get(".stats-section").style.maxHeight = "1000px";
   }
 });
 
-
-document.addEventListener('mouseover', function(e) {
-  let tooltipHtml = e.target.closest('.tooltip');
+document.addEventListener("mouseover", function (e) {
+  let tooltipHtml = e.target.closest(".tooltip");
   if (!tooltipHtml) {
     return;
   }
-  let tooltipContent = tooltipHtml.querySelector('.tooltip-content');
+  let tooltipContent = tooltipHtml.querySelector(".tooltip-content");
 
-  let tooltipElem = document.createElement('div');
-  tooltipElem.className = 'tooltip-content'; 
+  let tooltipElem = document.createElement("div");
+  tooltipElem.className = "tooltip-content";
   tooltipElem.innerHTML = tooltipContent.innerHTML;
   setTimeout(() => {
-    tooltipElem.style.opacity = '1';
+    tooltipElem.style.opacity = "1";
   }, 0);
   document.body.append(tooltipElem);
 
@@ -39,46 +38,46 @@ document.addEventListener('mouseover', function(e) {
     top = targetCoords.top + tooltipHtml.offsetHeight + 5;
   }
 
-  tooltipElem.style.left = left + 'px';
-  tooltipElem.style.top = top + 'px';
+  tooltipElem.style.left = left + "px";
+  tooltipElem.style.top = top + "px";
 
-  tooltipHtml.addEventListener('mouseleave', function() {
-        tooltipElem.style.opacity = '0';
-        setTimeout(() => {
-          tooltipElem.remove();
-        }, 300);
-    });
+  tooltipHtml.addEventListener("mouseleave", function () {
+    tooltipElem.style.opacity = "0";
+    setTimeout(() => {
+      tooltipElem.remove();
+    }, 300);
+  });
 });
 
 document.addEventListener("click", function (event) {
-  if (event.target.classList.contains('modal-container')) {
-    closeModal('#'+event.target.id);
+  if (event.target.classList.contains("modal-container")) {
+    closeModal("#" + event.target.id);
     return;
   }
-  if (event.target.classList.contains('modal__btn-close')) {
-    closeModal('#'+event.target.parentNode.parentNode.parentNode.id);
+  if (event.target.classList.contains("modal__btn-close")) {
+    closeModal("#" + event.target.parentNode.parentNode.parentNode.id);
     return;
   }
 });
 
 document.addEventListener("click", function (event) {
-  if (event.target.classList.contains('target-url')) {
+  if (event.target.classList.contains("target-url")) {
     event.preventDefault();
     function addHttpIfMissing(url) {
       if (!/^https?:\/\//i.test(url)) {
-        url = 'http://' + url;
+        url = "http://" + url;
       }
       return url;
     }
-    chrome.windows.create({ url: addHttpIfMissing(event.target.href), type: 'popup', focused: true });
+    chrome.windows.create({ url: addHttpIfMissing(event.target.href), type: "popup", focused: true });
   }
 });
 
 document.addEventListener("click", function (event) {
   if (event.target.classList.contains("swap")) {
-    if($.get('.swap').textContent == 'всё время') {
+    if ($.get(".swap").textContent == "всё время") {
       statsSection.innerHTML = dataTextYearTime;
-    } else if ($.get('.swap').textContent == 'год') {
+    } else if ($.get(".swap").textContent == "год") {
       statsSection.innerHTML = dataTextAllTime;
     }
   }
@@ -90,55 +89,70 @@ let balance = 0;
 let cachedBalance = 0;
 let cachedCleanBalance = 0;
 
-let timePeriod = '';
-let dataTextAllTime = '';
-let dataTextYearTime = '';
-let sameDataText = '';
+let timePeriod = "";
+let dataTextAllTime = "";
+let dataTextYearTime = "";
+let sameDataText = "";
 
-const formsElements = [fmDaysFrom, fmDaysTo, fmRatingFrom, fmRatingTo, fmRateFrom, fmRateTo, fmLoansFrom, fmLoansTo, fmMaxCompanySum, fmMaxLoanSum, fmInvestSum,
-  smDaysFrom, smDaysTo, smRatingFrom, smRatingTo, smRateFrom, smRateTo, smFdFrom, smFdTo, smProgressFrom,
-  smProgressTo, smPriceFrom, smPriceTo, smClassFrom, smClassTo, smMaxCompanySum, smMaxLoanSum, smInvestSum];
+const formsElements = [fmDaysFrom, fmDaysTo, fmRatingFrom, fmRatingTo, fmRateFrom, fmRateTo, fmLoansFrom, fmLoansTo, fmMaxCompanySum, fmMaxLoanSum, fmStopLoanSum, fmStopCompanySum, fmInvestSum, smDaysFrom, smDaysTo, smRatingFrom, smRatingTo, smRateFrom, smRateTo, smFdFrom, smFdTo, smProgressFrom, smProgressTo, smPriceFrom, smPriceTo, smClassFrom, smClassTo, smMaxCompanySum, smMaxLoanSum, smStopLoanSum, smStopCompanySum, smInvestSum];
 
-formsElements.forEach(element => element.addEventListener('change', updateInvestSettings));
-btnInvestOpen.addEventListener('click', openInvestPage);
-btnInvestClose.addEventListener('click', closeInvestPage);
+formsElements.forEach((element) => element.addEventListener("change", updateInvestSettings));
+btnInvestOpen.addEventListener("click", openInvestPage);
+btnInvestClose.addEventListener("click", closeInvestPage);
 
-$.get('#events__open').addEventListener('click', () => opneModal('#events'));
-$.get('#event-transactions__open').addEventListener('click', () => transactionsShow());
+$.get("#events__open").addEventListener("click", () => opneModal("#events"));
+$.get("#event-transactions__open").addEventListener("click", () => transactionsShow());
 
-$.get('#portfolio__open').addEventListener('click', () => opneModal('#portfolio'));
-$.get('#portfolio-all__open').addEventListener('click', () => portfolioAllShow());
-$.get('#npl1__open').addEventListener('click', () => nplShow(1));
-$.get('#npl15__open').addEventListener('click', () => nplShow(15));
-$.get('#restructs__open').addEventListener('click', () => restructsShow());
-$.get('#defaults__open').addEventListener('click', () => defaultsShow());
+$.get("#portfolio__open").addEventListener("click", () => opneModal("#portfolio"));
+$.get("#portfolio-all__open").addEventListener("click", () => portfolioAllShow());
+$.get("#npl1__open").addEventListener("click", () => nplShow(1));
+$.get("#npl15__open").addEventListener("click", () => nplShow(15));
+$.get("#restructs__open").addEventListener("click", () => restructsShow());
+$.get("#defaults__open").addEventListener("click", () => defaultsShow());
 
-$.get('#analytics__open').addEventListener('click', () => opneModal('#analytics'));
+$.get("#analytics__open").addEventListener("click", () => opneModal("#analytics"));
 
-$.get('#settings__open').addEventListener('click', () => {opneModal('#settings')});
-$.get('#newTab__open').addEventListener('click', () => chrome.tabs.create({url: chrome.runtime.getURL('html/popup.html')}));
+$.get("#settings__open").addEventListener("click", () => {
+  opneModal("#settings");
+});
+$.get("#newTab__open").addEventListener("click", () => chrome.tabs.create({ url: chrome.runtime.getURL("html/popup.html") }));
 
-$.get('#fm-btn-update').addEventListener('click', updateFirstMarket);
-$.get('#fm-btn-show').addEventListener('click', () => {opneModal('#fm-list'); fmCompanyShow(fmInvestCompanyArray, '#fm-list-ul')});
-$.get('#fm-btn-stop').addEventListener('click', function() {fmCompanyUpdate = false});
+$.get("#fm-btn-update").addEventListener("click", updateFirstMarket);
+$.get("#fm-btn-show").addEventListener("click", () => {
+  opneModal("#fm-list");
+  fmCompanyShow(fmInvestCompanyArray, "#fm-list-ul");
+});
+$.get("#fm-btn-stop").addEventListener("click", function () {
+  fmCompanyUpdate = false;
+});
 
-$.get('#fmr-btn-update').addEventListener('click', updateFirstMarketReserv);
-$.get('#fmr-btn-show').addEventListener('click', () => {opneModal('#fmr-list'); fmCompanyShow(fmrInvestCompanyArray, '#fmr-list-ul')});
-$.get('#fmr-btn-stop').addEventListener('click', function() {fmrCompanyUpdate = false});
+$.get("#fmr-btn-update").addEventListener("click", updateFirstMarketReserv);
+$.get("#fmr-btn-show").addEventListener("click", () => {
+  opneModal("#fmr-list");
+  fmCompanyShow(fmrInvestCompanyArray, "#fmr-list-ul");
+});
+$.get("#fmr-btn-stop").addEventListener("click", function () {
+  fmrCompanyUpdate = false;
+});
 
-$.get('#sm-btn-update').addEventListener('click', updateSecondMarket);
-$.get('#sm-btn-show').addEventListener('click', () => {opneModal('#sm-list'); smCompanyShow(smInvestCompanyArray, '#sm-list-ul')});
-$.get('#sm-btn-stop').addEventListener('click', function() {smCompanyUpdate = false});
+$.get("#sm-btn-update").addEventListener("click", updateSecondMarket);
+$.get("#sm-btn-show").addEventListener("click", () => {
+  opneModal("#sm-list");
+  smCompanyShow(smInvestCompanyArray, "#sm-list-ul");
+});
+$.get("#sm-btn-stop").addEventListener("click", function () {
+  smCompanyUpdate = false;
+});
 
-$.get('#marketMode').addEventListener('click', marketSwap);
-$.get('#checkCompany__open').addEventListener('click', () => opneModal('#checkCompany__section'));
-$.get('#checkCompany__btn').addEventListener('click', () => checkCompany());
+$.get("#marketMode").addEventListener("click", marketSwap);
+$.get("#checkCompany__open").addEventListener("click", () => opneModal("#checkCompany__section"));
+$.get("#checkCompany__btn").addEventListener("click", () => checkCompany());
 
-chrome.storage.local.get("investSettings", function(data) {
+chrome.storage.local.get("investSettings", function (data) {
   if (data.investSettings) {
     const settings = data.investSettings;
     const keys = Object.keys(settings);
-    keys.forEach(key => {
+    keys.forEach((key) => {
       const element = $.get(formsElementsObj[key]);
       if (element && settings[key]) {
         element.value = settings[key];
@@ -151,27 +165,29 @@ async function transactionsShow() {
   // if ($.get('#event-transactions__open').classList.contains('btn-small--active')) {
   //   return;
   // };
-  $.get('#events__btn-section').querySelectorAll('.btn-small').forEach(btn => btn.classList.remove('btn-small--active'));
-  $.get('#event-transactions__open').classList.add('btn-small--active');
-  const list = $.get('#events__list');
+  $.get("#events__btn-section")
+    .querySelectorAll(".btn-small")
+    .forEach((btn) => btn.classList.remove("btn-small--active"));
+  $.get("#event-transactions__open").classList.add("btn-small--active");
+  const list = $.get("#events__list");
   list.innerHTML = `<div class="load-spinner__container"><span class="load-spinner" style="width: 32px;"></span></div>`;
-  const transactionsData = await fetchData('https://jetlend.ru/invest/api/account/transactions');
+  const transactionsData = await fetchData("https://jetlend.ru/invest/api/account/transactions");
   const operations = {
-    purchase: 'Покупка займа',
-    payment: 'Платеж по займу',
-    collection: 'Судебное взыскание',
-    contract: 'Выдача займа',
-    default: 'Дефолт',
-    investment: 'Пополнение или вывод средтсв'
-  }
+    purchase: "Покупка займа",
+    payment: "Платеж по займу",
+    collection: "Судебное взыскание",
+    contract: "Выдача займа",
+    default: "Дефолт",
+    investment: "Пополнение или вывод средтсв",
+  };
   if (transactionsData.data) {
-    list.innerHTML = '';
-    transactionsData.data.transactions.forEach(element => {
-      const listItem = document.createElement('div');
-      listItem.classList.add('list-element', 'contrast-bg');
-      listItem.innerHTML = createListElement(element); 
-      list.appendChild(listItem); 
-    })
+    list.innerHTML = "";
+    transactionsData.data.transactions.forEach((element) => {
+      const listItem = document.createElement("div");
+      listItem.classList.add("list-element", "contrast-bg");
+      listItem.innerHTML = createListElement(element);
+      list.appendChild(listItem);
+    });
   } else {
     list.textContent = transactionsData.error;
   }
@@ -179,40 +195,42 @@ async function transactionsShow() {
   function createListElement(element) {
     function setColor(num) {
       if (num > 0) {
-        return 'limegreen';
+        return "limegreen";
       } else {
-        return 'red';
+        return "red";
       }
     }
     return `
     <section style="display: flex;">
-      ${element.preview_small_url ? `<img class="list-element__img" src="https://jetlend.ru${element.preview_small_url}">` : ''}
+      ${element.preview_small_url ? `<img class="list-element__img" src="https://jetlend.ru${element.preview_small_url}">` : ""}
       <div>
-        <div style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block;">${element.company || 'Прочее'}</div>
+        <div style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block;">${element.company || "Прочее"}</div>
         <div style="font-size: 14px; margin-top: 5px;">${operations[element.operation_type] ? operations[element.operation_type] : element.operation_type}</div>
       </div>
       <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; font-size: 14px;">
         <div style="font-weight: 600; text-wrap: nowrap;">
-          ${element.income && element.income !== 0.00 ? `${toCurrencyFormat(element.income)}` : ''}
+          ${element.income && element.income !== 0.0 ? `${toCurrencyFormat(element.income)}` : ""}
         </div>
         <div style="color: orangered; font-weight: 600; text-wrap: nowrap; margin-top: 5px;">
-          ${element.expense && element.expense !== 0.00 ? element.expense > 0 ? `-${toCurrencyFormat(element.expense)}` : `${toCurrencyFormat(element.expense)}` : ''}
+          ${element.expense && element.expense !== 0.0 ? (element.expense > 0 ? `-${toCurrencyFormat(element.expense)}` : `${toCurrencyFormat(element.expense)}`) : ""}
         </div> 
         <div style="color: ${setColor(element.revenue)}; font-weight: 600; text-wrap: nowrap; margin-top: 5px;">
-          ${element.revenue && element.revenue !== 0.00 ? element.revenue > 0 ? `+${toCurrencyFormat(element.revenue)}` : `${toCurrencyFormat(element.revenue)}` : ''}
+          ${element.revenue && element.revenue !== 0.0 ? (element.revenue > 0 ? `+${toCurrencyFormat(element.revenue)}` : `${toCurrencyFormat(element.revenue)}`) : ""}
         </div> 
       </div>
     </section>
-    `
+    `;
   }
 }
 
 async function portfolioAllShow() {
-  $.get('#portfolio__btn-section').querySelectorAll('.btn-small').forEach(btn => btn.classList.remove('btn-small--active'));
-  $.get('#portfolio-all__open').classList.add('btn-small--active');
-  const list = $.get('#portfolio__list');
+  $.get("#portfolio__btn-section")
+    .querySelectorAll(".btn-small")
+    .forEach((btn) => btn.classList.remove("btn-small--active"));
+  $.get("#portfolio-all__open").classList.add("btn-small--active");
+  const list = $.get("#portfolio__list");
   list.innerHTML = `<div class="load-spinner__container"><span class="load-spinner" style="width: 32px;"></span></div>`;
-  const allCompays = await fetchData('https://jetlend.ru/invest/api/portfolio/loans?limit=1&offset=0');
+  const allCompays = await fetchData("https://jetlend.ru/invest/api/portfolio/loans?limit=1&offset=0");
   if (allCompays.data) {
     list.innerHTML = list.innerHTML = `<div class="contrast-bg" style="margin-bottom: 12px">
       <p>Всего займов: <b>${allCompays.data.total}<b> шт.</p>
@@ -221,27 +239,29 @@ async function portfolioAllShow() {
 }
 
 async function nplShow(nplNum) {
-  $.get('#portfolio__btn-section').querySelectorAll('.btn-small').forEach(btn => btn.classList.remove('btn-small--active'));
-  $.get(`#npl${nplNum}__open`).classList.add('btn-small--active');
-  const list = $.get('#portfolio__list');
+  $.get("#portfolio__btn-section")
+    .querySelectorAll(".btn-small")
+    .forEach((btn) => btn.classList.remove("btn-small--active"));
+  $.get(`#npl${nplNum}__open`).classList.add("btn-small--active");
+  const list = $.get("#portfolio__list");
   list.innerHTML = `<div class="load-spinner__container"><span class="load-spinner" style="width: 32px;"></span></div>`;
-  const url = 'https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22delayed%22%5D%2C%22field%22%3A%22status%22%7D%5D&limit=10000&offset=0&sort_dir=asc&sort_field=company';
+  const url = "https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22delayed%22%5D%2C%22field%22%3A%22status%22%7D%5D&limit=10000&offset=0&sort_dir=asc&sort_field=company";
   const res = await fetchData(url);
 
   if (res.data) {
     let debtSum = 0;
-    let sorted = res.data.data.filter(obj => dateDiff(obj.next_payment_date) >= nplNum);
+    let sorted = res.data.data.filter((obj) => dateDiff(obj.next_payment_date) >= nplNum);
     if (nplNum === 1) {
-      sorted = sorted.filter(obj => dateDiff(obj.next_payment_date) < 15);
-    };
+      sorted = sorted.filter((obj) => dateDiff(obj.next_payment_date) < 15);
+    }
     if (!sorted.length) {
-      list.textContent = 'Нет просрочек.'
+      list.textContent = "Нет просрочек.";
       return;
-    };
+    }
     for (elem of sorted) {
       debtSum += elem.principal_debt;
       elem.npl = dateDiff(elem.next_payment_date);
-    };
+    }
     sorted.sort((a, b) => new Date(b.npl) - new Date(a.npl));
     list.innerHTML = `<div class="contrast-bg" style="margin-bottom: 12px">
         <p>Всего задержанных займов: <b>${res.data.total}</b> шт.</p>
@@ -261,15 +281,15 @@ async function nplShow(nplNum) {
         <p>Выплаченные пени: <b>${toCurrencyFormat(res.data.aggregation.paid_fine)}</b>.</p>
         <p>НПД: <b>${toCurrencyFormat(res.data.aggregation.nkd)}</b>.</p>
       </div>`;
-    sorted.forEach(element => {
-      const listItem = document.createElement('div');
-      listItem.classList.add('list-element', 'contrast-bg');
-      listItem.innerHTML = createListElement(element); 
-      list.appendChild(listItem); 
-    })
+    sorted.forEach((element) => {
+      const listItem = document.createElement("div");
+      listItem.classList.add("list-element", "contrast-bg");
+      listItem.innerHTML = createListElement(element);
+      list.appendChild(listItem);
+    });
   } else {
     list.textContent = transactionsData.error;
-  };
+  }
 
   function createListElement(company) {
     return `
@@ -280,9 +300,7 @@ async function nplShow(nplNum) {
           ${company.loan_name}
         </a>
           <div style="font-size: 14px; margin-top: 3px;">
-            <b style="${company.rating.includes('A') ? 'color: limegreen;' : 
-                        company.rating.includes('B') ? 'color: orange;' : 
-                        'color: orangered;'}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
+            <b style="${company.rating.includes("A") ? "color: limegreen;" : company.rating.includes("B") ? "color: orange;" : "color: orangered;"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
             <span class="tooltip"> 
               NPL <b>${company.npl} д.</b>
               <template class="tooltip-content">
@@ -297,7 +315,7 @@ async function nplShow(nplNum) {
       </div>
       <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; font-size: 14px;">
         <div class="tooltip" style="text-wrap: nowrap;">
-          <b>${formatReadableDate(company.next_payment_date, 'short')}</b>
+          <b>${formatReadableDate(company.next_payment_date, "short")}</b>
           <template class="tooltip-content">
             Дата следующего платежа.
           </template>
@@ -319,26 +337,27 @@ async function nplShow(nplNum) {
       </div>
     </section>
     <div class="progressbar__container" style="margin-top: 5px;">
-      <div class="progressbar" style="width: ${company.progress*100}%; background: ${company.status === 'delayed' ? 'orange' : 'var(--jle-lightGreen)'};"></div>
+      <div class="progressbar" style="width: ${company.progress * 100}%; background: ${company.status === "delayed" ? "orange" : "var(--jle-lightGreen)"};"></div>
     </div>
     `;
- };
-};
-
+  }
+}
 
 async function restructsShow() {
-  $.get('#portfolio__btn-section').querySelectorAll('.btn-small').forEach(btn => btn.classList.remove('btn-small--active'));
-  $.get('#restructs__open').classList.add('btn-small--active');
-  const list = $.get('#portfolio__list');
+  $.get("#portfolio__btn-section")
+    .querySelectorAll(".btn-small")
+    .forEach((btn) => btn.classList.remove("btn-small--active"));
+  $.get("#restructs__open").classList.add("btn-small--active");
+  const list = $.get("#portfolio__list");
   list.innerHTML = `<div class="load-spinner__container"><span class="load-spinner" style="width: 32px;"></span></div>`;
-  const url = 'https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22restructured%22%5D%2C%22field%22%3A%22status%22%7D%5D&limit=10000&offset=0&sort_dir=desc&sort_field=principal_debt';
+  const url = "https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22restructured%22%5D%2C%22field%22%3A%22status%22%7D%5D&limit=10000&offset=0&sort_dir=desc&sort_field=principal_debt";
   const res = await fetchData(url);
   if (res.data) {
     let sorted = res.data.data;
     if (!sorted.length) {
-      list.textContent = 'Нет реструктуризированых займов.'
+      list.textContent = "Нет реструктуризированых займов.";
       return;
-    };
+    }
     sorted.sort((a, b) => new Date(a.next_payment_date) - new Date(b.next_payment_date));
     list.innerHTML = `<div class="contrast-bg" style="margin-bottom: 12px">
       <p>Всего реструктуризаций: <b>${res.data.total}</b> шт.</p>
@@ -353,16 +372,16 @@ async function restructsShow() {
       <p>Выплаченные пени: <b>${toCurrencyFormat(res.data.aggregation.paid_fine)}</b>.</p>
       <p>НПД: <b>${toCurrencyFormat(res.data.aggregation.nkd)}</b>.</p>
     </div>`;
-    sorted.forEach(element => {
-      const listItem = document.createElement('div');
-      listItem.classList.add('list-element', 'contrast-bg');
-      listItem.innerHTML = createListElement(element); 
-      list.appendChild(listItem); 
-    })
+    sorted.forEach((element) => {
+      const listItem = document.createElement("div");
+      listItem.classList.add("list-element", "contrast-bg");
+      listItem.innerHTML = createListElement(element);
+      list.appendChild(listItem);
+    });
     console.log(sorted);
   } else {
     list.textContent = transactionsData.error;
-  };
+  }
 
   function createListElement(company) {
     return `
@@ -373,9 +392,7 @@ async function restructsShow() {
           ${company.loan_name}
         </a>
           <div style="font-size: 14px; margin-top: 3px;">
-            <b style="${company.rating.includes('A') ? 'color: limegreen;' : 
-                        company.rating.includes('B') ? 'color: orange;' : 
-                        'color: orangered;'}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>
+            <b style="${company.rating.includes("A") ? "color: limegreen;" : company.rating.includes("B") ? "color: orange;" : "color: orangered;"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>
             
           </div>
           <div style="margin-top: 5px; font-size: 14px; text-wrap: nowrap;">
@@ -385,7 +402,7 @@ async function restructsShow() {
       </div>
       <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; font-size: 14px;">
         <div class="tooltip" style="text-wrap: nowrap;">
-          <b>${formatReadableDate(company.next_payment_date, 'short')}</b>
+          <b>${formatReadableDate(company.next_payment_date, "short")}</b>
           <template class="tooltip-content">
             Дата следующего платежа.
           </template>
@@ -407,55 +424,56 @@ async function restructsShow() {
       </div>
     </section>
     <div class="progressbar__container" style="margin-top: 5px;">
-      <div class="progressbar" style="width: ${company.progress*100}%; background: var(--jle-lightGreen);"></div>
+      <div class="progressbar" style="width: ${company.progress * 100}%; background: var(--jle-lightGreen);"></div>
     </div>
     `;
- };
-};
-
+  }
+}
 
 async function defaultsShow() {
-  $.get('#portfolio__btn-section').querySelectorAll('.btn-small').forEach(btn => btn.classList.remove('btn-small--active'));
-  $.get('#defaults__open').classList.add('btn-small--active');
-  const list = $.get('#portfolio__list');
+  $.get("#portfolio__btn-section")
+    .querySelectorAll(".btn-small")
+    .forEach((btn) => btn.classList.remove("btn-small--active"));
+  $.get("#defaults__open").classList.add("btn-small--active");
+  const list = $.get("#portfolio__list");
   list.innerHTML = spinLoad.innerHTML;
   let cache = [];
-  chrome.storage.local.get('defaults', function(date) {
-    if(date.defaults) {
+  chrome.storage.local.get("defaults", function (date) {
+    if (date.defaults) {
       cache = date.defaults;
     }
-  })
+  });
 
-  const url = 'https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22default%22%5D%2C%22field%22%3A%22status%22%7D%5D&limit=10000&offset=0';
+  const url = "https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22default%22%5D%2C%22field%22%3A%22status%22%7D%5D&limit=10000&offset=0";
   const res = await fetchData(url);
   if (res.data) {
     let companysArr = res.data.data;
     if (!companysArr.length) {
-      list.textContent = 'Нет дефолтных займов.'
+      list.textContent = "Нет дефолтных займов.";
       return;
-    };
+    }
 
     async function memoDefaultsDate(company) {
-      const index = cache.findIndex(cacheElem => cacheElem.id === company.loan_id);
+      const index = cache.findIndex((cacheElem) => cacheElem.id === company.loan_id);
       if (index !== -1) {
         company.default_date = cache[index].default_date;
         company.npl = cache[index].npl;
         return;
-      };
+      }
       const events = await fetchData(`https://jetlend.ru/invest/api/requests/${company.loan_id}/events`);
-      const defaultEvent = events.data.events.find(obj => obj.event_type === 'default');
+      const defaultEvent = events.data.events.find((obj) => obj.event_type === "default");
       company.default_date = defaultEvent.date; // Дата дефолта
       if (company.last_payment_date === null) {
         company.last_payment_date = company.date;
-      };
+      }
       company.npl = dateDiff(company.last_payment_date, company.default_date);
-      cache.push({id: company.loan_id, default_date: company.default_date, npl: company.npl});
+      cache.push({ id: company.loan_id, default_date: company.default_date, npl: company.npl });
       return;
     }
 
     for (company of companysArr) {
       await memoDefaultsDate(company);
-    };
+    }
 
     chrome.storage.local.set({ defaults: cache });
 
@@ -467,15 +485,15 @@ async function defaultsShow() {
       <p>Выплаченные пени: <b>${toCurrencyFormat(res.data.aggregation.paid_fine)}</b>.</p>
       <p>Потери: <b>${toCurrencyFormat(res.data.aggregation.principal_debt)}</b>.</p>
     </div>`;
-    companysArr.forEach(element => {
-      const listItem = document.createElement('div');
-      listItem.classList.add('list-element', 'contrast-bg');
-      listItem.innerHTML = createListElement(element); 
-      list.appendChild(listItem); 
+    companysArr.forEach((element) => {
+      const listItem = document.createElement("div");
+      listItem.classList.add("list-element", "contrast-bg");
+      listItem.innerHTML = createListElement(element);
+      list.appendChild(listItem);
     });
   } else {
     list.textContent = transactionsData.error;
-  };
+  }
 
   function createListElement(company) {
     return `
@@ -486,9 +504,7 @@ async function defaultsShow() {
           ${company.loan_name}
         </a>
           <div style="font-size: 14px; margin-top: 3px;">
-            <b style="${company.rating.includes('A') ? 'color: limegreen;' : 
-                        company.rating.includes('B') ? 'color: orange;' : 
-                        'color: orangered;'}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
+            <b style="${company.rating.includes("A") ? "color: limegreen;" : company.rating.includes("B") ? "color: orange;" : "color: orangered;"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
             <span class="tooltip"> 
               NPL <b>${company.npl} д.</b>
               <template class="tooltip-content">
@@ -525,61 +541,54 @@ async function defaultsShow() {
       </div>
     </section>
     <div class="progressbar__container" style="margin-top: 5px;">
-      <div class="progressbar" style="width: ${company.progress*100}%; background: orangered;"></div>
+      <div class="progressbar" style="width: ${company.progress * 100}%; background: orangered;"></div>
     </div>
     `;
- };
-};
+  }
+}
 
 async function checkCompany() {
   if (!checkCompany__input.value) {
     return;
-  };
-  $.get('#checkCompany__list').innerHTML = '';
-  $.get('#checkCompany__spin').innerHTML = spinLoad.innerHTML;
-  const companysArr = checkCompany__input.value.split(' ');
+  }
+  $.get("#checkCompany__list").innerHTML = "";
+  $.get("#checkCompany__spin").innerHTML = spinLoad.innerHTML;
+  const companysArr = checkCompany__input.value.split(" ");
   checkCompany__input.value = null;
   for (const company of companysArr) {
-    const res = await checkingCompany(parseInt(company.replace(/\D/g,'')));
-    $.get('#checkCompany__list').innerHTML += res;
+    const res = await checkingCompany(parseInt(company.replace(/\D/g, "")));
+    $.get("#checkCompany__list").innerHTML += res;
   }
-  $.get('#checkCompany__spin').innerHTML = '';
-};
+  $.get("#checkCompany__spin").innerHTML = "";
+}
 
 function fmCompanyShow(arr, blockId) {
-  const removeElement = index => arr.splice(index, 1);
+  const removeElement = (index) => arr.splice(index, 1);
   const list = $.get(`${blockId}`);
-  list.innerHTML = ''; // очищаем текущий список
+  list.innerHTML = ""; // очищаем текущий список
   function createListElement(company, details) {
     return `
         <header>
           <div style="display: flex; margin-top: 6px;">
-            <img class="list-element__img" src="https://jetlend.ru${company.preview_small_url === null ? company.image_url : company.preview_small_url}">
+            <img class="list-element__img" src="https://jetlend.ru${company.preview_small_url}">
             <div style="display: flex; flex-direction: column; text-wrap: nowrap;">
               <a class="list-element__loan-name target-url" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block; width: 0;" 
                 href="https://jetlend.ru/invest/v3/company/${company.id}">${company.loan_name}</a>
               <span style="font-size: 14px">${company.loan_isin}</span>
               <span style="font-size: 14px">
-                <b style="${company.rating.includes('A') ? 'color: limegreen;' : 
-                            company.rating.includes('B') ? 'color: orange;' : 
-                            'color: orangered;'}">${company.rating}|${ratingArray.indexOf(company.rating)}
+                <b style="${company.rating.includes("A") ? "color: limegreen;" : company.rating.includes("B") ? "color: orange;" : "color: orangered;"}">${company.rating}|${ratingArray.indexOf(company.rating)}
                 </b>, 
-                <b style="${company.financial_discipline === 1 ? 'color: limegreen;' : 
-                            company.financial_discipline <= 0.4 ? 'color: red;' : 
-                            'color: orange;'}">ФД: ${(company.financial_discipline*100).toFixed(0)}%
+                <b style="${company.financial_discipline === 1 ? "color: limegreen;" : company.financial_discipline <= 0.4 ? "color: red;" : "color: orange;"}">ФД: ${(company.financial_discipline * 100).toFixed(0)}%
                 </b> 
               </span>
             </div>
             <div style="display: block; flex: 1; margin-left: -50px; font-size: 14px;">
-              <b style="${company.company_investing_amount === null ? 'color: limegreen;' : 
-                            company.company_investing_amount === '0.00' ? 'color: #8888e6;' : 'color: orange;'}
+              <b style="${company.company_investing_amount === null ? "color: limegreen;" : company.company_investing_amount === "0.00" ? "color: #8888e6;" : "color: orange;"}
                             text-wrap: nowrap; float: right">
-                            ${company.company_investing_amount === null ? 'Заёмщика нет в портфеле' : 
-                            company.company_investing_amount === '0.00' ? 'Заёмщик был в портфеле' : 
-                            `Компания в портфеле: ${toCurrencyFormat(company.company_investing_amount)}`}
+                            ${company.company_investing_amount === null ? "Заёмщика нет в портфеле" : company.company_investing_amount === "0.00" ? "Заёмщик был в портфеле" : `Компания в портфеле: ${toCurrencyFormat(company.company_investing_amount)}`}
               </b> 
-              <div style="${company.investing_amount !== null ? 'color: orange;' : ''} font-weight: 600; float: right">
-                          ${company.investing_amount !== null ? `Зарезервировано: ${toCurrencyFormat(company.investing_amount)}` : ''}
+              <div style="${company.investing_amount !== null ? "color: orange;" : ""} font-weight: 600; float: right">
+                          ${company.investing_amount !== null ? `Зарезервировано: ${toCurrencyFormat(company.investing_amount)}` : ""}
               </div>
             </div>
 
@@ -592,21 +601,23 @@ function fmCompanyShow(arr, blockId) {
         
         <main>
           <p>${company.company}</p>
-          <p>Ставка: <b>${(company.interest_rate*100).toFixed(2)}%</b>, срок: <b>${company.term}</b> ${daysEnding(company.term)}</p>
+          <p>Ставка: <b>${(company.interest_rate * 100).toFixed(2)}%</b>, срок: <b>${company.term}</b> ${daysEnding(company.term)}</p>
           <p>Сумма: <b>${toShortCurrencyFormat(company.amount)}</b>, собрано: <b>(${company.collected_percentage.toFixed(0)}%/100%)</b></p>
-          ${details ? 
-            `<p>ИНН: <b>${details.inn}</b>, ОГРН: <b>${details.ogrn}</b></p>
+          ${
+            details
+              ? `<p>ИНН: <b>${details.inn}</b>, ОГРН: <b>${details.ogrn}</b></p>
             <p>Выручка за год: <b>${toShortCurrencyFormat(details.revenueForPastYear)}</b>, прибыль за год: <b>${toShortCurrencyFormat(details.profitForPastYear)}</b></p>
             <p>Дата регистрации: <b>${details.registrationDate}</b></p>
             <p>Адрес: ${details.address}</p>
             <p>Деятельность: ${details.primaryCatergory}.</p> 
-            <div style="margin-top: 5px">${details.site ? `<a class="target-url link" href="${details.site}">Сайт компании </a>` : 'Cайта нет '}|
+            <div style="margin-top: 5px">${details.site ? `<a class="target-url link" href="${details.site}">Сайт компании </a>` : "Cайта нет "}|
               <a class="target-url link" href="${details.profile}"> Контур. Фокус </a>|
               <a class="target-url link" href="https://vbankcenter.ru/contragent/search?searchStr=${details.inn}"> ВБЦ </a>|
               <a class="target-url link" href="https://checko.ru/search?query=${details.inn}"> Чекко </a>|
               <a class="target-url link" href="https://www.rusprofile.ru/search?query=${details.inn}"> Rusprofile </a>
-            </div>` 
-            : ''}
+            </div>`
+              : ""
+          }
           </div> 
         </main>
 
@@ -614,35 +625,35 @@ function fmCompanyShow(arr, blockId) {
   `;
   }
   arr.forEach((company, index) => {
-    const listItem = document.createElement('div');
-    listItem.classList.add('list-element', 'contrast-bg');
-    listItem.innerHTML = createListElement(company); 
-   
+    const listItem = document.createElement("div");
+    listItem.classList.add("list-element", "contrast-bg");
+    listItem.innerHTML = createListElement(company);
+
     if (arr !== fmrInvestCompanyArray) {
-      const buttons = document.createElement('div');
-      buttons.classList.add('buttons-section');
-      const removeBtn = document.createElement('span');
-      removeBtn.textContent = 'Удалить';
-      removeBtn.classList.add('btn');
-      removeBtn.style.marginTop = '10px';
-      removeBtn.onclick = function() {
+      const buttons = document.createElement("div");
+      buttons.classList.add("buttons-section");
+      const removeBtn = document.createElement("span");
+      removeBtn.textContent = "Удалить";
+      removeBtn.classList.add("btn");
+      removeBtn.style.marginTop = "10px";
+      removeBtn.onclick = function () {
         removeElement(index);
         if (arr.length === 0) {
-          closeModal('#fm-list')
-         }
+          closeModal("#fm-list");
+        }
         updateFmArrayText();
         fmCompanyShow(arr, blockId);
-      }; 
-      const detailsBtn = document.createElement('span');
-      detailsBtn.textContent = 'Подробнее';
-      detailsBtn.classList.add('btn');
-      detailsBtn.style.marginTop = '10px';
-      detailsBtn.onclick = async function() {
-        const load = document.createElement('div');
-        load.classList.add('list-element__load-block');
-        const spin = document.createElement('div');
-        spin.classList.add('load-spinner');
-        spin.style.width = '64px';
+      };
+      const detailsBtn = document.createElement("span");
+      detailsBtn.textContent = "Подробнее";
+      detailsBtn.classList.add("btn");
+      detailsBtn.style.marginTop = "10px";
+      detailsBtn.onclick = async function () {
+        const load = document.createElement("div");
+        load.classList.add("list-element__load-block");
+        const spin = document.createElement("div");
+        spin.classList.add("load-spinner");
+        spin.style.width = "64px";
         load.appendChild(spin);
         listItem.appendChild(load);
         const res = await fetchData(`https://jetlend.ru/invest/api/requests/${company.id}/details`);
@@ -653,38 +664,38 @@ function fmCompanyShow(arr, blockId) {
       };
       listItem.appendChild(buttons);
       buttons.appendChild(detailsBtn);
-      buttons.appendChild(removeBtn); 
+      buttons.appendChild(removeBtn);
     }
-    list.appendChild(listItem); 
+    list.appendChild(listItem);
   });
-};
+}
 
 function updateFmArrayText() {
-  $.get('#fm-numOfSortedCompany').textContent = `Доступно: ${fmInvestCompanyArray.length} ${getZaimEnding(fmInvestCompanyArray.length)} `;
-  $.get('#fm-btn-update').classList.remove('display-none');
+  $.get("#fm-numOfSortedCompany").textContent = `Доступно: ${fmInvestCompanyArray.length} ${getZaimEnding(fmInvestCompanyArray.length)} `;
+  $.get("#fm-btn-update").classList.remove("display-none");
   if (fmInvestCompanyArray.length >= 1) {
-    $.get('#fm-btn-show').classList.remove('display-none');
+    $.get("#fm-btn-show").classList.remove("display-none");
   } else if (fmInvestCompanyArray.length === 0) {
-    $.get('#fm-btn-show').classList.add('display-none');
+    $.get("#fm-btn-show").classList.add("display-none");
   }
-  $.get('#fm-btn-stop').classList.add('display-none');
+  $.get("#fm-btn-stop").classList.add("display-none");
 }
 
 function updateSmArrayText() {
-  $.get('#sm-numOfSortedCompany').textContent = `Доступно: ${smInvestCompanyArray.length} ${getZaimEnding(smInvestCompanyArray.length)} `;
-  $.get('#sm-btn-update').classList.remove('display-none');
+  $.get("#sm-numOfSortedCompany").textContent = `Доступно: ${smInvestCompanyArray.length} ${getZaimEnding(smInvestCompanyArray.length)} `;
+  $.get("#sm-btn-update").classList.remove("display-none");
   if (smInvestCompanyArray.length >= 1) {
-    $.get('#fm-btn-show').classList.remove('display-none');
+    $.get("#fm-btn-show").classList.remove("display-none");
   } else if (smInvestCompanyArray.length === 0) {
-    $.get('#sm-btn-show').classList.add('display-none');
+    $.get("#sm-btn-show").classList.add("display-none");
   }
-  $.get('#sm-btn-stop').classList.add('display-none');
+  $.get("#sm-btn-stop").classList.add("display-none");
 }
 
 function smCompanyShow(arr, blockId) {
-  const removeElement = index => arr.splice(index, 1);
+  const removeElement = (index) => arr.splice(index, 1);
   const list = $.get(`${blockId}`);
-  list.innerHTML = ''; 
+  list.innerHTML = "";
   function createListElement(company, details) {
     return `
       <header>
@@ -695,100 +706,92 @@ function smCompanyShow(arr, blockId) {
               href="https://jetlend.ru/invest/v3/company/${company.loan_id}">${company.loan_name}</a>
             <span style="font-size: 14px">${company.loan_isin}</span>
             <span style="font-size: 14px">
-              <b style="${company.rating.includes('A') ? 'color: limegreen;' : 
-                          company.rating.includes('B') ? 'color: orange;' : 
-                          'color: orangered;'}">${company.rating}|${ratingArray.indexOf(company.rating)}
+              <b style="${company.rating.includes("A") ? "color: limegreen;" : company.rating.includes("B") ? "color: orange;" : "color: orangered;"}">${company.rating}|${ratingArray.indexOf(company.rating)}
               </b>, 
-              <b style="${company.financial_discipline === 1 ? 'color: limegreen;' : 
-                          company.financial_discipline <= 0.4 ? 'color: red;' : 
-                          'color: orange;'}">ФД: ${(company.financial_discipline*100).toFixed(0)}%
+              <b style="${company.financial_discipline === 1 ? "color: limegreen;" : company.financial_discipline <= 0.4 ? "color: red;" : "color: orange;"}">ФД: ${(company.financial_discipline * 100).toFixed(0)}%
               </b>, 
-              <b style="${company.loan_class === 0 ? 'color: limegreen;' : 
-                          company.loan_class === 1 ? 'color: orange;' : 
-                          'color: orangered;'}">Класс: ${company.loan_class}
+              <b style="${company.loan_class === 0 ? "color: limegreen;" : company.loan_class === 1 ? "color: orange;" : "color: orangered;"}">Класс: ${company.loan_class}
               </b>  
             </span>
           </div>
           <div style="display: block; flex: 1; margin-left: -50px; font-size: 14px;">
-            <b style="${company.invested_company_debt === null ? 'color: limegreen;' : 
-                          company.invested_company_debt === 0 ? 'color: #8888e6;' :  'color: orange;'}
+            <b style="${company.invested_company_debt === null ? "color: limegreen;" : company.invested_company_debt === 0 ? "color: #8888e6;" : "color: orange;"}
                           text-wrap: nowrap; float: right">
-                          ${(company.invested_company_debt === null ? 'Заёмщика нет в портфеле' : 
-                          company.invested_company_debt === 0 ? 'Заёмщик был в портфеле' : 
-                          `Компания в портфеле: ${toCurrencyFormat(company.invested_company_debt)}`)}
+                          ${company.invested_company_debt === null ? "Заёмщика нет в портфеле" : company.invested_company_debt === 0 ? "Заёмщик был в портфеле" : `Компания в портфеле: ${toCurrencyFormat(company.invested_company_debt)}`}
             </b> 
-            <div style="${company.invested_debt !== null ? 'color: orange;' : ''} font-weight: 600; float: right">
-                      ${company.invested_debt !== null ? `Займ в портфеле: ${toCurrencyFormat(company.invested_debt)}` : ''}
+            <div style="${company.invested_debt !== null ? "color: orange;" : ""} font-weight: 600; float: right">
+                      ${company.invested_debt !== null ? `Займ в портфеле: ${toCurrencyFormat(company.invested_debt)}` : ""}
             </div>
           </div>
         </div>
         <div class="progressbar__container" style="margin-bottom: 8px">
-          <div class="progressbar" style="width: ${company.progress*100}%; background: limegreen;"></div>
+          <div class="progressbar" style="width: ${company.progress * 100}%; background: limegreen;"></div>
         </div>
       </header>
 
       <main>
         <p>${company.company}</p>
-        <p>Ставка: <b>${(company.interest_rate*100).toFixed(2)}% (${(company.ytm*100).toFixed(2)}%)</b>, минимальная цена: <b>${(company.min_price*100).toFixed(2)}%</b></p>
-        <p>Cрок: <b>${company.term + daysEnding(company.term)}</b>, остаток: <b>${company.term_left + daysEnding(company.term_left)}</b>, выплачено: <b>${(company.progress*100).toFixed(2)}%</b></p>
-        ${details ? 
-          `<p>ИНН: <b>${details.inn}</b>, ОГРН: <b>${details.ogrn}</b></p>
+        <p>Ставка: <b>${(company.interest_rate * 100).toFixed(2)}% (${(company.ytm * 100).toFixed(2)}%)</b>, минимальная цена: <b>${(company.min_price * 100).toFixed(2)}%</b></p>
+        <p>Cрок: <b>${company.term + daysEnding(company.term)}</b>, остаток: <b>${company.term_left + daysEnding(company.term_left)}</b>, выплачено: <b>${(company.progress * 100).toFixed(2)}%</b></p>
+        ${
+          details
+            ? `<p>ИНН: <b>${details.inn}</b>, ОГРН: <b>${details.ogrn}</b></p>
           <p>Выручка за год: <b>${toShortCurrencyFormat(details.revenueForPastYear)}</b>, прибыль за год: <b>${toShortCurrencyFormat(details.profitForPastYear)}</b></p>
           <p>Дата регистрации: <b>${details.registrationDate}</b></p>
           <p>Адрес: ${details.address}</p>
           <p>Деятельность: ${details.primaryCatergory}.</p> 
-          <div style="margin-top: 5px">${details.site ? `<a class="target-url link" href="${details.site}">Сайт компании </a>` : 'Cайта нет '}|
+          <div style="margin-top: 5px">${details.site ? `<a class="target-url link" href="${details.site}">Сайт компании </a>` : "Cайта нет "}|
             <a class="target-url link" href="${details.profile}"> Контур. Фокус </a>|
             <a class="target-url link" href="https://vbankcenter.ru/contragent/search?searchStr=${details.inn}"> ВБЦ </a>|
             <a class="target-url link" href="https://checko.ru/search?query=${details.inn}"> Чекко </a>|
             <a class="target-url link" href="https://www.rusprofile.ru/search?query=${details.inn}"> Rusprofile </a>
-          </div>` 
-          : ''}
+          </div>`
+            : ""
+        }
       </main>
     `;
   }
   arr.forEach((company, index) => {
-    const listItem = document.createElement('div');
-    listItem.classList.add('list-element', 'contrast-bg');
+    const listItem = document.createElement("div");
+    listItem.classList.add("list-element", "contrast-bg");
     listItem.innerHTML = createListElement(company);
-    const buttons = document.createElement('div');
-    buttons.classList.add('buttons-section')
-    const removeBtn = document.createElement('span');
-    removeBtn.textContent = 'Удалить';
-    removeBtn.classList.add('btn');
-    removeBtn.style.marginTop = '10px';
-    removeBtn.onclick = function() {
+    const buttons = document.createElement("div");
+    buttons.classList.add("buttons-section");
+    const removeBtn = document.createElement("span");
+    removeBtn.textContent = "Удалить";
+    removeBtn.classList.add("btn");
+    removeBtn.style.marginTop = "10px";
+    removeBtn.onclick = function () {
       removeElement(index);
       if (arr.length === 0) {
-        closeModal('#sm-list')
-       }
+        closeModal("#sm-list");
+      }
       updateSmArrayText();
       smCompanyShow(arr, blockId);
-    }; 
-    const detailsBtn = document.createElement('span');
-    detailsBtn.textContent = 'Подробнее';
-    detailsBtn.classList.add('btn');
-    detailsBtn.style.marginTop = '10px';
-    detailsBtn.onclick = async function() {
-      const load = document.createElement('div');
-      load.classList.add('list-element__load-block');
-      const spin = document.createElement('div');
-      spin.classList.add('load-spinner');
-      spin.style.width = '64px';
+    };
+    const detailsBtn = document.createElement("span");
+    detailsBtn.textContent = "Подробнее";
+    detailsBtn.classList.add("btn");
+    detailsBtn.style.marginTop = "10px";
+    detailsBtn.onclick = async function () {
+      const load = document.createElement("div");
+      load.classList.add("list-element__load-block");
+      const spin = document.createElement("div");
+      spin.classList.add("load-spinner");
+      spin.style.width = "64px";
       load.appendChild(spin);
       listItem.appendChild(load);
       const res = await fetchData(`https://jetlend.ru/invest/api/requests/${company.loan_id}/details`);
-      
+
       if (res.data) {
         listItem.innerHTML = createListElement(company, res.data.data.details);
         listItem.appendChild(removeBtn);
       }
-      
     };
     listItem.appendChild(buttons);
     buttons.appendChild(detailsBtn);
-    buttons.appendChild(removeBtn); 
-    list.appendChild(listItem); 
+    buttons.appendChild(removeBtn);
+    list.appendChild(listItem);
   });
 }
 
@@ -796,26 +799,25 @@ chrome.storage.local.get("settings", function (data) {
   if (data.settings) {
     settingsBtn.textContent = data.settings.timePeriod;
 
-    if (data.settings.timePeriod == 'всё время') {
+    if (data.settings.timePeriod == "всё время") {
       timePeriod = "allTime";
-    } else if (data.settings.timePeriod == 'год') {
+    } else if (data.settings.timePeriod == "год") {
       timePeriod = "year";
     }
-
   } else if (!data.settings || data.settings.timePeriod == undefined || investDays() <= 365) {
-    settingsBtn.textContent = 'всё время';
+    settingsBtn.textContent = "всё время";
     timePeriod = "allTime";
   }
 });
 
 async function mainUpdateFunction() {
   lastUpdateDateTag.innerHTML = `Все активы <span style="position: relative"><span class="load-spinner" title="Загузка актуальных данных..." style="cursor: pointer; width: 16px"></span></span>`;
-  $.get('.invest-section__title-sum').textContent = `(Загрузка...)`;
+  $.get(".invest-section__title-sum").textContent = `(Загрузка...)`;
   const userStatsUrl = "https://jetlend.ru/invest/api/account/details";
   const userDataUrl = "https://jetlend.ru/invest/api/account/info";
   const platformStatsUrl = "https://jetlend.ru/invest/api/public/stats";
   const amountCompanyUrl = "https://jetlend.ru/invest/api/portfolio/distribution/overview";
-  const xirrUrl = "https://jetlend.ru/invest/api/account/notifications/v3?filter=%5B%7B%22values%22%3A%5B%22110%22%2C%22120%22%5D%2C%22field%22%3A%22event_type%22%7D%5D&limit=10000&offset=0&sort_dir=asc&sort_field=date"
+  const xirrUrl = "https://jetlend.ru/invest/api/account/notifications/v3?filter=%5B%7B%22values%22%3A%5B%22110%22%2C%22120%22%5D%2C%22field%22%3A%22event_type%22%7D%5D&limit=10000&offset=0&sort_dir=asc&sort_field=date";
 
   const userStats = await fetchData(userStatsUrl);
   const userData = await fetchData(userDataUrl);
@@ -831,34 +833,37 @@ async function mainUpdateFunction() {
     const statYearTime = userStatsObj.data.summary_year;
     const balanceStats = userStatsObj.data.balance;
 
-    balance = balanceStats.total;               // Баланс
-    cleanBalance = balance - balanceStats.nkd;  // Баланс без НПД
-    freeBalance = balanceStats.free;                  // Свободные средства
-    
+    balance = balanceStats.total; // Баланс
+    cleanBalance = balance - balanceStats.nkd; // Баланс без НПД
+    freeBalance = balanceStats.free; // Свободные средства
+
     const allTime = {
-      percentProfit: statAllTime.yield_rate,          // Доходность в процентах за всё время
-      interest: statAllTime.details.interest,         // Процентный доход за всё время
-      fine: statAllTime.details.fine,                 // Пени за всё время
-      bonus: statAllTime.details.bonus,               // Бонусы за всё время
-      reffBonus: statAllTime.details.referral_bonus,  // Реферальные бонусы за всё время
-      sale: statAllTime.details.sale,                 // Доход на вторичке за всё время
-      loss: statAllTime.loss,                         // Потери за всё время
-      ndfl: statAllTime.profit_ndfl,                  // НДФЛ за всё время
-      get profitWithoutNpd() {                        // Доход без НПД за всё время
+      percentProfit: statAllTime.yield_rate, // Доходность в процентах за всё время
+      interest: statAllTime.details.interest, // Процентный доход за всё время
+      fine: statAllTime.details.fine, // Пени за всё время
+      bonus: statAllTime.details.bonus, // Бонусы за всё время
+      reffBonus: statAllTime.details.referral_bonus, // Реферальные бонусы за всё время
+      sale: statAllTime.details.sale, // Доход на вторичке за всё время
+      loss: statAllTime.loss, // Потери за всё время
+      ndfl: statAllTime.profit_ndfl, // НДФЛ за всё время
+      get profitWithoutNpd() {
+        // Доход без НПД за всё время
         return this.interest + this.fine + this.bonus + this.reffBonus + this.sale - this.loss;
       },
-      get cleanProfit() {                             // Чистый доход за всё время
+      get cleanProfit() {
+        // Чистый доход за всё время
         return this.profitWithoutNpd - this.ndfl;
       },
-      get profitWithoutNdfl() {                       // Доход без НДФЛ за всё время
+      get profitWithoutNdfl() {
+        // Доход без НДФЛ за всё время
         return this.cleanProfit + balanceStats.nkd;
       },
-      xirr: function(type) {
+      xirr: function (type) {
         let cashFlows = [];
         let dates = [];
-        if (type === 'npd') {
+        if (type === "npd") {
           type = balance;
-        } else if (type === 'clean') {
+        } else if (type === "clean") {
           type = cleanBalance;
         }
         for (element of xirrData.data.data) {
@@ -868,7 +873,7 @@ async function mainUpdateFunction() {
         cashFlows.push(-type);
         dates.push(new Date());
         return calculateXIRR(cashFlows, dates);
-      }, 
+      },
       get incomeSum() {
         let sum = 0;
         for (element of xirrData.data.data) {
@@ -882,38 +887,41 @@ async function mainUpdateFunction() {
           sum += element.expense;
         }
         return sum;
-      }
-    }
-    
+      },
+    };
+
     const yearTime = {
-      percentProfit: statYearTime.yield_rate,         // Доходность в процентах за год
-      interest: statYearTime.details.interest,        // Процентный доход за год
-      fine: statYearTime.details.fine,                // Пени за год
-      bonus: statYearTime.details.bonus,              // Бонусы за год
+      percentProfit: statYearTime.yield_rate, // Доходность в процентах за год
+      interest: statYearTime.details.interest, // Процентный доход за год
+      fine: statYearTime.details.fine, // Пени за год
+      bonus: statYearTime.details.bonus, // Бонусы за год
       reffBonus: statYearTime.details.referral_bonus, // Реферальные бонусы за год
-      sale: statYearTime.details.sale,                // Доход на вторичке за год
-      loss: statYearTime.loss,                        // Потери за год
-      ndfl: statYearTime.profit_ndfl,                 // НДФЛ за год
-      get profitWithoutNpd() {                        // Доход без НПД за год
+      sale: statYearTime.details.sale, // Доход на вторичке за год
+      loss: statYearTime.loss, // Потери за год
+      ndfl: statYearTime.profit_ndfl, // НДФЛ за год
+      get profitWithoutNpd() {
+        // Доход без НПД за год
         return this.interest + this.fine + this.bonus + this.reffBonus + this.sale - this.loss;
       },
-      get cleanProfit() {                             // Чистый доход за год
+      get cleanProfit() {
+        // Чистый доход за год
         return this.profitWithoutNpd - this.ndfl;
       },
-      get profitWithoutNdfl() {                       // Доход без НДФЛ за год
+      get profitWithoutNdfl() {
+        // Доход без НДФЛ за год
         return this.cleanProfit + balanceStats.nkd;
       },
-      xirr: function(type) {
-        const timeYearAgo = new Date().getTime()-31536000000; // Время в unix год назад
+      xirr: function (type) {
+        const timeYearAgo = new Date().getTime() - 31536000000; // Время в unix год назад
         let cashFlows = [];
         let dates = [];
         let sumYear = 0; // Сумма транзакций за год
         let beforeFlows = 0; // Сумма транзакций до текущего года
         let profitSum = allTime.cleanProfit - this.cleanProfit; // Профит год назад
-        if (type === 'npd') {
+        if (type === "npd") {
           type = balance;
           // profitSum = allTime.cleanProfit - this.cleanProfit;
-        } else if (type === 'clean') {
+        } else if (type === "clean") {
           type = cleanBalance;
         }
         for (element of xirrData.data.data) {
@@ -921,23 +929,21 @@ async function mainUpdateFunction() {
             sumYear += element.amount;
             cashFlows.push(element.amount);
             dates.push(new Date(element.date));
-            
-          }
-          else {
+          } else {
             beforeFlows += element.amount;
           }
         }
         cashFlows.unshift(beforeFlows + profitSum);
         dates.unshift(new Date(timeYearAgo));
         // cashFlows[0] += beforeFlows;
-        cashFlows.push(-(type));
+        cashFlows.push(-type);
         dates.push(new Date());
-        console.log('Транзакции: ', cashFlows);
-        console.log('Даты: ', dates);
+        // console.log('Транзакции: ', cashFlows);
+        // console.log('Даты: ', dates);
         return calculateXIRR(cashFlows, dates);
       },
       get incomeSum() {
-        const timeYearAgo = new Date().getTime()-31536000000;
+        const timeYearAgo = new Date().getTime() - 31536000000;
         let sum = 0;
         for (element of xirrData.data.data) {
           if (timeYearAgo < new Date(element.date).getTime()) {
@@ -947,7 +953,7 @@ async function mainUpdateFunction() {
         return sum;
       },
       get expenseSum() {
-        const timeYearAgo = new Date().getTime()-31536000000;
+        const timeYearAgo = new Date().getTime() - 31536000000;
         let sum = 0;
         for (element of xirrData.data.data) {
           if (timeYearAgo < new Date(element.date).getTime()) {
@@ -955,14 +961,14 @@ async function mainUpdateFunction() {
           }
         }
         return sum;
-      }
-    }
+      },
+    };
 
-    // Функция подсчёта дней инвестирования 
+    // Функция подсчёта дней инвестирования
     function investDays() {
-      const investStartDate = new Date(statAllTime.start_date).getTime();      // Дата начала инвестирования в unix
-      const timeDiff = Math.abs(new Date().getTime() - investStartDate);       // Разница между сегодняшним днем и началом инвестирования в unix
-      const days = (diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24)));      // Количество дней инвестирования
+      const investStartDate = new Date(statAllTime.start_date).getTime(); // Дата начала инвестирования в unix
+      const timeDiff = Math.abs(new Date().getTime() - investStartDate); // Разница между сегодняшним днем и началом инвестирования в unix
+      const days = (diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24))); // Количество дней инвестирования
       return days;
     }
 
@@ -975,12 +981,12 @@ async function mainUpdateFunction() {
 
     if (!settingsBtn.clickListenerAdded) {
       settingsBtn.addEventListener("click", function () {
-        if (settingsBtn.textContent == 'всё время' && investDays() >= 365) {
-          settingsBtn.textContent = 'год';
+        if (settingsBtn.textContent == "всё время" && investDays() >= 365) {
+          settingsBtn.textContent = "год";
           timePeriod = "year";
           updateProfit();
-        } else if (settingsBtn.textContent == 'год') {
-          settingsBtn.textContent = 'всё время';
+        } else if (settingsBtn.textContent == "год") {
+          settingsBtn.textContent = "всё время";
           timePeriod = "allTime";
           updateProfit();
         }
@@ -991,8 +997,8 @@ async function mainUpdateFunction() {
       });
       settingsBtn.clickListenerAdded = true;
     }
-    
-    $.get('.invest-section__title-sum').textContent = `(Свободно: ${toCurrencyFormat(balanceStats.free)})`;
+
+    $.get(".invest-section__title-sum").textContent = `(Свободно: ${toCurrencyFormat(balanceStats.free)})`;
     fmInvestSumAll.value = balanceStats.free;
     smInvestSumAll.value = balanceStats.free;
 
@@ -1020,10 +1026,9 @@ async function mainUpdateFunction() {
       <span id="support-btn" style="text-decoration:underline; cursor:pointer; user-select: none;">Поддержать разработку.</span>
       </footer>
     </div>
-    `
+    `;
 
-    dataTextAllTime = 
-    `<div class="container">
+    dataTextAllTime = `<div class="container">
       <div class="contrast-bg">
         <h3>Статистика за <span class="swap">всё время</span>:</h3>
         <p>Процентный доход: <b style="color:${decorNumber(allTime.interest)}">${numberSign(allTime.interest)}${toCurrencyFormat(allTime.interest)}</b></p>
@@ -1039,14 +1044,13 @@ async function mainUpdateFunction() {
         <p>Сумма пополнений: <b>${toCurrencyFormat(allTime.incomeSum)}</b></p>
         <p>Сумма выводов: <b>${toCurrencyFormat(allTime.expenseSum)}</b></p>
         <p>Свободные средства: <b style="color:${decorNumber(balanceStats.free)}">${numberSign(balanceStats.free)}${toCurrencyFormat(balanceStats.free)}</b></p>
-        <p>XIRR (с НПД / без НПД): <b>${toPercentFormat(allTime.xirr('npd'))}</b> / <b>${toPercentFormat(allTime.xirr('clean'))}</b></p>
+        <p>XIRR (с НПД / без НПД): <b>${toPercentFormat(allTime.xirr("npd"))}</b> / <b>${toPercentFormat(allTime.xirr("clean"))}</b></p>
       </div>
       <br>
-    ${innerHTML = sameDataText}
-    `
+    ${(innerHTML = sameDataText)}
+    `;
 
-    dataTextYearTime = 
-    `<div class="container">
+    dataTextYearTime = `<div class="container">
       <div class="contrast-bg">
         <h3>Статистика за <span class="swap">год</span>:</h3>
         <p>Процентный доход: <b style="color:${decorNumber(yearTime.interest)}">${numberSign(yearTime.interest)}${toCurrencyFormat(yearTime.interest)}</b></p>
@@ -1062,33 +1066,33 @@ async function mainUpdateFunction() {
         <p>Сумма пополнений: <b>${toCurrencyFormat(yearTime.incomeSum)}</b></p>
         <p>Сумма выводов: <b>${toCurrencyFormat(yearTime.expenseSum)}</b></p>
         <p>Свободные средства: <b style="color:${decorNumber(balanceStats.free)}">${numberSign(balanceStats.free)}${toCurrencyFormat(balanceStats.free)}</b></p>
-        <p>XIRR (с НПД / без НПД): <b>${toPercentFormat(yearTime.xirr('npd'))}</b> / <b>${toPercentFormat(yearTime.xirr('clean'))}</b></p>
+        <p>XIRR (с НПД / без НПД): <b>${toPercentFormat(yearTime.xirr("npd"))}</b> / <b>${toPercentFormat(yearTime.xirr("clean"))}</b></p>
       </div>
       <br>
-    ${innerHTML = sameDataText}
-    `
+    ${(innerHTML = sameDataText)}
+    `;
 
     function updateProfit() {
       if (investDays() < 365) {
         incomeTitle.innerHTML = `<span>Доход за ${getInvestDays()} (без НПД | чистый доход)</span> <span>Доходность</span>`;
-        $.get('.income__currency').innerHTML = `<span id="income">${toCurrencyFormat(allTime.profitWithoutNpd)}</span><span style="opacity: .5;"> | </span><span id="income--clean">${toCurrencyFormat(allTime.cleanProfit)}</span>`;  
-        $.get('.income__percent').innerHTML = `<span><img src="/img/income.svg">${toPercentFormat(allTime.percentProfit)}</span>`;
+        $.get(".income__currency").innerHTML = `<span id="income">${toCurrencyFormat(allTime.profitWithoutNpd)}</span><span style="opacity: .5;"> | </span><span id="income--clean">${toCurrencyFormat(allTime.cleanProfit)}</span>`;
+        $.get(".income__percent").innerHTML = `<span><img src="/img/income.svg">${toPercentFormat(allTime.percentProfit)}</span>`;
       } else if (timePeriod == "allTime") {
         incomeTitle.innerHTML = `<span>Доход за всё время (без НПД | чистый доход)</span> <span>Доходность</span>`;
-        $.get('.income__currency').innerHTML = `<span id="income">${toCurrencyFormat(allTime.profitWithoutNpd)}</span><span style="opacity: .5;"> | </span><span id="income--clean">${toCurrencyFormat(allTime.cleanProfit)}</span>`;  
-        $.get('.income__percent').innerHTML = `<span><img src="/img/income.svg">${toPercentFormat(allTime.percentProfit)}</span>`;
+        $.get(".income__currency").innerHTML = `<span id="income">${toCurrencyFormat(allTime.profitWithoutNpd)}</span><span style="opacity: .5;"> | </span><span id="income--clean">${toCurrencyFormat(allTime.cleanProfit)}</span>`;
+        $.get(".income__percent").innerHTML = `<span><img src="/img/income.svg">${toPercentFormat(allTime.percentProfit)}</span>`;
       } else if (timePeriod == "year" && investDays() >= 365) {
         incomeTitle.innerHTML = `<span>Доход за год (без НПД | чистый доход)</span> <span>Доходность</span>`;
-        $.get('.income__currency').innerHTML = `<span id="income">${toCurrencyFormat(yearTime.profitWithoutNpd)}</span><span style="opacity: .5;"> | </span><span id="income--clean">${toCurrencyFormat(yearTime.cleanProfit)}</span>`;  
-        $.get('.income__percent').innerHTML = `<span><img src="/img/income.svg">${toPercentFormat(yearTime.percentProfit)}</span>`;
-      }      
+        $.get(".income__currency").innerHTML = `<span id="income">${toCurrencyFormat(yearTime.profitWithoutNpd)}</span><span style="opacity: .5;"> | </span><span id="income--clean">${toCurrencyFormat(yearTime.cleanProfit)}</span>`;
+        $.get(".income__percent").innerHTML = `<span><img src="/img/income.svg">${toPercentFormat(yearTime.percentProfit)}</span>`;
+      }
     }
 
-    lastUpdateDateTag.innerHTML = `Все активы <span>(${getUpdateTime((new Date).getTime())})</span>`;
+    lastUpdateDateTag.innerHTML = `Все активы <span>(${getUpdateTime(new Date().getTime())})</span>`;
     balanceTitle.innerHTML = `<span>Активы | Активы без НПД</span> <span>Ставка на сборе</span>`;
     balanceTag.innerHTML = `<span style="text-wrap: nowrap"><span id="balance">${toCurrencyFormat(balance)}</span><span style="opacity: .5;"> | </span><span id="balance--clean">${toCurrencyFormat(cleanBalance)}</span></span><span style="text-wrap: nowrap">${toPercentFormat(platformObj.data.average_interest_rate_30days)}</span>`;
-    currencyAnimation('balance', currencyToFloat(cachedBalance), currencyToFloat($.get('#balance').textContent), 'hideArrow');
-    currencyAnimation('balance--clean', currencyToFloat(cachedCleanBalance), currencyToFloat($.get('#balance--clean').textContent));
+    currencyAnimation("balance", currencyToFloat(cachedBalance), currencyToFloat($.get("#balance").textContent), "hideArrow");
+    currencyAnimation("balance--clean", currencyToFloat(cachedCleanBalance), currencyToFloat($.get("#balance--clean").textContent));
     cachedBalance = balance;
     cachedCleanBalance = cleanBalance;
     updateProfit();
@@ -1102,56 +1106,55 @@ async function mainUpdateFunction() {
     if (investDays() < 365) {
       await userStats;
       statsSection.innerHTML = dataTextAllTime;
-      $.get('.swap').textContent = getInvestDays();
-      $.get('.swap').style.textDecoration = 'none';
-      $.get('.swap').style.userSelect = 'auto';
-      $.get('.swap').style.cursor = 'text';
+      $.get(".swap").textContent = getInvestDays();
+      $.get(".swap").style.textDecoration = "none";
+      $.get(".swap").style.userSelect = "auto";
+      $.get(".swap").style.cursor = "text";
     }
 
     if (!$.get("#support-btn").clickListenerAdded) {
-      $.get("#support-btn").addEventListener("click", () => opneModal('#support-section'));
+      $.get("#support-btn").addEventListener("click", () => opneModal("#support-section"));
     }
-    
+
     // if (!userStatsObj.data.status.qualification.passed) {
     //   $.get('#fmInvestAgreeText').textContent = $.get('#smInvestAgreeText').textContent;
     // }
 
-  // Сохранение данных
-  const cache = {
-    balanceTitle: balanceTitle.querySelectorAll('span')[0].textContent,            // Текст заголовка активов (согласно настройкам)
-    balanceText: balanceTag.querySelectorAll('span')[0].textContent,               // Текст активов (согласно настройкам)
+    // Сохранение данных
+    const cache = {
+      balanceTitle: balanceTitle.querySelectorAll("span")[0].textContent, // Текст заголовка активов (согласно настройкам)
+      balanceText: balanceTag.querySelectorAll("span")[0].textContent, // Текст активов (согласно настройкам)
 
-    balance: $.get('#balance').textContent,
-    cleanBalance: $.get('#balance--clean').textContent,
+      balance: $.get("#balance").textContent,
+      cleanBalance: $.get("#balance--clean").textContent,
 
-    income: $.get('#income').textContent,
-    cleanIncome: $.get('#income--clean').textContent,
+      income: $.get("#income").textContent,
+      cleanIncome: $.get("#income--clean").textContent,
 
-    collectionIncomeTitle: balanceTitle.querySelectorAll('span')[1].textContent,   // Текст заголовка ставки на сборе
-    collectionIncomeText: balanceTag.querySelectorAll('span')[4].textContent,      // Текст ставки на сборе
+      collectionIncomeTitle: balanceTitle.querySelectorAll("span")[1].textContent, // Текст заголовка ставки на сборе
+      collectionIncomeText: balanceTag.querySelectorAll("span")[4].textContent, // Текст ставки на сборе
 
-    incomeTitle: incomeTitle.querySelectorAll('span')[0].textContent,              // Текст заголовка дохода (согласно настройкам)
-    incomeText: $.get('.income__currency').textContent,                            // Текст дохода (согласно настройкам)
+      incomeTitle: incomeTitle.querySelectorAll("span")[0].textContent, // Текст заголовка дохода (согласно настройкам)
+      incomeText: $.get(".income__currency").textContent, // Текст дохода (согласно настройкам)
 
-    incomePercent: incomeTitle.querySelectorAll('span')[1].textContent,            // Текст заголовка процентного дохода
-    percentIncomeNum: $.get('.income__percent').textContent,                       // Процентный доход
-    
-    updateTime: new Date().getTime(),                                              // Текущее время
+      incomePercent: incomeTitle.querySelectorAll("span")[1].textContent, // Текст заголовка процентного дохода
+      percentIncomeNum: $.get(".income__percent").textContent, // Процентный доход
 
-    qualification: userStatsObj.data.status.qualification.passed                   // Статус квала
-  };
+      updateTime: new Date().getTime(), // Текущее время
+
+      qualification: userStatsObj.data.status.qualification.passed, // Статус квала
+    };
     chrome.storage.local.set({ cacheJetlend: cache });
   }
-  
+
   if (userStats.error) {
-    lastUpdateDateTag.textContent = 'Нет авторизации';
-    $.get('.main-section__stats').innerHTML = `<div style="margin: 64px 0px; position: relative; transform: translate(25%, 0%);">Авторизуйтесь на сайте</div>`;
+    lastUpdateDateTag.textContent = "Нет авторизации";
+    $.get(".main-section__stats").innerHTML = `<div style="margin: 64px 0px; position: relative; transform: translate(25%, 0%);">Авторизуйтесь на сайте</div>`;
   }
 }
 
 mainUpdateFunction();
 setInterval(mainUpdateFunction, 60000);
-
 
 chrome.storage.local.get("cacheJetlend", function (result) {
   const data = result.cacheJetlend;
@@ -1160,15 +1163,15 @@ chrome.storage.local.get("cacheJetlend", function (result) {
     balanceTitle.innerHTML = `<span>${data.balanceTitle}</span> <span>${data.collectionIncomeTitle}</span>`;
     balanceTag.innerHTML = `<div><span class="load-opacity-animation">${data.balance}</span><span style="opacity: .5;"> | </span><span class="load-opacity-animation">${data.cleanBalance}</span></div> <span class="load-opacity-animation">${data.collectionIncomeText}</span>`;
     incomeTitle.innerHTML = `<span>${data.incomeTitle}</span> <span>${data.incomePercent}</span>`;
-    
-    $.get('.income__currency').innerHTML = `<span class="load-opacity-animation">${data.income}</span><span style="opacity: .5;"> | </span><span class="load-opacity-animation">${data.cleanIncome}</span>`;
-    $.get('.income__percent').innerHTML = `<span class="load-opacity-animation"><img src="/img/income.svg">${data.percentIncomeNum}</span>`
-    
+
+    $.get(".income__currency").innerHTML = `<span class="load-opacity-animation">${data.income}</span><span style="opacity: .5;"> | </span><span class="load-opacity-animation">${data.cleanIncome}</span>`;
+    $.get(".income__percent").innerHTML = `<span class="load-opacity-animation"><img src="/img/income.svg">${data.percentIncomeNum}</span>`;
+
     cachedBalance = data.balance;
     cachedCleanBalance = data.cleanBalance;
 
     if (data.qualification) {
-      $.get('#fmInvestAgreeText').textContent = $.get('#smInvestAgreeText').textContent;
+      $.get("#fmInvestAgreeText").textContent = $.get("#smInvestAgreeText").textContent;
     }
   }
 });
@@ -1178,27 +1181,27 @@ async function updateFirstMarket() {
   loadInvestSettings();
   fmCompanyUpdate = true;
   fmInvestCompanyArray = [];
-  $.get('#fm-numOfSortedCompany').textContent = `Загрузка...`;
-  $.get('#fm-btn-update').classList.add('display-none');
-  $.get('#fm-btn-show').classList.add('display-none');
-  $.get('#fm-btn-stop').classList.remove('display-none');
-  $.get('#market-companyAnaliz').classList.add('load-block-animation');
+  $.get("#fm-numOfSortedCompany").textContent = `Загрузка...`;
+  $.get("#fm-btn-update").classList.add("display-none");
+  $.get("#fm-btn-show").classList.add("display-none");
+  $.get("#fm-btn-stop").classList.remove("display-none");
+  $.get("#market-companyAnaliz").classList.add("load-block-animation");
 
   await fmLoadLoans();
-  
-  $.get('#fm-numOfSortedCompany').textContent = `Доступно: ${fmInvestCompanyArray.length} ${getZaimEnding(fmInvestCompanyArray.length)} `;
-  $.get('#fm-btn-update').classList.remove('display-none');
-  if (fmInvestCompanyArray.length >= 1) {
-    $.get('#fm-btn-show').classList.remove('display-none');
-  }
-  $.get('#fm-btn-stop').classList.add('display-none');
 
-  const updateTotal = await fetchData('https://jetlend.ru/invest/api/requests/waiting');
-  if (updateTotal .data) {
-    $.get('#market-numOfAllCompany').textContent = updateTotal.data.requests.length;
-    $.get('#market-companyAnaliz').classList.remove('load-block-animation');
-  };
-};
+  $.get("#fm-numOfSortedCompany").textContent = `Доступно: ${fmInvestCompanyArray.length} ${getZaimEnding(fmInvestCompanyArray.length)} `;
+  $.get("#fm-btn-update").classList.remove("display-none");
+  if (fmInvestCompanyArray.length >= 1) {
+    $.get("#fm-btn-show").classList.remove("display-none");
+  }
+  $.get("#fm-btn-stop").classList.add("display-none");
+
+  const updateTotal = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
+  if (updateTotal.data) {
+    $.get("#market-numOfAllCompany").textContent = updateTotal.data.requests.length;
+    $.get("#market-companyAnaliz").classList.remove("load-block-animation");
+  }
+}
 updateFirstMarket();
 
 // Обновление списка компаний (первичка, резерв)
@@ -1206,30 +1209,27 @@ async function updateFirstMarketReserv() {
   fmrCompanyUpdate = true;
   fmCompanyUpdate = false;
   fmrInvestCompanyArray = [];
-  $.get('#fmr-numOfSortedCompany').textContent = `Загрузка...`;
-  $.get('#fmr-btn-update').classList.add('display-none');
-  $.get('#fmr-btn-show').classList.add('display-none');
-  $.get('#fmr-btn-stop').classList.remove('display-none');
+  $.get("#fmr-numOfSortedCompany").textContent = `Загрузка...`;
+  $.get("#fmr-btn-update").classList.add("display-none");
+  $.get("#fmr-btn-show").classList.add("display-none");
+  $.get("#fmr-btn-stop").classList.remove("display-none");
   const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
 
   if (res.data) {
-    fmrInvestCompanyArray = res.data.requests.filter(obj => (obj.collected_percentage !== 100) /* Полоска сбора не заполнена (меньше 100%) */ 
-      && (obj.investing_amount !== null) /* Резервация */ 
-      ) 
-        $.get('#fmr-numOfSortedCompany').textContent = `Загрузка... ()`;
-        if (!fmrCompanyUpdate) {
-          fmrCompanyUpdate = true;
-          return;
-        }
-      $.get('#fmr-numOfSortedCompany').textContent =
-        `Загружено: ${fmrInvestCompanyArray.length} ${getZaimEnding(fmrInvestCompanyArray.length)}`;
-      $.get('#fmr-btn-update').classList.remove('display-none');
-      $.get('#fmr-btn-update').textContent = 'Обновить';
-      if (fmrInvestCompanyArray.length >= 1) {
-        $.get('#fmr-btn-show').classList.remove('display-none');
-      }
-      $.get('#fmr-btn-stop').classList.add('display-none');
-  };
+    fmrInvestCompanyArray = res.data.requests.filter((obj) => obj.collected_percentage !== 100 /* Полоска сбора не заполнена (меньше 100%) */ && obj.investing_amount !== null /* Резервация */);
+    $.get("#fmr-numOfSortedCompany").textContent = `Загрузка... ()`;
+    if (!fmrCompanyUpdate) {
+      fmrCompanyUpdate = true;
+      return;
+    }
+    $.get("#fmr-numOfSortedCompany").textContent = `Загружено: ${fmrInvestCompanyArray.length} ${getZaimEnding(fmrInvestCompanyArray.length)}`;
+    $.get("#fmr-btn-update").classList.remove("display-none");
+    $.get("#fmr-btn-update").textContent = "Обновить";
+    if (fmrInvestCompanyArray.length >= 1) {
+      $.get("#fmr-btn-show").classList.remove("display-none");
+    }
+    $.get("#fmr-btn-stop").classList.add("display-none");
+  }
 }
 
 // Обновление списка компаний (вторичка)
@@ -1237,38 +1237,32 @@ async function updateSecondMarket() {
   loadInvestSettings();
   smCompanyUpdate = true;
   smInvestCompanyArray = [];
-  $.get('#sm-numOfSortedCompany').textContent = `Загрузка...`;
-  $.get('#sm-btn-update').classList.add('display-none');
-  $.get('#sm-btn-show').classList.add('display-none');
-  $.get('#sm-btn-stop').classList.remove('display-none');
-  $.get('#market-companyAnaliz').classList.add('load-block-animation');
-  
-  await smLoadLoans('popup', 0, 100);
+  $.get("#sm-numOfSortedCompany").textContent = `Загрузка...`;
+  $.get("#sm-btn-update").classList.add("display-none");
+  $.get("#sm-btn-show").classList.add("display-none");
+  $.get("#sm-btn-stop").classList.remove("display-none");
+  $.get("#market-companyAnaliz").classList.add("load-block-animation");
 
-  $.get('#sm-numOfSortedCompany').textContent = `Доступно: ${smInvestCompanyArray.length} ${getZaimEnding(smInvestCompanyArray.length)}`;
-  $.get('#sm-btn-update').classList.remove('display-none');
+  await smLoadLoans("popup", 0, 100);
+
+  $.get("#sm-numOfSortedCompany").textContent = `Доступно: ${smInvestCompanyArray.length} ${getZaimEnding(smInvestCompanyArray.length)}`;
+  $.get("#sm-btn-update").classList.remove("display-none");
   if (smInvestCompanyArray.length >= 1) {
-    $.get('#sm-btn-show').classList.remove('display-none');
+    $.get("#sm-btn-show").classList.remove("display-none");
   }
-  $.get('#sm-btn-stop').classList.add('display-none'); 
+  $.get("#sm-btn-stop").classList.add("display-none");
 
-  const updateTotal = await fetchData('https://jetlend.ru/invest/api/exchange/loans?limit=1&offset=0');
-  if (updateTotal .data) {
-    $.get('#market-numOfAllCompany').textContent = updateTotal .data.total;
-    $.get('#market-companyAnaliz').classList.remove('load-block-animation');
-  };
-};
+  const updateTotal = await fetchData("https://jetlend.ru/invest/api/exchange/loans?limit=1&offset=0");
+  if (updateTotal.data) {
+    $.get("#market-numOfAllCompany").textContent = updateTotal.data.total;
+    $.get("#market-companyAnaliz").classList.remove("load-block-animation");
+  }
+}
 
 // Распределение средств (первичка)
-$.get('#firstMarketSubmit').addEventListener('click', function() {
-  const valueToInt = value => parseInt((value).toString().replace(',', '.'));
-
-  if ($.get('#fmInvestAgree').checked 
-    && valueToInt(fmInvestSum.value) <= freeBalance 
-    && valueToInt(fmInvestSum.value) >= 100 
-    && !$.get('#fm-numOfSortedCompany').textContent.includes("Загрузка...")
-    && freeBalance >= 100
-    && fmInvestCompanyArray.length >= 1) {
+$.get("#firstMarketSubmit").addEventListener("click", function () {
+  const valueToInt = (value) => parseInt(value.toString().replace(",", "."));
+  if ($.get("#fmInvestAgree").checked && valueToInt(fmInvestSum.value) <= freeBalance && valueToInt(fmInvestSum.value) >= 100 && !$.get("#fm-numOfSortedCompany").textContent.includes("Загрузка...") && freeBalance >= 100 && fmInvestCompanyArray.length >= 1) {
     function numOfCuts() {
       let canInvest = Math.floor(valueToInt(fmInvestSumAll.value) / valueToInt(fmInvestSum.value));
       if (canInvest > fmInvestCompanyArray.length) {
@@ -1278,43 +1272,46 @@ $.get('#firstMarketSubmit').addEventListener('click', function() {
       }
     }
     const sliceArray = fmInvestCompanyArray.slice(0, numOfCuts());
-    const arrOfCompanyId = sliceArray.map(obj => obj.id);
-    chrome.storage.local.set({fmInvest: {array: arrOfCompanyId, sum: valueToInt(fmInvestSum.value)}});
+    const arrOfCompanyId = sliceArray.map((obj) => obj.id);
+    chrome.storage.local.set({
+      fmInvest: {
+        array: arrOfCompanyId,
+        sum: valueToInt(fmInvestSum.value),
+        sumAll: currencyToFloat(fmInvestSumAll.value),
+      },
+    });
     // chrome.tabs.create({ url: "https://jetlend.ru/invest/v3/?state=login" });
-    chrome.windows.create({ url: "https://jetlend.ru/invest/v3/?state=login", type: 'popup', focused: true });
+    chrome.windows.create({ url: "https://jetlend.ru/invest/v3/?state=login", type: "popup", focused: true });
   }
-})
+});
 
 // Распределение средств (вторичка)
-$.get('#secondMarketSubmit').addEventListener('click', function() {
-  const valueToInt = value => parseInt((value).toString().replace(',', '.'));
-  if ($.get('#smInvestAgree').checked 
-    && valueToInt(smInvestSum.value) <= freeBalance 
-    && valueToInt(smInvestSum.value) >= 100 
-    && !$.get('#sm-numOfSortedCompany').textContent.includes("Загрузка...")
-    && freeBalance >= 100
-    && smInvestCompanyArray.length >= 1) {
-    const arrOfCompanyId = smInvestCompanyArray.map(obj => obj.loan_id);
-    chrome.storage.local.set({smInvest: {
-      array: arrOfCompanyId, 
-      sum: valueToInt(smInvestSum.value),
-      sumAll: currencyToFloat(smInvestSumAll.value), 
-      minPrice: valueToPercent(smPriceFrom.value), 
-      maxPrice: valueToPercent(smPriceTo.value),
-      ytmMin: valueToPercent(smRateFrom.value),
-      ytmMax: valueToPercent(smRateTo.value)
-    }});
+$.get("#secondMarketSubmit").addEventListener("click", function () {
+  const valueToInt = (value) => parseInt(value.toString().replace(",", "."));
+  if ($.get("#smInvestAgree").checked && valueToInt(smInvestSum.value) <= freeBalance && valueToInt(smInvestSum.value) >= 100 && !$.get("#sm-numOfSortedCompany").textContent.includes("Загрузка...") && freeBalance >= 100 && smInvestCompanyArray.length >= 1) {
+    const arrOfCompanyId = smInvestCompanyArray.map((obj) => obj.loan_id);
+    chrome.storage.local.set({
+      smInvest: {
+        array: arrOfCompanyId,
+        sum: valueToInt(smInvestSum.value),
+        sumAll: currencyToFloat(smInvestSumAll.value),
+        minPrice: valueToPercent(smPriceFrom.value),
+        maxPrice: valueToPercent(smPriceTo.value),
+        ytmMin: valueToPercent(smRateFrom.value),
+        ytmMax: valueToPercent(smRateTo.value),
+      },
+    });
     // chrome.tabs.create({ url: "https://jetlend.ru/invest/v3/?state=login", active: true });
-    chrome.windows.create({ url: "https://jetlend.ru/invest/v3/?state=login", type: 'popup', focused: true });
+    chrome.windows.create({ url: "https://jetlend.ru/invest/v3/?state=login", type: "popup", focused: true });
   }
-})
+});
 
-chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-  if (message.data === 'Распределение средств заверешено') {
-    $.get('#fm-numOfSortedCompany').textContent = '';
-    $.get('#fm-btn-show').classList.add('display-none');
-    $.get('#sm-numOfSortedCompany').textContent = '';
-    $.get('#sm-btn-show').classList.add('display-none');
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+  if (message.data === "Распределение средств заверешено") {
+    $.get("#fm-numOfSortedCompany").textContent = "";
+    $.get("#fm-btn-show").classList.add("display-none");
+    $.get("#sm-numOfSortedCompany").textContent = "";
+    $.get("#sm-btn-show").classList.add("display-none");
     fmInvestCompanyArray = [];
     smInvestCompanyArray = [];
     closeInvestPage();
@@ -1322,3 +1319,6 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
   }
 });
 
+setTimeout(() => {
+  console.log(smInvestCompanyArray);
+}, 55000);

@@ -243,6 +243,22 @@ b {
   transition: 0.25s ease-in-out;
 }
 
+.select {
+  width: 145px;
+  background: var(--jle-smallBtnColor);
+  border: none;
+  color: var(--jle-fontColor);
+  border-radius: 20px;
+  padding: 4px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: all 0.185s ease-in-out;
+}
+.select:hover {
+  background: var(--jle-smallBtnColor--hover);
+}
+
 .invest-section {
   background: var(--jle-bgColor);
   position: absolute;
@@ -274,6 +290,10 @@ b {
   border: 1px solid var(--jle-second-color);
   background: var(--jle-smallBtnColor);
   color: var(--jle-fontColor);
+  transition: all 0.185s ease-in-out;
+}
+.invest-section__input:hover {
+  background: var(--jle-smallBtnColor--hover);
 }
 .invest-section__input-btn {
   width: 40px;
@@ -407,7 +427,7 @@ b {
   -webkit-user-select: none;
      -moz-user-select: none;
           user-select: none;
-  transition: background 0.25s ease-in-out, scale 0.05s ease;
+  transition: background 0.185s ease-in-out, scale 0.05s ease;
 }
 .btn-small__wrapper {
   display: flex;
