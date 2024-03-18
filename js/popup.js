@@ -245,7 +245,7 @@ async function nplShow(nplNum) {
   $.get(`#npl${nplNum}__open`).classList.add("btn-small--active");
   const list = $.get("#portfolio__list");
   list.innerHTML = `<div class="load-spinner__container"><span class="load-spinner" style="width: 32px;"></span></div>`;
-  const url = "https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22delayed%22%5D%2C%22field%22%3A%22status%22%7D%5D&limit=10000&offset=0&sort_dir=asc&sort_field=company";
+  const url = "https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22delayed%22%5D%2C%22field%22%3A%22status%22%7D%5D&limit=100&offset=0&sort_dir=asc&sort_field=company";
   const res = await fetchData(url);
 
   if (res.data) {
@@ -350,7 +350,7 @@ async function restructsShow() {
   $.get("#restructs__open").classList.add("btn-small--active");
   const list = $.get("#portfolio__list");
   list.innerHTML = `<div class="load-spinner__container"><span class="load-spinner" style="width: 32px;"></span></div>`;
-  const url = "https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22restructured%22%5D%2C%22field%22%3A%22status%22%7D%5D&limit=10000&offset=0&sort_dir=desc&sort_field=principal_debt";
+  const url = "https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22restructured%22%5D%2C%22field%22%3A%22status%22%7D%5D&limit=100&offset=0&sort_dir=desc&sort_field=principal_debt";
   const res = await fetchData(url);
   if (res.data) {
     let sorted = res.data.data;
