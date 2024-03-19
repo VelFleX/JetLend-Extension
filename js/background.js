@@ -9,9 +9,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     })
       .then((response) => {
         if (!response.ok) {
-          throw new Error(
-            'Непредвиденная ошибка. Джет устал, либо проблемы с интернетом.'
-          );
+          throw new Error("Непредвиденная ошибка. Джет устал, либо проблемы с интернетом.");
         }
         return response.json();
       })
@@ -33,18 +31,40 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   }
 });
 
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if (request.action === "getBadge") {
+    new Promise((res) => {
+      chrome.action.getBadgeText({}, function (result) {
+        res(result ?? null);
+      });
+    }).then((badgeText) => {
+      sendResponse({ badgeText: badgeText });
+    });
+    return true; // указывает, что мы будем использовать sendResponse асинхронно
+  }
+});
+
 // Открытие расширения в новом окне сочетанием клавиш
-chrome.commands.onCommand.addListener(function(command) {
+chrome.commands.onCommand.addListener(function (command) {
   if (command === "open_extension") {
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       if (tabs.length > 0 && tabs[0].url !== "chrome://newtab/") {
-        chrome.windows.create({url: "html/popup.html", type: "popup"});
+        chrome.windows.create({ url: "html/popup.html", type: "popup" });
       } else {
-        chrome.tabs.create({url: chrome.runtime.getURL('html/popup.html')});
+        chrome.tabs.create({ url: chrome.runtime.getURL("html/popup.html") });
       }
     });
   }
 });
 
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+  if (message.action === "createWindow") {
+    chrome.windows.create({ url: message.url, focused: false });
+  }
+});
 
-
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+  if (message.action === "createTab") {
+    chrome.tabs.create({ url: message.url, active: false });
+  }
+});

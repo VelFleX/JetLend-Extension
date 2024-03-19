@@ -17,6 +17,19 @@ function fetchData(url) {
   });
 }
 
+// Фетч чанками
+async function fetchChunks(link, offset = 0, limit = 100, total = 0, resArr = [], result) {
+  if (offset > total) {
+    result.data.data = resArr;
+    return result;
+  }
+  const url = `${link}&limit=${limit}&offset=${offset}`;
+  const fetchRes = await fetchData(url);
+  resArr = resArr.concat(fetchRes.data.data);
+  offset += limit;
+  return fetchChunks(link, offset, limit, fetchRes.data.total, resArr, fetchRes);
+}
+
 function daysEnding(days) {
   const lastTwoDigits = days % 100;
   return days === 1 ? " день" : lastTwoDigits >= 11 && lastTwoDigits <= 14 ? " дней" : lastTwoDigits % 10 === 1 ? " день" : lastTwoDigits % 10 >= 2 && lastTwoDigits % 10 <= 4 ? " дня" : " дней";
@@ -32,18 +45,32 @@ function toShortCurrencyFormat(num) {
   return toCurrencyFormat(num);
 }
 
-function opneModal(modalId) {
-  $.get(`${modalId}`).classList.remove("display-none");
+function toSuperShortCurrencyFormat(num) {
+  if (num >= 1000000) {
+    num = (num / 1000000).toString().slice(0, 3).replace(/\.0$/, "").replace(".", ",") + "m";
+  } else if (num >= 1000) {
+    num = (num / 1000).toString().slice(0, 3).replace(/\.0$/, "").replace(".", ",") + "k";
+  } else {
+    num = num.toString().slice(0, 3).replace(/\.0$/, "").replace(".", ",") + "₽";
+  }
+  if (num.endsWith(",m") || num.endsWith(",k") || num.endsWith(",₽")) {
+    num = num.replace(",", "");
+  }
+  return num;
+}
+
+function openModal(modalId) {
+  $get(`${modalId}`).classList.remove("display-none");
   setTimeout(() => {
-    $.get(`${modalId}`).style.opacity = "1";
+    $get(`${modalId}`).style.opacity = "1";
   }, 0);
   document.body.style.overflow = "hidden";
 }
 
 function closeModal(modalId) {
-  $.get(`${modalId}`).style.opacity = "0";
+  $get(`${modalId}`).style.opacity = "0";
   setTimeout(() => {
-    $.get(`${modalId}`).classList.add("display-none");
+    $get(`${modalId}`).classList.add("display-none");
   }, 300);
   document.body.style.overflow = "auto";
 }
@@ -65,52 +92,27 @@ function setBadge(text, bgColor = false) {
   }
 }
 
+async function getBadge() {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage({ action: "getBadge" }, function (response) {
+      resolve(response.badgeText);
+    });
+  });
+}
+
 // Функция обновления настроек инвестирования
-function updateInvestSettings() {
-  const newSettings = {
-    fmDaysFrom: fmDaysFrom.value,
-    fmDaysTo: fmDaysTo.value,
-    fmRatingFrom: fmRatingFrom.value,
-    fmRatingTo: fmRatingTo.value,
-    fmRateFrom: fmRateFrom.value,
-    fmRateTo: fmRateTo.value,
-    fmLoansFrom: fmLoansFrom.value,
-    fmLoansTo: fmLoansTo.value,
-    fmMaxCompanySum: fmMaxCompanySum.value,
-    fmMaxLoanSum: fmMaxLoanSum.value,
-    fmStopLoanSum: fmStopLoanSum.value,
-    fmStopCompanySum: fmStopCompanySum.value,
-    fmInvestSum: fmInvestSum.value,
-    // Вторичка
-    smDaysFrom: smDaysFrom.value,
-    smDaysTo: smDaysTo.value,
-    smRatingFrom: smRatingFrom.value,
-    smRatingTo: smRatingTo.value,
-    smRateFrom: smRateFrom.value,
-    smRateTo: smRateTo.value,
-    smFdFrom: smFdFrom.value,
-    smFdTo: smFdTo.value,
-    smProgressFrom: smProgressFrom.value,
-    smProgressTo: smProgressTo.value,
-    smClassFrom: smClassFrom.value,
-    smClassTo: smClassTo.value,
-    smMaxCompanySum: smMaxCompanySum.value,
-    smMaxLoanSum: smMaxLoanSum.value,
-    smPriceFrom: smPriceFrom.value,
-    smPriceTo: smPriceTo.value,
-    smStopLoanSum: smStopLoanSum.value,
-    smStopCompanySum: smStopCompanySum.value,
-    smInvestSum: smInvestSum.value,
-  };
-  chrome.storage.local.set({ investSettings: newSettings });
+async function updateInvestSettings(setting) {
+  const settings = await getCache("investSettings", {});
+  settings[setting.id] = setting.value;
+  chrome.storage.local.set({ investSettings: settings });
 }
 
 // Функция открытия инвест страницы
 function openInvestPage() {
   document.querySelector(".invest-section").style.top = "0";
   document.body.style.height = "650px";
-  $.get("#stats__open").style.transform = "scaleY(-1)";
-  $.get(".stats-section").style.maxHeight = "0px";
+  $get("#stats__open").style.transform = "scaleY(-1)";
+  $get(".stats-section").style.maxHeight = "0px";
 }
 
 // Функция закрытия инвест страницы
@@ -166,18 +168,22 @@ function getUpdateTime(unixTime) {
 }
 
 // Функция перевода из числового в денежный формат (20.20 => 20,20 ₽)
-const toCurrencyFormat = (element) => parseFloat(element).toLocaleString("ru-RU", { style: "currency", currency: "RUB" });
-
-const valueToPercent = (value) => parseFloat((parseFloat(value.toString().replace(",", ".")) / 100).toFixed(4)); // '12,3456' => 0.1234
+const toCurrencyFormat = (num) => parseFloat(num).toLocaleString("ru-RU", { style: "currency", currency: "RUB" });
 
 // Функция перевода из числа в проценты (0.2 => 20 %)
-const toPercentFormat = (element) => `${(element * 100).toFixed(2).replace(".", ",")} %`;
+const toPercentFormat = (num) => `${(num * 100).toFixed(2).replace(".", ",")} %`;
 
 // Функция получения цвета в зависимости от числа (зеленый, красный, дефолт)
-const decorNumber = (element) => (element > 0 ? "#00ba88" : element != 0 ? "#f23c3c" : "var(--var-fontColor)");
+const decorNumber = (num) => (num > 0 ? "#00ba88" : num != 0 ? "#f23c3c" : "var(--vanumolor)");
 
 // Функция добавления знака "+" положительным числам
-const numberSign = (number) => (number > 0 ? "+" : "");
+const numberSign = (num) => (num > 0 ? "+" : "");
+
+// '12,3456' => 0.1234
+const valueToPercent = (value) => (value ? parseFloat((parseFloat(value.toString().replace(",", ".")) / 100).toFixed(4)) : 0);
+
+// '12,3456R' => 12
+const valueToInt = (value) => (value ? parseInt(value.toString().replace(",", ".")) : 0);
 
 // Функция получения куки
 function getCookie(name) {
@@ -188,11 +194,11 @@ function getCookie(name) {
 
 // Функция отправки уведомлений
 function sendNotification(title, content) {
-  if (!document.body.contains($.get("#notificationContainer"))) {
+  if (!document.body.contains($get("#notificationContainer"))) {
     const notificationContainer = document.createElement("div");
     notificationContainer.id = "notificationContainer";
     Object.assign(notificationContainer.style, {
-      height: "100vh",
+      maxHeight: "100vh",
       overflowY: "scroll",
       overflowX: "hidden",
       display: "flex",
@@ -202,10 +208,11 @@ function sendNotification(title, content) {
       bottom: "0",
       boxSizing: "border-box",
       zIndex: "999999999999",
+      scrollbarWidth: "none",
     });
     document.body.appendChild(notificationContainer);
   }
-  const notificationContainer = $.get("#notificationContainer");
+  const notificationContainer = $get("#notificationContainer");
   let color = "#1e2021";
   let bgColor = "#fff";
   if (darkTheme) {
@@ -247,18 +254,18 @@ function sendNotification(title, content) {
 
 // Функция свапа рынков в распределении средств
 function marketSwap() {
-  if ($.get("#marketMode").textContent === "Первичный рынок") {
-    $.get("#marketMode").textContent = "Вторичный рынок";
-    $.get("#firstMarket").classList.add("display-none");
-    $.get("#secondMarket").classList.remove("display-none");
+  if ($get("#marketMode").textContent === "Первичный рынок") {
+    $get("#marketMode").textContent = "Вторичный рынок";
+    $get("#firstMarket").classList.add("display-none");
+    $get("#secondMarket").classList.remove("display-none");
     document.body.style.height = "790px";
     fmCompanyUpdate = false;
     smCompanyUpdate = true;
     updateSecondMarket();
   } else {
-    $.get("#marketMode").textContent = "Первичный рынок";
-    $.get("#secondMarket").classList.add("display-none");
-    $.get("#firstMarket").classList.remove("display-none");
+    $get("#marketMode").textContent = "Первичный рынок";
+    $get("#secondMarket").classList.add("display-none");
+    $get("#firstMarket").classList.remove("display-none");
     document.body.style.height = "650px";
     fmCompanyUpdate = true;
     smCompanyUpdate = false;
@@ -340,32 +347,6 @@ function currencyToFloat(currency) {
   return parseFloat(result);
 }
 
-function loadInvestSettings() {
-  chrome.storage.local.get("investSettings", function (data) {
-    if (data.investSettings) {
-      function copyObj(sourceObj, targetObj) {
-        for (let key in sourceObj) {
-          if (key in targetObj) {
-            targetObj[key] = sourceObj[key];
-          }
-        }
-      }
-      const settings = data.investSettings;
-      copyObj(settings, investSettingsObj);
-    }
-  });
-}
-
-// let wasOpen = false;
-// if (!wasOpen) {
-//   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-//     if (tabs.length > 0) {
-//       chrome.tabs.create({ url: 'html/popup.html' });
-//     }
-//   });
-//   wasOpen = true;
-// }
-
 function dateDiff(firstDate, secondDate = 0) {
   let timeDifference = 0;
   if (!secondDate) {
@@ -379,25 +360,26 @@ function dateDiff(firstDate, secondDate = 0) {
 
 async function fmLoadLoans(mode) {
   const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
+  const filters = await getCache("investSettings", {});
   if (res.data) {
     fmInvestCompanyArray = res.data.requests.filter(
       (obj) =>
         obj.collected_percentage !== 100 /* Полоска сбора не заполнена (меньше 100%) */ &&
         obj.investing_amount === null /* Резервация (нет) */ &&
-        obj.term >= parseInt(investSettingsObj.fmDaysFrom) &&
-        obj.term <= parseInt(investSettingsObj.fmDaysTo) /* Срок займа */ &&
-        ratingArray.indexOf(obj.rating) >= parseInt(investSettingsObj.fmRatingFrom) &&
-        ratingArray.indexOf(obj.rating) <= parseInt(investSettingsObj.fmRatingTo) /* Рейтинг займа */ &&
-        obj.interest_rate >= valueToPercent(investSettingsObj.fmRateFrom) &&
-        obj.interest_rate <= valueToPercent(investSettingsObj.fmRateTo) /* Ставка */ &&
-        obj.loan_order >= parseFloat(investSettingsObj.fmLoansFrom) &&
-        obj.loan_order <= parseFloat(investSettingsObj.fmLoansTo) /* Какой по счёту займ на платформе */ &&
-        // && (obj.company_investing_amount <= (parseFloat(investSettingsObj.fmMaxCompanySum) - parseFloat(investSettingsObj.fmInvestSum))) /* Сумма в одного заёмщика */
-        obj.investing_amount <= parseFloat(investSettingsObj.fmMaxLoanSum) /* Сумма в один займ */ &&
-        obj.company_investing_amount <= parseFloat(investSettingsObj.fmMaxCompanySum) /* Сумма в одного заёмщика */ &&
+        obj.term >= parseInt(filters.fmDaysFrom) &&
+        obj.term <= parseInt(filters.fmDaysTo) /* Срок займа */ &&
+        ratingArray.indexOf(obj.rating) >= parseInt(filters.fmRatingFrom) &&
+        ratingArray.indexOf(obj.rating) <= parseInt(filters.fmRatingTo) /* Рейтинг займа */ &&
+        obj.interest_rate >= valueToPercent(filters.fmRateFrom) &&
+        obj.interest_rate <= valueToPercent(filters.fmRateTo) /* Ставка */ &&
+        obj.loan_order >= parseFloat(filters.fmLoansFrom) &&
+        obj.loan_order <= parseFloat(filters.fmLoansTo) /* Какой по счёту займ на платформе */ &&
+        // && (obj.company_investing_amount <= (parseFloat(filters.fmMaxCompanySum) - parseFloat(filters.fmInvestSum))) /* Сумма в одного заёмщика */
+        obj.investing_amount <= parseFloat(filters.fmMaxLoanSum) /* Сумма в один займ */ &&
+        obj.company_investing_amount <= parseFloat(filters.fmMaxCompanySum) /* Сумма в одного заёмщика */ &&
         obj.financial_discipline === 1 /* ФД заёмщика */
     );
-    if (!fmCompanyUpdate && mode !== "badge") {
+    if (!fmCompanyUpdate && mode === "popup") {
       fmCompanyUpdate = true;
       return;
     }
@@ -408,7 +390,7 @@ async function fmLoadLoans(mode) {
 }
 
 async function smLoadLoans(mode, offset, limit, total = 0) {
-  if (!smCompanyUpdate && mode !== "badge") {
+  if (!smCompanyUpdate && mode === "popup") {
     smCompanyUpdate = true;
     return;
   }
@@ -417,40 +399,40 @@ async function smLoadLoans(mode, offset, limit, total = 0) {
   }
   const url = `https://jetlend.ru/invest/api/exchange/loans?limit=${limit}&offset=${offset}&sort_dir=desc&sort_field=ytm`;
   const res = await fetchData(url);
+  const filters = await getCache("investSettings", {});
   if (res.data) {
     smInvestCompanyArray = smInvestCompanyArray.concat(
       res.data.data.filter(
         (obj) =>
-          obj.term_left >= parseFloat(investSettingsObj.smDaysFrom) &&
-          obj.term_left <= parseFloat(investSettingsObj.smDaysTo) /* Остаток срока займа */ &&
-          ratingArray.indexOf(obj.rating) >= parseInt(investSettingsObj.smRatingFrom) &&
-          ratingArray.indexOf(obj.rating) <= parseInt(investSettingsObj.smRatingTo) /* Рейтинг займа */ &&
-          obj.ytm >= valueToPercent(investSettingsObj.smRateFrom) &&
-          obj.ytm <= valueToPercent(investSettingsObj.smRateTo) /* Эффективная ставка в % */ &&
-          obj.progress >= valueToPercent(investSettingsObj.smProgressFrom) &&
-          obj.progress <= valueToPercent(investSettingsObj.smProgressTo) /* Выплачено (прогресс в %) */ &&
-          obj.loan_class >= parseInt(investSettingsObj.smClassFrom) &&
-          obj.loan_class <= parseInt(investSettingsObj.smClassTo) /* Класс займа */ &&
-          obj.min_price >= valueToPercent(investSettingsObj.smPriceFrom) &&
-          obj.min_price <= valueToPercent(investSettingsObj.smPriceTo) /* Мин прайс в % */ &&
-          // && (obj.invested_company_debt <= (parseFloat(investSettingsObj.smMaxCompanySum) - parseFloat(investSettingsObj.smInvestSum))) /* Сумма в одного заёмщика */
-          obj.invested_debt <= parseFloat(investSettingsObj.smMaxLoanSum) /* Сумма в один займ */ &&
-          obj.invested_company_debt <= parseFloat(investSettingsObj.smMaxCompanySum) /* Сумма в одного заёмщика */ &&
-          obj.financial_discipline >= valueToPercent(investSettingsObj.smFdFrom) &&
-          obj.financial_discipline <= valueToPercent(investSettingsObj.smFdTo) /* ФД заёмщика */ &&
+          obj.term_left >= parseFloat(filters.smDaysFrom) &&
+          obj.term_left <= parseFloat(filters.smDaysTo) /* Остаток срока займа */ &&
+          ratingArray.indexOf(obj.rating) >= parseInt(filters.smRatingFrom) &&
+          ratingArray.indexOf(obj.rating) <= parseInt(filters.smRatingTo) /* Рейтинг займа */ &&
+          obj.ytm >= valueToPercent(filters.smRateFrom) &&
+          obj.ytm <= valueToPercent(filters.smRateTo) /* Эффективная ставка в % */ &&
+          obj.progress >= valueToPercent(filters.smProgressFrom) &&
+          obj.progress <= valueToPercent(filters.smProgressTo) /* Выплачено (прогресс в %) */ &&
+          obj.loan_class >= parseInt(filters.smClassFrom) &&
+          obj.loan_class <= parseInt(filters.smClassTo) /* Класс займа */ &&
+          obj.min_price >= valueToPercent(filters.smPriceFrom) &&
+          obj.min_price <= valueToPercent(filters.smPriceTo) /* Мин прайс в % */ &&
+          // && (obj.invested_company_debt <= (parseFloat(filters.smMaxCompanySum) - parseFloat(filters.smInvestSum))) /* Сумма в одного заёмщика */
+          obj.invested_debt <= parseFloat(filters.smMaxLoanSum) /* Сумма в один займ */ &&
+          obj.invested_company_debt <= parseFloat(filters.smMaxCompanySum) /* Сумма в одного заёмщика */ &&
+          obj.financial_discipline >= valueToPercent(filters.smFdFrom) &&
+          obj.financial_discipline <= valueToPercent(filters.smFdTo) /* ФД заёмщика */ &&
           obj.status === "active" /* Статус - выплачивается */
       )
     );
     // Удаление дубликатов
     smInvestCompanyArray = smInvestCompanyArray.filter((obj, index, self) => index === self.findIndex((t) => t.loan_id === obj.loan_id));
-    if (res.data.data[res.data.data.length - 1].ytm < valueToPercent(investSettingsObj.smRateFrom)) {
+    if (res.data.data.at(-1).ytm < valueToPercent(filters.smRateFrom)) {
       return;
     }
     offset += limit;
     if (mode === "popup") {
-      $.get("#sm-numOfSortedCompany").textContent = `Загрузка... (${toPercentFormat(offset / res.data.total)})`;
+      $get("#sm-numOfSortedCompany").textContent = `Загрузка... (${toPercentFormat(offset / res.data.total)})`;
     }
-
     if (mode === "badge") {
       setBadge(((offset / res.data.total) * 100).toFixed(0) + "%");
     }
@@ -458,17 +440,14 @@ async function smLoadLoans(mode, offset, limit, total = 0) {
   }
 }
 
-async function checkingCompany(companyId) {
-  loadInvestSettings();
+async function checkingCompany(companyId, fm, sm) {
+  const filters = await getCache("investSettings", {});
   const errors = [];
-  const fm = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
-  const sm = await fetchData("https://jetlend.ru/invest/api/exchange/loans");
-  if (fm.data && sm.data) {
-    let company = null;
-    const fmCompany = fm.data.requests.find((obj) => obj.id === companyId);
-    const smCompany = sm.data.data.find((obj) => obj.loan_id === companyId);
-    const errorsHtml = function () {
-      return `
+  let company = null;
+  const fmCompany = fm.data.requests.find((obj) => obj.id === companyId);
+  const smCompany = sm.data.data.find((obj) => obj.loan_id === companyId);
+  const errorsHtml = function () {
+    return `
         <div class="list-element contrast-bg">
           <div style="display: flex; margin-top: 6px;">
             <img class="list-element__img" src="https://jetlend.ru${company.preview_small_url}">
@@ -495,205 +474,207 @@ async function checkingCompany(companyId) {
                 .join("")}`
           }
         </div>`;
-    };
+  };
 
-    if (fmCompany) {
-      company = fmCompany;
-      if (company.investing_amount === null) {
-        errors.push(`Займ уже зарезервирован на сумму ${toCurrencyFormat(company.investing_amount)}.`);
-      }
-      if (company.term < parseInt(investSettingsObj.fmDaysFrom) || company.term > parseInt(investSettingsObj.fmDaysTo)) {
-        errors.push(`Срок займа (${company.term}) не входит в диапазон от ${parseInt(investSettingsObj.fmDaysFrom)} до ${parseInt(investSettingsObj.fmDaysTo)}.`);
-      }
-      if (ratingArray.indexOf(company.rating) < parseInt(investSettingsObj.fmRatingFrom) || ratingArray.indexOf(company.rating) > parseInt(investSettingsObj.fmRatingTo)) {
-        errors.push(`Рейтинг займа (${ratingArray.indexOf(company.rating)}) не входит в диапазон от ${parseInt(investSettingsObj.fmRatingFrom)} до ${parseInt(investSettingsObj.fmRatingTo)}.`);
-      }
-      if (company.interest_rate < valueToPercent(investSettingsObj.fmRateFrom) || company.interest_rate > valueToPercent(investSettingsObj.fmRateTo)) {
-        errors.push(`Процентная ставка (${company.interest_rate}) не входит в диапазон от ${valueToPercent(investSettingsObj.fmRateFrom)} до ${valueToPercent(investSettingsObj.fmRateTo)}.`);
-      }
-      if (company.loan_order < parseFloat(investSettingsObj.fmLoansFrom) || company.loan_order > parseFloat(investSettingsObj.fmLoansTo)) {
-        errors.push(`Ордер займа (${company.loan_order}) не входит в диапазон от ${parseFloat(investSettingsObj.fmLoansFrom)} до ${parseFloat(investSettingsObj.fmLoansTo)}.`);
-      }
-      // if (company.company_investing_amount > (parseFloat(investSettingsObj.fmMaxCompanySum) - parseFloat(investSettingsObj.fmInvestSum))) {
-      //   errors.push(`Сумма инвестий в компанию (${toCurrencyFormat(company.company_investing_amount)}) превышает ${toCurrencyFormat((parseFloat(investSettingsObj.fmMaxCompanySum) - parseFloat(investSettingsObj.fmInvestSum)))}
-      //   (считается как "максимальная сумма в компанию (${toCurrencyFormat(investSettingsObj.fmMaxCompanySum)})" - "сумма в один займ (${toCurrencyFormat(investSettingsObj.fmInvestSum)})).`);
-      // }
-      if (company.investing_amount > parseFloat(investSettingsObj.fmMaxLoanSum)) {
-        errors.push(`Сумма инвестий в займ (${toCurrencyFormat(company.investing_amount)}) превышает ${toCurrencyFormat(parseFloat(investSettingsObj.fmMaxLoanSum))}.`);
-      }
-      if (company.company_investing_amount > parseFloat(investSettingsObj.fmMaxCompanySum)) {
-        errors.push(`Сумма инвестий в компанию (${toCurrencyFormat(company.company_investing_amount)}) превышает ${toCurrencyFormat(parseFloat(investSettingsObj.fmMaxCompanySum))}.`);
-      }
-      if (company.financial_discipline !== 1) {
-        errors.push(`ФД заёмщика (${toPercentFormat(company.financial_discipline)}) меньше 100%.`);
-      }
-      return errorsHtml();
-    } else if (smCompany) {
-      company = smCompany;
-      if (company.term_left < parseFloat(investSettingsObj.smDaysFrom) || company.term_left > parseFloat(investSettingsObj.smDaysTo)) {
-        errors.push(`Остаток срока займа (${company.term_left}) не входит в диапазон от ${parseFloat(investSettingsObj.smDaysFrom)} до ${parseFloat(investSettingsObj.smDaysTo)}.`);
-      }
-      if (ratingArray.indexOf(company.rating) < parseInt(investSettingsObj.smRatingFrom) || ratingArray.indexOf(company.rating) > parseInt(investSettingsObj.smRatingTo)) {
-        errors.push(`Рейтинг займа (${ratingArray.indexOf(company.rating)}) не входит в диапазон от ${parseInt(investSettingsObj.smRatingFrom)} до ${parseInt(investSettingsObj.smRatingTo)}.`);
-      }
-      if (company.ytm < valueToPercent(investSettingsObj.smRateFrom) || company.ytm > valueToPercent(investSettingsObj.smRateTo)) {
-        errors.push(`Эффективная ставка (${toPercentFormat(company.ytm)}) не входит в диапазон от ${toPercentFormat(valueToPercent(investSettingsObj.smRateFrom))} до ${toPercentFormat(valueToPercent(investSettingsObj.smRateTo))}.`);
-      }
-      if (company.progress < valueToPercent(investSettingsObj.smProgressFrom) || company.progress > valueToPercent(investSettingsObj.smProgressTo)) {
-        errors.push(`Прогресс погашения займа (${toPercentFormat(company.progress)}) не входит в диапазон от ${toPercentFormat(investSettingsObj.smProgressFrom / 100)} до ${toPercentFormat(investSettingsObj.smProgressTo / 100)}.`);
-      }
-      if (company.loan_class < parseInt(investSettingsObj.smClassFrom) || company.loan_class > parseInt(investSettingsObj.smClassTo)) {
-        errors.push(`Класс займа (${company.loan_class}) не входит в диапазон от ${parseInt(investSettingsObj.smClassFrom)} до ${parseInt(investSettingsObj.smClassTo)}.`);
-      }
-      if (company.min_price < valueToPercent(investSettingsObj.smPriceFrom) || company.min_price > valueToPercent(investSettingsObj.smPriceTo)) {
-        errors.push(`Минимальная цена займа (${toPercentFormat(company.min_price)}) не входит в диапазон от ${toPercentFormat(investSettingsObj.smPriceFrom / 100)} до ${toPercentFormat(investSettingsObj.smPriceTo / 100)}.`);
-      }
-      // if (company.invested_company_debt > (parseFloat(investSettingsObj.smMaxCompanySum) - parseFloat(investSettingsObj.smInvestSum))) {
-      //   errors.push(`Сумма инвестий в компанию (${toCurrencyFormat(company.invested_company_debt)}) превышает ${toCurrencyFormat((parseFloat(investSettingsObj.smMaxCompanySum) - parseFloat(investSettingsObj.smInvestSum)))}
-      //   (считается как "максимальная сумма в компанию (${toCurrencyFormat(investSettingsObj.smMaxCompanySum)})" - "сумма в один займ (${toCurrencyFormat(investSettingsObj.smInvestSum)})).`);
-      // }
-      if (company.invested_debt > parseFloat(investSettingsObj.smMaxLoanSum)) {
-        errors.push(`Сумма инвестий в займ (${toCurrencyFormat(company.invested_debt)}) превышает ${toCurrencyFormat(parseFloat(investSettingsObj.smMaxLoanSum))}.`);
-      }
-      if (company.invested_company_debt > parseFloat(investSettingsObj.smMaxCompanySum)) {
-        errors.push(`Сумма инвестий в компанию (${toCurrencyFormat(company.invested_company_debt)}) превышает ${toCurrencyFormat(parseFloat(investSettingsObj.smMaxCompanySum))}.`);
-      }
-      if (company.financial_discipline < valueToPercent(investSettingsObj.smFdFrom) || company.financial_discipline > valueToPercent(investSettingsObj.smFdTo)) {
-        errors.push(`ФД заёмщика (${toPercentFormat(company.financial_discipline)}) не входит в диапазон от ${toPercentFormat(investSettingsObj.smFdFrom / 100)} до ${toPercentFormat(investSettingsObj.smFdTo / 100)}.`);
-      }
-      if (company.status !== "active") {
-        errors.push(`Статус займа (${company.status}) - просрочен, либо реструктуризирован.`);
-      }
-      return errorsHtml();
+  if (fmCompany) {
+    company = fmCompany;
+    if (company.investing_amount === null) {
+      errors.push(`Займ уже зарезервирован на сумму ${toCurrencyFormat(company.investing_amount)}.`);
     }
-    return `<div class="list-element contrast-bg"><div style="margin: 8px 0">Компания ${companyId} не найдена.</div></div>`;
+    if (company.term < parseInt(filters.fmDaysFrom) || company.term > parseInt(filters.fmDaysTo)) {
+      errors.push(`Срок займа (${company.term}) не входит в диапазон от ${parseInt(filters.fmDaysFrom)} до ${parseInt(filters.fmDaysTo)}.`);
+    }
+    if (ratingArray.indexOf(company.rating) < parseInt(filters.fmRatingFrom) || ratingArray.indexOf(company.rating) > parseInt(filters.fmRatingTo)) {
+      errors.push(`Рейтинг займа (${ratingArray.indexOf(company.rating)}) не входит в диапазон от ${parseInt(filters.fmRatingFrom)} до ${parseInt(filters.fmRatingTo)}.`);
+    }
+    if (company.interest_rate < valueToPercent(filters.fmRateFrom) || company.interest_rate > valueToPercent(filters.fmRateTo)) {
+      errors.push(`Процентная ставка (${company.interest_rate}) не входит в диапазон от ${valueToPercent(filters.fmRateFrom)} до ${valueToPercent(filters.fmRateTo)}.`);
+    }
+    if (company.loan_order < parseFloat(filters.fmLoansFrom) || company.loan_order > parseFloat(filters.fmLoansTo)) {
+      errors.push(`Ордер займа (${company.loan_order}) не входит в диапазон от ${parseFloat(filters.fmLoansFrom)} до ${parseFloat(filters.fmLoansTo)}.`);
+    }
+    if (company.investing_amount > parseFloat(filters.fmMaxLoanSum)) {
+      errors.push(`Сумма инвестий в займ (${toCurrencyFormat(company.investing_amount)}) превышает ${toCurrencyFormat(parseFloat(filters.fmMaxLoanSum))}.`);
+    }
+    if (company.company_investing_amount > parseFloat(filters.fmMaxCompanySum)) {
+      errors.push(`Сумма инвестий в компанию (${toCurrencyFormat(company.company_investing_amount)}) превышает ${toCurrencyFormat(parseFloat(filters.fmMaxCompanySum))}.`);
+    }
+    if (company.financial_discipline !== 1) {
+      errors.push(`ФД заёмщика (${toPercentFormat(company.financial_discipline)}) меньше 100%.`);
+    }
+    if (company.investing_amount + parseFloat(filters.fmInvestSum) > parseFloat(filters.fmStopLoanSum)) {
+      errors.push(`Ограничение суммы инвестиции в займ (${toCurrencyFormat(parseFloat(filters.fmStopLoanSum))}) меньше чем инвестированная сумма (${toCurrencyFormat(company.investing_amount)}) + сумма инвестиций в одну компанию (${toCurrencyFormat(parseFloat(filters.fmInvestSum))}).`);
+    }
+    if (company.company_investing_amount + parseFloat(filters.fmInvestSum) > parseFloat(filters.fmStopCompanySum)) {
+      errors.push(`Ограничение суммы инвестиции в компанию (${toCurrencyFormat(parseFloat(filters.fmStopCompanySum))}) меньше чем инвестированная сумма (${toCurrencyFormat(company.company_investing_amount)}) + сумма инвестиций в одну компанию (${toCurrencyFormat(parseFloat(filters.fmInvestSum))}).`);
+    }
+    return errorsHtml();
+  } else if (smCompany) {
+    company = smCompany;
+    if (company.term_left < parseFloat(filters.smDaysFrom) || company.term_left > parseFloat(filters.smDaysTo)) {
+      errors.push(`Остаток срока займа (${company.term_left}) не входит в диапазон от ${parseFloat(filters.smDaysFrom)} до ${parseFloat(filters.smDaysTo)}.`);
+    }
+    if (ratingArray.indexOf(company.rating) < parseInt(filters.smRatingFrom) || ratingArray.indexOf(company.rating) > parseInt(filters.smRatingTo)) {
+      errors.push(`Рейтинг займа (${ratingArray.indexOf(company.rating)}) не входит в диапазон от ${parseInt(filters.smRatingFrom)} до ${parseInt(filters.smRatingTo)}.`);
+    }
+    if (company.ytm < valueToPercent(filters.smRateFrom) || company.ytm > valueToPercent(filters.smRateTo)) {
+      errors.push(`Эффективная ставка (${toPercentFormat(company.ytm)}) не входит в диапазон от ${toPercentFormat(valueToPercent(filters.smRateFrom))} до ${toPercentFormat(valueToPercent(filters.smRateTo))}.`);
+    }
+    if (company.progress < valueToPercent(filters.smProgressFrom) || company.progress > valueToPercent(filters.smProgressTo)) {
+      errors.push(`Прогресс погашения займа (${toPercentFormat(company.progress)}) не входит в диапазон от ${toPercentFormat(filters.smProgressFrom / 100)} до ${toPercentFormat(filters.smProgressTo / 100)}.`);
+    }
+    if (company.loan_class < parseInt(filters.smClassFrom) || company.loan_class > parseInt(filters.smClassTo)) {
+      errors.push(`Класс займа (${company.loan_class}) не входит в диапазон от ${parseInt(filters.smClassFrom)} до ${parseInt(filters.smClassTo)}.`);
+    }
+    if (company.min_price < valueToPercent(filters.smPriceFrom) || company.min_price > valueToPercent(filters.smPriceTo)) {
+      errors.push(`Минимальная цена займа (${toPercentFormat(company.min_price)}) не входит в диапазон от ${toPercentFormat(filters.smPriceFrom / 100)} до ${toPercentFormat(filters.smPriceTo / 100)}.`);
+    }
+    if (company.invested_debt > parseFloat(filters.smMaxLoanSum)) {
+      errors.push(`Сумма инвестий в займ (${toCurrencyFormat(company.invested_debt)}) превышает ${toCurrencyFormat(parseFloat(filters.smMaxLoanSum))}.`);
+    }
+    if (company.invested_company_debt > parseFloat(filters.smMaxCompanySum)) {
+      errors.push(`Сумма инвестий в компанию (${toCurrencyFormat(company.invested_company_debt)}) превышает ${toCurrencyFormat(parseFloat(filters.smMaxCompanySum))}.`);
+    }
+    if (company.financial_discipline < valueToPercent(filters.smFdFrom) || company.financial_discipline > valueToPercent(filters.smFdTo)) {
+      errors.push(`ФД заёмщика (${toPercentFormat(company.financial_discipline)}) не входит в диапазон от ${toPercentFormat(filters.smFdFrom / 100)} до ${toPercentFormat(filters.smFdTo / 100)}.`);
+    }
+    if (company.invested_debt + parseFloat(filters.smInvestSum) > parseFloat(filters.smStopLoanSum)) {
+      errors.push(`Ограничение суммы инвестиции в займ (${toCurrencyFormat(parseFloat(filters.smStopLoanSum))}) меньше чем инвестированная сумма (${toCurrencyFormat(company.invested_debt)}) + сумма инвестиций в одну компанию (${toCurrencyFormat(parseFloat(filters.smInvestSum))}).`);
+    }
+    if (company.invested_company_debt + parseFloat(filters.smInvestSum) > parseFloat(filters.smStopCompanySum)) {
+      errors.push(`Ограничение суммы инвестиции в компанию (${toCurrencyFormat(parseFloat(filters.smStopCompanySum))}) меньше чем инвестированная сумма (${toCurrencyFormat(company.invested_company_debt)}) + сумма инвестиций в одну компанию (${toCurrencyFormat(parseFloat(filters.smInvestSum))}).`);
+    }
+    if (company.status !== "active") {
+      errors.push(`Статус займа (${company.status}) - просрочен, либо реструктуризирован.`);
+    }
+    return errorsHtml();
   }
-  return `<div class="list-element contrast-bg"><div style="margin: 8px 0">Ошибка загрузки.</div></div>`;
+  return `<div class="list-element contrast-bg"><div style="margin: 8px 0">Компания ${companyId} не найдена.</div></div>`;
 }
-
-// const currentVersion = chrome.runtime.getManifest().version;
-
-// console.log(currentVersion);
-
-chrome.storage.local.set({
-  test: {
-    array: [
-      { id: 1, name: "lol" },
-      { id: 2, name: "lol2" },
-    ],
-  },
-});
-
-chrome.storage.local.get("test", function (data) {
-  if (data.test) {
-    console.log(data.test.array);
-    console.log(data.test.array[1].name);
-  }
-});
-
-const smc = {
-  company: 'ООО "СТАНКОСАРАТОВ"',
-  image_url: "/media/images/e2/d3/e2d3065f-64bd-463d-a468-81237a987b5e.jpg",
-  preview_small_url: "/media/images/e2/d3/e2d3065f-64bd-463d-a468-81237a987b5e_160x160.jpg",
-  preview_url: "/media/images/e2/d3/e2d3065f-64bd-463d-a468-81237a987b5e_1024x1024.jpg",
-  loan_id: 2945,
-  loan_class: 1,
-  loan_isin: "JL0000002945",
-  loan_name: "СТАНКОСАРАТО-В02",
-  loan_order: 2,
-  financial_discipline: 0,
-  term: 882,
-  term_left: 203,
-  interest_rate: 0.223,
-  rating: "BBB+",
-  status: "restructured",
-  end_date: "2024-09-17",
-  progress: 0.80457412625,
-  amount: 4075.01,
-  principal_debt: 4494.2,
-  ytm: 2.2803205040260073,
-  min_price: 0.65,
-  invested_contracts_count: null,
-  invested_debt: null,
-  invested_company_debt: null,
-  region: "",
-};
-
-const fmc = {
-  company: "ИП Хаметова Наталья Павловна",
-  image_url: "/media/images/b4/44/b444861b-c556-4ac2-b854-2924fba29e8d.jpg",
-  preview_small_url: "/media/images/b4/44/b444861b-c556-4ac2-b854-2924fba29e8d_160x160.jpg",
-  preview_url: "/media/images/b4/44/b444861b-c556-4ac2-b854-2924fba29e8d_1024x1024.jpg",
-  id: 19412,
-  amount: "914500.00",
-  interest_rate: 0.331,
-  term: 660,
-  investing_amount: null,
-  company_investing_amount: "114.90",
-  financial_discipline: 1,
-  rating: "CC",
-  start_date: "2024-02-26T08:18:08.419163+03:00",
-  collect_time: "2024-03-11T08:18:08.534221+03:00",
-  collected_percentage: 100,
-  status: "waiting",
-  promo: [],
-  loan_isin: "JL0000019412",
-  loan_name: "ХаметоваНП-В20",
-  loan_order: 20,
-  allow_delete: false,
-  allow_delete_cause: "Отмена резерва доступна только в течение 5 дней с момента его создания.",
-  allow_delete_amount: null,
-  ignored: false,
-  region: "",
-};
 
 const companyHtmlNotification = (company, invest) => {
   return `
-<section style="display: flex;">
-<img style="object-fit: cover; height: 50px; width: 50px; border-radius: 100%; margin: 0px 10px 10px 0;" src="https://jetlend.ru${company.image_url || company.preview_small_url}">
-<div>
-  <a style="text-decoration: underline; color: var(--jle-fontColor);" href="https://jetlend.ru/invest/v3/company/${company.id || company.loan_id}" target="_blank">
-    <b>${company.loan_name}</b>
-  </a>
-  <div style="margin-top: 3px;">
-    <b style="${company.rating.includes("A") ? "color: limegreen;" : company.rating.includes("B") ? "color: orange;" : "color: orangered;"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
-    <b style="${company.financial_discipline === 1 ? "color: limegreen;" : company.financial_discipline <= 0.4 ? "color: red;" : "color: orange;"}">ФД: ${(company.financial_discipline * 100).toFixed(0)}%</b>
+    <section style="display: flex;">
+    <img style="object-fit: cover; height: 50px; width: 50px; border-radius: 100%; margin: 0px 10px 10px 0;" src="https://jetlend.ru${company.preview_small_url}">
+    <div>
+      <a style="text-decoration: underline; color: var(--jle-fontColor);" href="https://jetlend.ru/invest/v3/company/${company.id || company.loan_id}" target="_blank">
+        <b>${company.loan_name}</b>
+      </a>
+      <div style="margin-top: 3px;">
+        <b style="${company.rating.includes("A") ? "color: limegreen;" : company.rating.includes("B") ? "color: orange;" : "color: orangered;"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
+        <b style="${company.financial_discipline === 1 ? "color: limegreen;" : company.financial_discipline <= 0.4 ? "color: red;" : "color: orange;"}">ФД: ${(company.financial_discipline * 100).toFixed(0)}%</b>
+        ${company.loan_class !== undefined ? `, <b style="${company.loan_class === 0 ? "color: limegreen;" : company.loan_class === 1 ? "color: orange;" : "color: orangered;"}">Класс: ${company.loan_class}</b>` : ""}
+      </div>
+    </div>
     ${
-      company.loan_class
-        ? `, 
-    <b style="${company.loan_class === 0 ? "color: limegreen;" : company.loan_class === 1 ? "color: orange;" : "color: orangered;"}">Класс: ${company.loan_class}</b>`
+      !invest.error
+        ? `
+    <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto;">
+      <div style="text-wrap: nowrap;">
+        Cумма: <b>${toCurrencyFormat(invest.sum)}</b>
+      </div>
+      ${invest.price ? `<div style="text-wrap: nowrap; margin-top: 3px;">Цена: <b>${toPercentFormat(invest.price)}</b></div>` : ""}
+    </div>
+      `
         : ""
     }
-  </div>
-</div>
-${
-  invest.error
-    ? ""
-    : `
-<div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto;">
-  <div style="text-wrap: nowrap;">
-    Cумма: <b>${toCurrencyFormat(invest.sum)}</b>
-  </div>
-  ${
-    invest.price
-      ? `  <div style="text-wrap: nowrap; margin-top: 3px;">
-             Цена: <b>${toPercentFormat(invest.price)}</b>
-           </div>`
-      : ""
-  }
-</div>
-  `
-}
-</section>
-<div style="background: var(--jle-universalColor); width: 100%; height: 4px; border-radius: 5px; margin-top: 5px;">
-  <div style="background: limegreen; width: 40%; height: inherit; border-radius: inherit;"></div>
-</div>
-${invest.error ? `<div style="margin-top: 5px;">${invest.error}</div>` : ""}
-`;
+    </section>
+    <div style="background: var(--jle-universalColor); width: 100%; height: 4px; border-radius: 5px; margin-top: 5px;">
+      <div style="background: limegreen; width: 40%; height: inherit; border-radius: inherit;"></div>
+    </div>
+    ${invest.error ? `<div style="margin-top: 5px;">${invest.error}</div>` : ""}
+    `;
 };
 
-// sendNotification(`Успешная инвестиция id${smc.loan_id}`, companyHtmlNotification(smc, { sum: 100, price: 99 }));
-// sendNotification(`Успешная инвестиция id${smc.loan_id}`, companyHtmlNotification(smc, { error: "Ошибка стоп 0x0000000000" }));
+async function getCache(key, def = null) {
+  return new Promise((res) => {
+    chrome.storage.local.get(key, function (data) {
+      res(data[key] ?? def);
+    });
+  });
+}
 
-// sendNotification(`Успешная инвестиция id${fmc.id}`, companyHtmlNotification(fmc, { sum: 100 }));
-// sendNotification(`Успешная инвестиция id${fmc.id}`, companyHtmlNotification(fmc, { error: "Ошибка стоп 0x0000000000" }));
+function getAverage(arr) {
+  const sum = arr.reduce((acc, curr) => acc + curr);
+  return sum / arr.length;
+}
+
+function getMedian(arr) {
+  arr.sort((a, b) => a - b);
+  const mid = Math.floor(arr.length / 2);
+  return arr.length % 2 === 0 ? (arr[mid - 1] + arr[mid]) / 2 : arr[mid];
+}
+
+function getModa(arr) {
+  const map = {};
+  let maxCount = 0;
+  let modes = [];
+
+  arr.forEach((val) => {
+    map[val] = (map[val] || 0) + 1;
+    if (map[val] > maxCount) {
+      maxCount = map[val];
+      modes = [val];
+    } else if (map[val] === maxCount) {
+      modes.push(val);
+    }
+  });
+
+  return modes;
+}
+
+// const smc = {
+//   company: 'ООО "СТАНКОСАРАТОВ"',
+//   image_url: "/media/images/e2/d3/e2d3065f-64bd-463d-a468-81237a987b5e.jpg",
+//   preview_small_url: "/media/images/e2/d3/e2d3065f-64bd-463d-a468-81237a987b5e_160x160.jpg",
+//   preview_url: "/media/images/e2/d3/e2d3065f-64bd-463d-a468-81237a987b5e_1024x1024.jpg",
+//   loan_id: 2945,
+//   loan_class: 1,
+//   loan_isin: "JL0000002945",
+//   loan_name: "СТАНКОСАРАТО-В02",
+//   loan_order: 2,
+//   financial_discipline: 0,
+//   term: 882,
+//   term_left: 203,
+//   interest_rate: 0.223,
+//   rating: "BBB+",
+//   status: "restructured",
+//   end_date: "2024-09-17",
+//   progress: 0.80457412625,
+//   amount: 4075.01,
+//   principal_debt: 4494.2,
+//   ytm: 2.2803205040260073,
+//   min_price: 0.65,
+//   invested_contracts_count: null,
+//   invested_debt: null,
+//   invested_company_debt: null,
+//   region: "",
+// };
+
+// const fmc = {
+//   company: "ИП Хаметова Наталья Павловна",
+//   image_url: "/media/images/b4/44/b444861b-c556-4ac2-b854-2924fba29e8d.jpg",
+//   preview_small_url: "/media/images/b4/44/b444861b-c556-4ac2-b854-2924fba29e8d_160x160.jpg",
+//   preview_url: "/media/images/b4/44/b444861b-c556-4ac2-b854-2924fba29e8d_1024x1024.jpg",
+//   id: 19412,
+//   amount: "914500.00",
+//   interest_rate: 0.331,
+//   term: 660,
+//   investing_amount: null,
+//   company_investing_amount: "114.90",
+//   financial_discipline: 1,
+//   rating: "CC",
+//   start_date: "2024-02-26T08:18:08.419163+03:00",
+//   collect_time: "2024-03-11T08:18:08.534221+03:00",
+//   collected_percentage: 100,
+//   status: "waiting",
+//   promo: [],
+//   loan_isin: "JL0000019412",
+//   loan_name: "ХаметоваНП-В20",
+//   loan_order: 20,
+//   allow_delete: false,
+//   allow_delete_cause: "Отмена резерва доступна только в течение 5 дней с момента его создания.",
+//   allow_delete_amount: null,
+//   ignored: false,
+//   region: "",
+// };

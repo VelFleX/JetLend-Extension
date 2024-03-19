@@ -9,16 +9,11 @@
     "32": "./img/icons/icon32.png",
     "48": "./img/icons/icon48.png"
   },
-  "permissions": [
-    "storage", "declarativeNetRequest", "activeTab", "tabs", "notifications", "declarativeContent"
-
-  ],
-  "host_permissions": [
-    "<all_urls>"
-  ],
-   "background": {
+  "permissions": ["storage", "declarativeNetRequest", "activeTab", "tabs", "notifications", "declarativeContent"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
     "service_worker": "js/background.js"
-  }, 
+  },
   "commands": {
     "open_extension": {
       "suggested_key": {
@@ -37,10 +32,11 @@
       "js": ["js/global/variables.js", "js/global/functions.js", "js/content.js"],
       "css": ["css/vars.css"]
     }
-  ], 
-  "web_accessible_resources": [  {
-    "resources": ["css/zero.min.css", "css/style.css"],
-    "matches": ["<all_urls>"]
-  }]
-  
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["css/zero.min.css", "css/style.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

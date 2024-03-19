@@ -1,17 +1,104 @@
+const normalizedURL = window.location.href.replace(/(https?:\/\/)?(www\.)?/i, "").replace(/\/$/, "");
 // Распределение средств (первичка)
-chrome.storage.local.get("fmInvest", function (data) {
-  if (data.fmInvest) {
-    let investedSum = 0; // Счётчик инвестированной суммы
-    let companyCount = 0; // Счётчик компаний, в которых распределены средства
-    let companyArrayLength = data.fmInvest.array.length; // Всего компаний
-    let errorCount = 0; // Количество ошибок
-    async function invest(companyId) {
-      let user = {
-        agree: true,
-        amount: data.fmInvest.sum,
-      };
+async function fmInvest() {
+  if (normalizedURL !== "jetlend.ru/invest/v3/?state=login") return;
+  const cache = await getCache("fmInvest");
+  if (!cache) return;
+  chrome.storage.local.remove("fmInvest");
+  document.title = "Распределение средств";
+  let investedSum = 0; // Счётчик инвестированной суммы
+  let companyCount = 0; // Счётчик компаний, в которых распределены средства
+  let errorCount = 0; // Количество ошибок
+  let companyArrayLength = cache.array.length; // Всего компаний
+  const investMode = cache.investMode;
+  const investHistory = await getCache("investHistory", []);
+  async function invest(company) {
+    let user = {
+      agree: true,
+      amount: cache.sum,
+    };
+    await fetch(`https://jetlend.ru/invest/api/requests/${company.id}/invest`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json;charset=UTF-8",
+        "X-Csrftoken": getCookie("csrftoken"),
+      },
+      credentials: "include",
+      body: JSON.stringify(user),
+    })
+      .then((response) => response.json())
+      .then((res) => {
+        if (res.status.toLowerCase() === "ok") {
+          sendNotification(`Успешная инвестиция ID${company.id}`, companyHtmlNotification(company, { sum: cache.sum }));
+          investedSum += cache.sum;
+          companyCount++;
+          investHistory.unshift({ id: company.id, name: company.loan_name, img: company.preview_small_url, fd: company.financial_discipline, rating: company.rating, investSum: cache.sum, percent: company.interest_rate, date: new Date().getTime(), mode: investMode });
+        } else {
+          sendNotification(`Ошибка ID${company.id}`, companyHtmlNotification(company, { error: res.error }));
+          errorCount++;
+        }
+        console.log(res);
+      });
+  }
 
-      await fetch(`https://jetlend.ru/invest/api/requests/${companyId}/invest`, {
+  async function mainFunction() {
+    sendNotification("Ожидайте", "Средства распределяются, не закрывайте вкладку.");
+    for (company of cache.array) {
+      if (investedSum + cache.sum > cache.sumAll) {
+        break;
+      }
+      if (company.company_investing_amount + cache.sum > cache.companyMaxSum || company.investing_amount + cache.sum > cache.loanMaxSum) {
+        continue;
+      }
+      await invest(company);
+    }
+    sendNotification(
+      "Распределение заверешено",
+      `Общая сумма: ${toCurrencyFormat(investedSum)}. 
+      Количество займов: ${companyCount} из ${companyArrayLength}. Ошибки: ${errorCount}.`
+    );
+    const settings = await getCache("settings", {});
+    const badgeMode = settings.badgeMode;
+    if (badgeMode === "money") {
+      const statsUrl = "https://jetlend.ru/invest/api/account/details";
+      const statsData = await fetchData(statsUrl);
+      if (statsData.data) {
+        const freeBalance = statsData.data.data.balance.free;
+        setBadge(toSuperShortCurrencyFormat(freeBalance));
+      }
+    } else {
+      setBadge("");
+    }
+    chrome.storage.local.set({ investHistory: investHistory });
+    chrome.runtime.sendMessage({ data: "Распределение средств заверешено" });
+    investMode === "auto" && window.close();
+  }
+  mainFunction();
+}
+fmInvest();
+
+// Распределение средств (вторичка)
+//https://jetlend.ru/invest/api/exchange/loans/12026/buy/preview
+async function smInvest() {
+  if (normalizedURL !== "jetlend.ru/invest/v3/?state=login") return;
+  const cache = await getCache("smInvest");
+  if (!cache) return;
+  chrome.storage.local.remove("smInvest");
+  document.title = "Распределение средств";
+  let investedSum = 0;
+  let companyCount = 0;
+  let errorCount = 0;
+  let companyArrayLength = cache.array.length;
+  const investMode = cache.mode;
+  const investHistory = await getCache("investHistory", []);
+  async function invest(min, max, ytmMin, ytmMax, sumAll, sum, companyArray) {
+    async function loanInvest(company, count, price) {
+      let user = {
+        count: count,
+        max_price: price, // Процент
+      };
+      // Создание промиса для fetch запроса
+      let fetchPromise = fetch(`https://jetlend.ru/invest/api/exchange/loans/${company.loan_id}/buy`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json;charset=UTF-8",
@@ -19,178 +106,186 @@ chrome.storage.local.get("fmInvest", function (data) {
         },
         credentials: "include",
         body: JSON.stringify(user),
-      })
-        .then((response) => response.json())
-        .then((obj) => {
-          if (obj.status.toLowerCase() === "ok") {
-            sendNotification("Успешная инвестиция", `Сумма: ${toCurrencyFormat(data.fmInvest.sum)}`);
-            investedSum += data.fmInvest.sum;
-            companyCount++;
-          } else {
-            sendNotification("Ошибка", `${obj.error}`);
-            errorCount++;
-          }
-          console.log(obj);
-        });
-    }
+      }).then((response) => response.json());
+      let timeoutPromise = new Promise((resolve, reject) => {
+        setTimeout(() => {
+          errorCount++;
+          console.log("Таймаут, id: ", company.loan_id);
+          reject(new Error(`Время ожидания истекло (10 сек).\nID займа: ${company.loan_id}.`));
+        }, 10000);
+      });
 
-    async function mainFunction() {
-      sendNotification("Ожидайте", "Средства распределяются, не закрывайте вкладку.");
-      for (company of data.fmInvest.array) {
-        await invest(company);
-      }
-      sendNotification(
-        "Распределение заверешено",
-        `Общая сумма: ${toCurrencyFormat(investedSum)}. 
-                                  Количество займов: ${companyCount} из ${companyArrayLength}. Ошибки: ${errorCount}.`
-      );
-      setBadge("");
-      chrome.runtime.sendMessage({ data: "Распределение средств заверешено" });
-      chrome.storage.local.remove("fmInvest");
-      // setTimeout(() => {
-      //   window.close();
-      // }, 3000);
-    }
-    mainFunction();
-  }
-});
-
-//https://jetlend.ru/invest/api/exchange/loans/12026/buy/preview
-// Распределение средств (вторичка)
-chrome.storage.local.get("smInvest", function (data) {
-  if (data.smInvest) {
-    let investedSum = 0;
-    let companyCount = 0;
-    let companyArrayLength = data.smInvest.array.length;
-    let errorCount = 0;
-    async function smInvest(min, max, ytmMin, ytmMax, all, sum, companyArray) {
-      chrome.storage.local.remove("smInvest");
-      console.log("Массив компаний: ", companyArray);
-      let sumAll = all; // Свободные средства
-      async function invest(companyId, count, price) {
-        let user = {
-          count: count,
-          max_price: price, // Процент
-        };
-
-        // Создание промиса для fetch запроса
-        let fetchPromise = fetch(`https://jetlend.ru/invest/api/exchange/loans/${companyId}/buy`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json;charset=UTF-8",
-            "X-Csrftoken": getCookie("csrftoken"),
-          },
-          credentials: "include",
-          body: JSON.stringify(user),
-        }).then((response) => response.json());
-        let timeoutPromise = new Promise((resolve, reject) => {
-          setTimeout(() => {
-            errorCount++;
-            console.log("Таймаут, id: ", companyId);
-            reject(new Error(`Время ожидания истекло (10 сек).\nID займа: ${companyId}.`));
-          }, 10000);
-        });
-
-        try {
-          let data = await Promise.race([fetchPromise, timeoutPromise]);
-          if (data.status.toLowerCase() === "ok") {
-            sendNotification("Успешная инвестиция", `Сумма: ${toCurrencyFormat(data.data.amount)}. ID займа: ${companyId}.`);
-            sumAll = parseFloat((sumAll - data.data.amount).toFixed(2));
-            investedSum += data.data.amount;
-            companyCount++;
-          } else {
-            sendNotification("Ошибка", `${data.error}\nID займа: ${companyId}.`);
-            errorCount++;
-          }
-        } catch (error) {
-          sendNotification("Ошибка", error.message);
+      try {
+        let data = await Promise.race([fetchPromise, timeoutPromise]);
+        if (data.status.toLowerCase() === "ok") {
+          sendNotification(`Успешная инвестиция ID${company.loan_id}`, companyHtmlNotification(company, { sum: data.data.amount, price: price }));
+          sumAll = parseFloat((sumAll - data.data.amount).toFixed(2));
+          investedSum += data.data.amount;
+          companyCount++;
+          investHistory.unshift({ id: company.loan_id, name: company.loan_name, img: company.preview_small_url, fd: company.financial_discipline, rating: company.rating, investSum: data.data.amount, percent: data.data.ytm, date: new Date().getTime(), mode: investMode, price: price, class: company.loan_class });
+        } else {
+          sendNotification(`Ошибка ID${company.loan_id}`, companyHtmlNotification(company, { error: data.error }));
+          errorCount++;
         }
+      } catch (error) {
+        sendNotification(`Ошибка ID${company.loan_id}`, companyHtmlNotification(company, { error: error.message }));
       }
+    }
 
-      for (companyId of companyArray) {
-        const resp = await fetchData(`https://jetlend.ru/invest/api/exchange/loans/${companyId}/dom/records`);
-        if (resp.data) {
-          const sort = resp.data.data.filter((obj) => obj.count > 0 && obj.price >= min && obj.price <= max && obj.ytm >= ytmMin && obj.ytm <= ytmMax).reverse();
-          const secondSort = [];
-          let sumOne = sum; // Сумма в один займ
-          console.log(sort);
-          for (element of sort) {
-            const getPrice = (element) => currencyToFloat(element.amount / element.count); // Цена
-            if (sumOne > 0) {
-              if (element.amount >= sumOne && Math.floor(sumOne / getPrice(element)) > 0) {
-                secondSort.push({ id: companyId, price: element.price, count: Math.floor(sumOne / getPrice(element)), amount: getPrice(element) });
-                sumOne = 0;
-              } else if (element.amount < sumOne) {
-                secondSort.push({ id: companyId, price: element.price, count: element.count, amount: getPrice(element) });
-                sumOne -= element.amount;
-              }
+    for (company of companyArray) {
+      const resp = await fetchData(`https://jetlend.ru/invest/api/exchange/loans/${company.loan_id}/dom/records`);
+      if (resp.data) {
+        const sort = resp.data.data.filter((obj) => obj.count > 0 && obj.price >= min && obj.price <= max && obj.ytm >= ytmMin && obj.ytm <= ytmMax).reverse();
+        const secondSort = [];
+        let sumOne = sum; // Сумма в один займ
+        let stopLoanSum = cache.loanMaxSum - company.invested_debt; // Ограничение в займ
+        let stopCompanySum = cache.companyMaxSum - company.invested_company_debt; // Ограничение в компанию
+        let minSum = () => Math.min(sumOne, stopLoanSum, stopCompanySum);
+        for (element of sort) {
+          const getPrice = (element) => currencyToFloat(element.amount / element.count); // Цена за 1 лот
+          if (sumOne > 0 && stopCompanySum - getPrice(element) > 0 && stopLoanSum - getPrice(element) > 0) {
+            if (element.amount >= sumOne && Math.floor(minSum() / getPrice(element)) > 0) {
+              secondSort.push({ company: company, price: element.price, count: Math.floor(minSum() / getPrice(element)), amount: getPrice(element) });
+              sumOne = 0;
+            } else if (sumOne >= element.amount && stopLoanSum - getPrice(element) >= element.amount && stopCompanySum - getPrice(element) >= element.amount) {
+              secondSort.push({ company: company, price: element.price, count: element.count, amount: getPrice(element) });
+              sumOne -= element.amount;
+              stopLoanSum -= element.amount;
+              stopCompanySum -= element.amount;
             }
           }
-          for (element of secondSort) {
-            // Если цена больше чем сумма распределения
-            if (element.count * element.amount > sumAll) {
-              continue;
-            }
-            console.log("Цена и сумма: ", element.count * element.amount, sumAll);
-            await invest(element.id, element.count, element.price);
+        }
+
+        for (element of secondSort) {
+          console.log("secondSort: ", secondSort);
+          // Если цена больше чем сумма распределения
+          if (element.count * element.amount > sumAll) {
+            continue;
           }
+          if (element.company.invested_company_debt + element.amount * element.count > cache.companyMaxSum || element.company.invested_debt + element.amount * element.count > cache.loanMaxSum) {
+            continue;
+          }
+          await loanInvest(element.company, element.count, element.price);
         }
       }
     }
-    async function mainFunction() {
-      sendNotification("Ожидайте", "Средства распределяются, не закрывайте вкладку.");
-      await smInvest(data.smInvest.minPrice, data.smInvest.maxPrice, data.smInvest.ytmMin, data.smInvest.ytmMax, data.smInvest.sumAll, data.smInvest.sum, data.smInvest.array);
-      sendNotification(
-        "Распределение заверешено",
-        `Общая сумма: ${toCurrencyFormat(investedSum)}. 
-                                  Количество займов: ${companyCount} из ${companyArrayLength}. Ошибки: ${errorCount}.`
-      );
-      setBadge("");
-      chrome.runtime.sendMessage({ data: "Распределение средств заверешено" });
-
-      // setTimeout(() => {
-      //   window.close();
-      // }, 4000);
-    }
-    mainFunction();
   }
-});
+  async function mainFunction() {
+    sendNotification("Ожидайте", "Средства распределяются, не закрывайте вкладку.");
+    await invest(cache.minPrice, cache.maxPrice, cache.ytmMin, cache.ytmMax, cache.sumAll, cache.sum, cache.array);
+    sendNotification(
+      "Распределение заверешено",
+      `Общая сумма: ${toCurrencyFormat(investedSum)}. 
+                                  Количество займов: ${companyCount} из ${companyArrayLength}. Ошибки: ${errorCount}.`
+    );
+    const settings = await getCache("settings", {});
+    const badgeMode = settings.badgeMode;
+    if (badgeMode === "money") {
+      const statsUrl = "https://jetlend.ru/invest/api/account/details";
+      const statsData = await fetchData(statsUrl);
+      if (statsData.data) {
+        const freeBalance = statsData.data.data.balance.free;
+        setBadge(toSuperShortCurrencyFormat(freeBalance));
+      }
+    } else {
+      setBadge("");
+    }
+    chrome.storage.local.set({ investHistory: investHistory });
+    chrome.runtime.sendMessage({ data: "Распределение средств заверешено" });
+    investMode === "auto" && window.close();
+  }
+  mainFunction();
+}
+smInvest();
 
 async function updateBadge() {
-  if (document.hidden) {
-    return;
-  }
+  if (document.hidden) return;
+  const settings = await getCache("settings", {});
+  const badgeMode = settings.badgeMode ?? "0";
+  const autoInvestMode = settings.autoInvestMode ?? "0";
+  const safe = settings.autoInvestSafe ?? 0;
+  const investInterval = settings.autoInvestInterval ?? 6;
+  const lastData = await getCache("JLE_content", {});
+  const lastUpdateTime = lastData.lastUpdate ?? 0;
+  const lastAutoInvest = lastData.lastAutoInvest ?? 0;
   const timeCd = 6;
+  const MINUTE = 60000;
   try {
-    const lastData = await new Promise((res, rej) => {
-      chrome.storage.local.get("JLE_content", function (result) {
-        if (chrome.runtime.lastError) {
-          rej(chrome.runtime.lastError);
-        } else {
-          res(result);
-        }
-      });
-    });
-
-    if (!lastData.JLE_content || lastData.JLE_content.lastUpdate + 60000 * timeCd <= new Date().getTime()) {
+    if (lastUpdateTime + MINUTE * timeCd <= new Date().getTime()) {
       setBadge("⌛");
       const statsUrl = "https://jetlend.ru/invest/api/account/details";
       const statsData = await fetchData(statsUrl);
-
       if (statsData.data) {
         const freeBalance = statsData.data.data.balance.free;
         chrome.storage.local.set({
           JLE_content: { lastUpdate: new Date().getTime() },
         });
-
-        loadInvestSettings();
-        await smLoadLoans("badge", 0, 100);
-        await fmLoadLoans("badge");
-        setBadge(`${Math.min(fmInvestCompanyArray.length, Math.floor(freeBalance / investSettingsObj.fmInvestSum), 99)}/${Math.min(smInvestCompanyArray.length, Math.floor(freeBalance / investSettingsObj.smInvestSum), 99)}`);
-        console.log("f/sm: ", fmInvestCompanyArray, smInvestCompanyArray);
-        console.log("f/sm/obj: ", Math.floor(freeBalance / investSettingsObj.fmInvestSum, Math.floor(freeBalance / investSettingsObj.smInvestSum)));
-        console.log("obj: ", investSettingsObj.fmInvestSum, investSettingsObj.smInvestSum);
-        console.log("bagde: ", `${Math.min(fmInvestCompanyArray.length, Math.floor(freeBalance / investSettingsObj.fmInvestSum), 99)}/${Math.min(smInvestCompanyArray.length, Math.floor(freeBalance / investSettingsObj.smInvestSum), 99)}`);
+        const filters = await getCache("investSettings", {});
+        if (badgeMode === "loans") {
+          await smLoadLoans("badge", 0, 100);
+          await fmLoadLoans("badge");
+          setBadge(`${Math.min(fmInvestCompanyArray.length, Math.floor(freeBalance / filters.fmInvestSum), 99)}/${Math.min(smInvestCompanyArray.length, Math.floor(freeBalance / filters.smInvestSum), 99)}`);
+        } else if (badgeMode === "money") {
+          setBadge(toSuperShortCurrencyFormat(freeBalance));
+          if (autoInvestMode !== "0") {
+            if (autoInvestMode === "fm" && freeBalance - safe < filters.fmInvestSum && lastAutoInvest + MINUTE * investInterval > new Date().getTime()) {
+              return;
+            } else if (autoInvestMode === "sm" && freeBalance - safe < filters.smInvestSum && lastAutoInvest + MINUTE * investInterval > new Date().getTime()) {
+              return;
+            } else {
+              await smLoadLoans("loadLoans", 0, 100);
+              await fmLoadLoans("loadLoans");
+              console.log();
+            }
+          }
+        } else {
+          setBadge("");
+          if (autoInvestMode !== "0") {
+            if (autoInvestMode === "fm" && freeBalance - safe < filters.fmInvestSum && lastAutoInvest + MINUTE * investInterval > new Date().getTime()) {
+              return;
+            } else if (autoInvestMode === "sm" && freeBalance - safe < filters.smInvestSum && lastAutoInvest + MINUTE * investInterval > new Date().getTime()) {
+              return;
+            }
+          }
+        }
+        if (autoInvestMode === "fm" && freeBalance - safe > filters.fmInvestSum && fmInvestCompanyArray.length !== 0) {
+          const currentTime = new Date().getTime();
+          chrome.storage.local.set({
+            JLE_content: { lastUpdate: currentTime, lastAutoInvest: currentTime },
+          });
+          chrome.storage.local.set({
+            fmInvest: {
+              array: fmInvestCompanyArray,
+              sum: valueToInt(filters.fmInvestSum),
+              sumAll: currencyToFloat(freeBalance - safe),
+              loanMaxSum: currencyToFloat(filters.fmStopLoanSum),
+              companyMaxSum: currencyToFloat(filters.fmStopCompanySum),
+              mode: "auto",
+            },
+          });
+          chrome.runtime.sendMessage({ action: "createTab", url: "https://jetlend.ru/invest/v3/?state=login" });
+        } else if (autoInvestMode === "sm" && freeBalance - safe > filters.smInvestSum && smInvestCompanyArray !== 0) {
+          const currentTime = new Date().getTime();
+          chrome.storage.local.set({
+            JLE_content: { lastUpdate: currentTime, lastAutoInvest: currentTime },
+          });
+          chrome.storage.local.set({
+            smInvest: {
+              array: smInvestCompanyArray,
+              sum: valueToInt(filters.smInvestSum),
+              sumAll: currencyToFloat(freeBalance - safe),
+              minPrice: valueToPercent(filters.smPriceFrom),
+              maxPrice: valueToPercent(filters.smPriceTo),
+              ytmMin: valueToPercent(filters.smRateFrom),
+              ytmMax: valueToPercent(filters.smRateTo),
+              loanMaxSum: currencyToFloat(filters.smStopLoanSum),
+              companyMaxSum: currencyToFloat(filters.smStopCompanySum),
+              mode: "auto",
+            },
+          });
+          chrome.runtime.sendMessage({ action: "createTab", url: "https://jetlend.ru/invest/v3/?state=login" });
+        }
+        return;
       } else {
         setBadge("🔒❌");
       }
@@ -208,17 +303,17 @@ async function mainUpdate() {
     const userStats = await fetchData(userStatsUrl);
     const platformStats = await fetchData(platformStatsUrl);
 
-    const allAssetsBlock = document.querySelector(".block_header__title__text__g9kpM"); //Заголовок "Все активы"
-    const balanceTitleBlock = document.querySelector(".propertyItem_title__XLj0y"); //Заголовок активов
+    const allAssetsBlock = document.querySelector(".block_header__title__text__NTBZ-"); //Заголовок "Все активы"
+    const balanceTitleBlock = document.querySelector(".SummaryBlock_property-item-title__VbKja"); //Заголовок активов
 
-    const balanceBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[0]; //Блок активов
+    const balanceBlock = document.querySelectorAll(".propertyItem_value__ZVbTz")[0]; //Блок активов
 
-    const collectionIncomeBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[1]; //Значение ставки на сборе
+    const collectionIncomeBlock = document.querySelectorAll(".propertyItem_value__ZVbTz")[1]; //Значение ставки на сборе
 
     const incomeTitleBlock = document.querySelector(".dashboard_income-title__ly2bD"); //Заголовок доходов
-    const incomeBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[2]; //Блок доходов
+    const incomeBlock = document.querySelectorAll(".propertyItem_value__ZVbTz")[2]; //Блок доходов
 
-    const incomePercentBlock = document.querySelectorAll(".propertyItem_value__ZHL6p")[3]; //Блок доходности в процентах
+    const incomePercentBlock = document.querySelectorAll(".propertyItem_value__ZVbTz")[3]; //Блок доходности в процентах
 
     if (userStats.data && platformStats.data) {
       const obj = userStats.data.data;
@@ -286,8 +381,8 @@ async function mainUpdate() {
       chrome.storage.local.get("settings", function (data) {
         if (data.settings) {
           if (!data.settings || data.settings.timePeriod == undefined || data.settings.timePeriod == "всё время") {
-            incomeTitleBlock.innerHTML = `<span>Доход за всё время (без НПД / чистый доход)</span>`;
-            incomeBlock.innerHTML = `<span>${toCurrencyFormat(allTime.profitWithoutNpd)} / ${toCurrencyFormat(allTime.cleanProfit)}</span>`;
+            incomeTitleBlock.textContent = "Доход за всё время (без НПД / чистый доход)";
+            incomeBlock.textContent = `${toCurrencyFormat(allTime.profitWithoutNpd)} / ${toCurrencyFormat(allTime.cleanProfit)}`;
             incomePercentBlock.innerHTML = `<span>${toPercentFormat(allTime.percentProfit)}</span>`;
           } else if (data.settings.timePeriod == "год") {
             incomeTitleBlock.innerHTML = `<span>Доход за год (без НПД / чистый доход)</span>`;
