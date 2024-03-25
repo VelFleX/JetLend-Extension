@@ -57,6 +57,11 @@
   box-sizing: border-box;
 }
 
+::selection {
+  color: white;
+  background: #186251;
+}
+
 body {
   font-family: SF Pro Display, sans-serif, currencies, auto;
   font-size: 24px;
@@ -92,7 +97,7 @@ b {
 
 .container {
   min-width: 520px;
-  max-width: 768px;
+  max-width: 1220px;
   margin: 0 auto;
   padding: 0 10px;
 }
@@ -156,6 +161,25 @@ b {
     font-size: 24px;
     user-select: none;
   }
+}
+
+.dashboard {
+  display: none;
+  &__btn {
+    font-size: 16px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.3s;
+    &:hover {
+      background: var(--jle-secondBgColor);
+    }
+  }
+}
+
+#page {
+  display: none;
 }
 
 .main-section {
@@ -585,6 +609,19 @@ b {
   height: 24px;
 }
 
+.footer-text {
+  color: gray;
+  font-size: 14px;
+  padding: 5px 0 5px;
+  text-align: center;
+}
+
+.open-support {
+  text-decoration: underline;
+  cursor: pointer;
+  user-select: none;
+}
+
 .progressbar {
   height: inherit;
   border-radius: inherit;
@@ -643,15 +680,57 @@ b {
   }
 }
 
+.self {
+  &-auto {
+    align-self: auto;
+  }
+  &-start {
+    align-self: flex-start;
+  }
+  &-end {
+    align-self: flex-end;
+  }
+  &-center {
+    align-self: center;
+  }
+  &-stretch {
+    align-self: stretch;
+  }
+  &-baseline {
+    align-self: baseline;
+  }
+}
+
 @media screen and (min-width: 768px) {
+  .dashboard {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    flex-basis: 15%;
+    padding: 0 16px;
+    gap: 8px;
+    border-right: 1px solid var(--jle-universalColor);
+  }
+  .base {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    flex-basis: 60%;
+  }
+  .main-section__buttons {
+    display: none;
+  }
   .stats-section {
-    max-height: 1000px;
+    flex: 1;
+    overflow-y: scroll;
+    scrollbar-width: none;
+    max-height: 100%;
   }
   #stats__open {
     transform: scaleY(1);
   }
+  #page {
+    display: block;
+    flex-basis: 15%;
+  }
 }
-
-// .filterInput {
-//   background: blue;
-// }

@@ -1,3 +1,13 @@
+$get("#version").innerHTML = version;
+
+(async function () {
+  const settings = await getCache("settings", {});
+  badgeMode_setting.value = settings.badgeMode ?? 0;
+  autoInvest_mode.value = settings.autoInvestMode ?? 0;
+  autoInvest_safe.value = settings.autoInvestSafe ?? 0;
+  autoInvest_interval.value = settings.autoInvestInterval ?? 6;
+})();
+
 $get("#stats__open").addEventListener("click", function () {
   if ($get(".stats-section").style.maxHeight === "1000px" || (!this.style.cssText && window.innerWidth >= 768)) {
     this.style.transform = "scaleY(-1)";
@@ -50,37 +60,38 @@ document.addEventListener("mouseover", function (e) {
 });
 
 document.addEventListener("click", function (event) {
-  if (event.target.classList.contains("modal-container")) {
-    closeModal("#" + event.target.id);
-    return;
-  }
-  if (event.target.classList.contains("modal__btn-close")) {
-    closeModal("#" + event.target.parentNode.parentNode.parentNode.id);
-    return;
-  }
-});
-
-document.addEventListener("click", function (event) {
-  if (event.target.classList.contains("target-url")) {
-    event.preventDefault();
-    function addHttpIfMissing(url) {
-      if (!/^https?:\/\//i.test(url)) {
-        url = "http://" + url;
-      }
-      return url;
-    }
-    chrome.windows.create({ url: addHttpIfMissing(event.target.href), type: "popup", focused: true });
-  }
-});
-
-document.addEventListener("click", function (event) {
+  // Свап отображения в настрйоках
   if (event.target.classList.contains("swap")) {
     if ($get(".swap").textContent == "всё время") {
       statsSection.innerHTML = dataTextYearTime;
     } else if ($get(".swap").textContent == "год") {
       statsSection.innerHTML = dataTextAllTime;
     }
+    return;
   }
+  // Таргет урл
+  if (event.target.classList.contains("target-url")) {
+    event.preventDefault();
+    const ensureHttpPrefix = (url) => (!/^https?:\/\//i.test(url) ? "http://" + url : url);
+    chrome.windows.create({ url: ensureHttpPrefix(event.target.href), type: "popup", focused: true });
+    return;
+  }
+  // Модалка
+  if (event.target.classList.contains("modal-container")) return closeModal("#" + event.target.id);
+  // Модалка №2
+  if (event.target.classList.contains("modal__btn-close")) return closeModal("#" + event.target.parentNode.parentNode.parentNode.id);
+  // Открыть поддержку проекта
+  if (event.target.classList.contains("open-support")) return openModal("#support-section");
+  // Открыть события
+  if (event.target.closest(".open-events")) return openModal("#events");
+  // Открыть портфель
+  if (event.target.closest(".open-portfolio")) return openModal("#portfolio");
+  // Открыть аналитику
+  if (event.target.closest(".open-analytics")) return openModal("#analytics");
+  // Открыть настройки
+  if (event.target.closest(".open-settings")) return openModal("#settings");
+  // Открыть распределение
+  // if (event.target.closest(".open-events")) return openModal("#events");
 });
 
 let freeBalance = 0;
@@ -98,89 +109,55 @@ const formsElements = $getAll(".filterInput");
 
 formsElements.forEach((element) =>
   element.addEventListener("change", async function () {
-    await updateInvestSettings(this);
+    await updateCache("investSettings", this.id, this.value);
   })
 );
-btnInvestOpen.addEventListener("click", openInvestPage);
-btnInvestClose.addEventListener("click", closeInvestPage);
+btnInvestOpen.onclick = openInvestPage;
+btnInvestClose.onclick = closeInvestPage;
 
-$get("#events__open").addEventListener("click", () => openModal("#events"));
-$get("#event-transactions__open").addEventListener("click", () => transactionsShow());
-$get("#event-invests__open").addEventListener("click", () => investHistoryShow());
+$get("#event-transactions__open").onclick = () => transactionsShow();
+$get("#event-invests__open").onclick = () => investHistoryShow();
 
-$get("#portfolio__open").addEventListener("click", () => openModal("#portfolio"));
-$get("#portfolio-all__open").addEventListener("click", () => portfolioAllShow());
-$get("#npl1__open").addEventListener("click", () => nplShow(1));
-$get("#npl15__open").addEventListener("click", () => nplShow(15));
-$get("#restructs__open").addEventListener("click", () => restructsShow());
-$get("#defaults__open").addEventListener("click", () => defaultsShow());
+$get("#portfolio-all__open").onclick = () => portfolioAllShow();
+$get("#npl1__open").onclick = () => nplShow(1);
+$get("#npl15__open").onclick = () => nplShow(15);
+$get("#restructs__open").onclick = () => restructsShow();
+$get("#defaults__open").onclick = () => defaultsShow();
+$get("#problemLoans__open").onclick = () => problemLoansShow();
 
-$get("#revenue__open").addEventListener("click", () => revenueShow());
+$get("#revenue__open").onclick = () => revenueShow();
 
-$get("#analytics__open").addEventListener("click", () => openModal("#analytics"));
+$get("#autoInvest_mode").onchange = async (event) => await updateCache("settings", "autoInvestMode", event.target.value);
+$get("#autoInvest_safe").onchange = async (event) => await updateCache("settings", "autoInvestSafe", event.target.value);
+$get("#autoInvest_interval").onchange = async (event) => await updateCache("settings", "autoInvestInterval", event.target.value);
+$get("#badgeMode_setting").onchange = async (event) => await updateCache("settings", "badgeMode", event.target.value);
 
-$get("#settings__open").addEventListener("click", () => openModal("#settings"));
-$get("#autoInvest_mode").addEventListener("change", async (event) => {
-  const cache = await getCache("settings", {});
-  cache.autoInvestMode = event.target.value;
-  chrome.storage.local.set({ settings: cache });
-});
-$get("#autoInvest_safe").addEventListener("change", async (event) => {
-  const cache = await getCache("settings", {});
-  cache.autoInvestSafe = event.target.value;
-  chrome.storage.local.set({ settings: cache });
-});
-$get("#autoInvest_interval").addEventListener("change", async (event) => {
-  const cache = await getCache("settings", {});
-  cache.autoInvestInterval = event.target.value > 6 ? event.target.value : 6;
-  chrome.storage.local.set({ settings: cache });
-});
-$get("#badgeMode_setting").addEventListener("change", async (event) => {
-  const cache = await getCache("settings", {});
-  cache.badgeMode = event.target.value;
-  chrome.storage.local.set({ settings: cache });
-});
+$get(".open-newTab").onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL("html/popup.html") });
 
-(async function () {
-  const settings = await getCache("settings", {});
-  badgeMode_setting.value = settings.badgeMode ?? 0;
-  autoInvest_mode.value = settings.autoInvestMode ?? 0;
-  autoInvest_safe.value = settings.autoInvestSafe ?? 0;
-  autoInvest_interval.value = settings.autoInvestInterval ?? 6;
-})();
-
-$get("#newTab__open").addEventListener("click", () => chrome.tabs.create({ url: chrome.runtime.getURL("html/popup.html") }));
-
-$get("#fm-btn-update").addEventListener("click", updateFirstMarket);
-$get("#fm-btn-show").addEventListener("click", () => {
+$get("#fm-btn-update").onclick = updateFirstMarket;
+$get("#fm-btn-show").onclick = () => {
   openModal("#fm-list");
   fmCompanyShow(fmInvestCompanyArray, "#fm-list-ul");
-});
-$get("#fm-btn-stop").addEventListener("click", function () {
-  fmCompanyUpdate = false;
-});
+};
+$get("#fm-btn-stop").onclick = () => (fmCompanyUpdate = false);
 
-$get("#fmr-btn-update").addEventListener("click", updateFirstMarketReserv);
-$get("#fmr-btn-show").addEventListener("click", () => {
+$get("#fmr-btn-update").onclick = updateFirstMarketReserv;
+$get("#fmr-btn-show").onclick = () => {
   openModal("#fmr-list");
   fmCompanyShow(fmrInvestCompanyArray, "#fmr-list-ul");
-});
-$get("#fmr-btn-stop").addEventListener("click", function () {
-  fmrCompanyUpdate = false;
-});
+};
+$get("#fmr-btn-stop").onclick = () => (fmrCompanyUpdate = false);
 
-$get("#sm-btn-update").addEventListener("click", updateSecondMarket);
-$get("#sm-btn-show").addEventListener("click", () => {
+$get("#sm-btn-update").onclick = updateSecondMarket;
+$get("#sm-btn-show").onclick = () => {
   openModal("#sm-list");
   smCompanyShow(smInvestCompanyArray, "#sm-list-ul");
-});
-$get("#sm-btn-stop").addEventListener("click", function () {
-  smCompanyUpdate = false;
-});
+};
+$get("#sm-btn-stop").onclick = () => (smCompanyUpdate = false);
 
-$get("#marketMode").addEventListener("click", marketSwap);
-$get("#checkCompany__open").addEventListener("click", () => openModal("#checkCompany__section"));
-$get("#checkCompany__btn").addEventListener("click", () => checkCompany());
+$get("#marketMode").onclick = marketSwap;
+$get("#checkCompany__open").onclick = () => openModal("#checkCompany__section");
+$get("#checkCompany__btn").onclick = () => checkCompany();
 
 (async function () {
   const filters = await getCache("investSettings", {});
@@ -692,6 +669,82 @@ async function defaultsShow() {
   }
 }
 
+async function problemLoansShow() {
+  $get("#portfolio__btn-section")
+    .querySelectorAll(".btn-small")
+    .forEach((btn) => btn.classList.remove("btn-small--active"));
+  $get("#problemLoans__open").classList.add("btn-small--active");
+  const list = $get("#portfolio__list");
+  list.innerHTML = spinLoad.innerHTML;
+
+  const url = "https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22active%22%5D%2C%22field%22%3A%22status%22%7D%5D";
+  const activeLoans = await fetchChunks(url);
+  console.log("Активные займы ", activeLoans.data.data);
+
+  const problemLoans = await loadProblemLoans();
+  console.log("Пробленмые компании ", problemLoans);
+
+  const userProblemLoans = activeLoans.data.data.filter((loan) => loan.company.includes(problemLoans));
+
+  if (!userProblemLoans.length) {
+    list.textContent = "Нет проблемных займов.";
+    return;
+  }
+  list.innerHTML = `<div class="contrast-bg" style="margin-bottom: 12px">
+    <p>Активные в портфеле займы, компании которых имеют активную просрочку / реструктуризацию по другим займам.</p>
+  </div>`;
+  userProblemLoans.forEach((loan) => {
+    const listItem = document.createElement("div");
+    listItem.classList.add("list-element", "contrast-bg");
+    listItem.innerHTML = createListElement(loan);
+    list.appendChild(listItem);
+  });
+
+  function createListElement(company) {
+    return `
+  <section class="flex">
+    <img class="list-element__img" src="https://jetlend.ru${company.preview_small_url}">
+    <div>
+      <a class="list-element__loan-name target-url" style="font-size: 14.5px; font-weight:600; z-index: 1; display: inline-block;" href="https://jetlend.ru/invest/v3/company/${company.loan_id}">
+        ${company.loan_name}
+      </a>
+        <div style="font-size: 14px; margin-top: 3px;">
+          <b style="${company.rating.includes("A") ? "color: limegreen;" : company.rating.includes("B") ? "color: orange;" : "color: orangered;"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>,
+          <b class="tooltip">${toPercentFormat(company.ytm)}
+            <template class="tooltip-content">
+              Эффективная ставка.
+            </template>
+          </b>
+        </div>
+        <div style="margin-top: 5px; font-size: 14px; text-wrap: nowrap;">
+          <span>Инвестиция: </span>
+          <b>${toCurrencyFormat(company.purchased_amount)}</b>
+        </div>
+    </div>
+    <div class="flex flex-col items-end" style="margin-left: auto; font-size: 14px;">
+      <div class="tooltip" style="text-wrap: nowrap; margin-top: 5px;">
+        <span>Остаток долга: </span>
+        <b>${toCurrencyFormat(company.principal_debt)}</b>
+        <template class="tooltip-content">
+          Остаток тела долга по займу.
+        </template>
+      </div>
+      <div class="tooltip" style="text-wrap: nowrap; margin-top: 5px;">
+        <span>Совокупный доход: </span>
+        <b>${toCurrencyFormat(company.profit)}</b>
+        <template class="tooltip-content">
+          Совокупный доход по займу, включая полученный процентный доход, а также пени за просрочку платежей.
+        </template>
+      </div>
+    </div>
+  </section>
+  <div class="progressbar__container" style="margin-top: 5px;">
+    <div class="progressbar" style="width: ${company.progress * 100}%; background: limegreen;"></div>
+  </div>
+  `;
+  }
+}
+
 async function revenueShow() {
   $get("#analytics__btn-section")
     .querySelectorAll(".btn-small")
@@ -1057,13 +1110,9 @@ async function mainUpdateFunction() {
   const amountCompanyUrl = "https://jetlend.ru/invest/api/portfolio/distribution/overview";
   const xirrUrl = "https://jetlend.ru/invest/api/account/notifications/v3?filter=%5B%7B%22values%22%3A%5B%22110%22%2C%22120%22%5D%2C%22field%22%3A%22event_type%22%7D%5D&sort_dir=asc&sort_field=date";
 
-  const userStats = await fetchData(userStatsUrl);
-  const userData = await fetchData(userDataUrl);
-  const platformStats = await fetchData(platformStatsUrl);
-  const amountCompany = await fetchData(amountCompanyUrl);
-  const xirrData = await fetchChunks(xirrUrl);
+  try {
+    const [userStats, userData, platformStats, amountCompany, xirrData] = await Promise.all([fetchData(userStatsUrl), fetchData(userDataUrl), fetchData(platformStatsUrl), fetchData(amountCompanyUrl), fetchChunks(xirrUrl)]);
 
-  if (userStats.data && platformStats.data && userData.data && amountCompany.data && xirrData.data) {
     const userStatsObj = userStats.data;
     const userObj = userData.data;
     const platformObj = platformStats.data;
@@ -1256,13 +1305,14 @@ async function mainUpdateFunction() {
         <p>Срок инвестирования: <b>${getInvestDays()}</b></p>
         <p>Компаний в портфеле: <b>${amountCompany.data.data.companies_count}</b></p>
       </div>
-      <footer style="
-      color: gray;
-      font-size: 14px;
-      padding: 5px 0 5px;
-      text-align: center;">JetLend Extension v${version}. 
-      <span id="support-btn" style="text-decoration:underline; cursor:pointer; user-select: none;">Поддержать разработку.</span>
-      </footer>
+      ${
+        window.innerWidth <= 768
+          ? `<footer class="footer-text">JetLend Extension v${version}. 
+              <span class="open-support">Поддержать разработку.</span>
+             </footer>`
+          : `<br>`
+      }
+
     </div>
     `;
 
@@ -1350,14 +1400,6 @@ async function mainUpdateFunction() {
       $get(".swap").style.cursor = "text";
     }
 
-    if (!$get("#support-btn").clickListenerAdded) {
-      $get("#support-btn").addEventListener("click", () => openModal("#support-section"));
-    }
-
-    // if (!userStatsObj.data.status.qualification.passed) {
-    //   $get('#fmInvestAgreeText').textContent = $get('#smInvestAgreeText').textContent;
-    // }
-
     // Сохранение данных
     const cache = {
       balanceTitle: balanceTitle.querySelectorAll("span")[0].textContent, // Текст заголовка активов (согласно настройкам)
@@ -1383,11 +1425,10 @@ async function mainUpdateFunction() {
       qualification: userStatsObj.data.status.qualification.passed, // Статус квала
     };
     chrome.storage.local.set({ cacheJetlend: cache });
-  }
-
-  if (userStats.error) {
+  } catch (e) {
     lastUpdateDateTag.textContent = "Нет авторизации";
     $get(".main-section__stats").innerHTML = `<div style="margin: 64px 0px; position: relative; transform: translate(25%, 0%);">Авторизуйтесь на сайте</div>`;
+    return;
   }
 }
 

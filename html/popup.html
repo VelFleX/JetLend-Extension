@@ -9,235 +9,267 @@
     <title>JetLend Extension</title>
   </head>
   <body>
-    <section class="main-section">
-      <div class="container">
-        <div class="main-section__header">
-          <h5 class="lastUpdateDate">
-            Все активы
-            <span title="Посетите Jetlend чтобы обновить данные" style="color: #e1bb45; cursor: pointer">(Не обновлено)</span>
-          </h5>
-          <div class="main-section__buttons">
-            <div class="svg-btn-container tooltip" id="events__open">
-              <img src="/img/events.svg" width="24px" alt="События" />
-              <template class="tooltip-content">События</template>
+    <div class="layout flex justify-between">
+      <section class="dashboard">
+        <a style="margin-top: 16px" href="https://jetlend.ru/invest/v3/?state=login" target="»_blank">
+          <div class="flex">
+            <img src="/img/icons/jetlend-logo-min.svg" alt="" width="44px" height="44px" />
+            <div class="flex flex-col items-center">
+              <h3>jetlend</h3>
+              <p style="margin-top: -4px; font-size: 16px; letter-spacing: 2.4px">extension</p>
             </div>
-            <div class="svg-btn-container tooltip" id="portfolio__open">
-              <img src="/img/portfolio.svg" width="24px" alt="Портфель" />
-              <template class="tooltip-content">Портфель</template>
+          </div>
+        </a>
+
+        <div class="flex flex-col" style="gap: 8px; flex-grow: 1">
+          <div class="flex dashboard__btn open-events" style="gap: 8px"><img src="/img/events.svg" width="24px" alt="События" /> <span class="self-center">События</span></div>
+          <div class="flex dashboard__btn open-portfolio" style="gap: 8px"><img src="/img/portfolio.svg" width="24px" alt="Портфель" /><span class="self-center">Портфель</span></div>
+          <div class="flex dashboard__btn open-analytics" style="gap: 8px"><img src="/img/analytics.svg" width="24px" alt="Аналитика" /><span class="self-center">Аналитика</span></div>
+          <div class="flex dashboard__btn open-settings" style="gap: 8px"><img src="/img/settings.svg" width="22px" alt="Настройки" /><span class="self-center">Настройки</span></div>
+        </div>
+        <div class="footer-text">
+          <p>JetLend Extension v<span id="version"></span></p>
+          <p class="open-support">Поддержать разработку</p>
+        </div>
+        <span class="self-center"></span>
+      </section>
+
+      <section class="base">
+        <div class="main-section">
+          <div class="container">
+            <div class="main-section__header">
+              <h5 class="lastUpdateDate">
+                Все активы
+                <span title="Посетите Jetlend чтобы обновить данные" style="color: #e1bb45; cursor: pointer">(Не обновлено)</span>
+              </h5>
+              <div class="main-section__buttons">
+                <div class="svg-btn-container tooltip open-events">
+                  <img src="/img/events.svg" width="24px" alt="События" />
+                  <template class="tooltip-content">События</template>
+                </div>
+                <div class="svg-btn-container tooltip open-portfolio">
+                  <img src="/img/portfolio.svg" width="24px" alt="Портфель" />
+                  <template class="tooltip-content">Портфель</template>
+                </div>
+                <div class="svg-btn-container tooltip open-analytics">
+                  <img src="/img/analytics.svg" width="24px" alt="Аналитика" />
+                  <template class="tooltip-content">Аналитика</template>
+                </div>
+                <div class="svg-btn-container tooltip open-settings">
+                  <img src="/img/settings.svg" width="22px" alt="Настройки" />
+                  <template class="tooltip-content">Настройки</template>
+                </div>
+                <div class="svg-btn-container tooltip open-newTab">
+                  <img src="/img/newTab.svg" width="22px" alt="Новое окно" />
+                  <template class="tooltip-content">Открыть в новой вкладке</template>
+                </div>
+              </div>
             </div>
-            <div class="svg-btn-container tooltip" id="analytics__open">
-              <img src="/img/analytics.svg" width="24px" alt="Аналитика" />
-              <template class="tooltip-content">Аналитика</template>
+            <div class="main-section__stats">
+              <div class="balance">
+                <div class="balance__title">
+                  <span>Активы</span>
+                  <span>Ставка на сборе</span>
+                </div>
+                <div class="balance__value">
+                  <span>-</span>
+                  <span>-</span>
+                </div>
+              </div>
+              <div class="income">
+                <div class="income__title">
+                  <span>Доход</span>
+                  <span>Доходность</span>
+                </div>
+                <div class="income__value">
+                  <span class="income__currency">
+                    <span style="color: var(--var-fontColor)">-</span>
+                  </span>
+                  <span class="income__percent">
+                    <span style="color: var(--var-fontColor)">-</span>
+                  </span>
+                </div>
+              </div>
             </div>
-            <div class="svg-btn-container tooltip" id="settings__open">
-              <img src="/img/settings.svg" width="22px" alt="Настройки" />
-              <template class="tooltip-content">Настройки</template>
-            </div>
-            <div class="svg-btn-container tooltip" id="newTab__open">
-              <img src="/img/newTab.svg" width="22px" alt="Новое окно" />
-              <template class="tooltip-content">Открыть в новой вкладке</template>
+            <div class="buttons-section">
+              <a class="btn" href="https://jetlend.ru/invest/v3/?state=login" target="»_blank">Перейти в JetLend</a>
+              <div class="btn invest-section__btn-open">Распределение средств</div>
             </div>
           </div>
         </div>
-        <section class="main-section__stats">
-          <div class="balance">
-            <div class="balance__title">
-              <span>Активы</span>
-              <span>Ставка на сборе</span>
-            </div>
-            <div class="balance__value">
-              <span>-</span>
-              <span>-</span>
-            </div>
-          </div>
-          <div class="income">
-            <div class="income__title">
-              <span>Доход</span>
-              <span>Доходность</span>
-            </div>
-            <div class="income__value">
-              <span class="income__currency">
-                <span style="color: var(--var-fontColor)">-</span>
-              </span>
-              <span class="income__percent">
-                <span style="color: var(--var-fontColor)">-</span>
-              </span>
-            </div>
-          </div>
-        </section>
-        <div class="buttons-section">
-          <a class="btn" href="https://jetlend.ru/invest/v3/?state=login" target="»_blank">Перейти в JetLend</a>
-          <div class="btn invest-section__btn-open">Распределение средств</div>
-        </div>
-      </div>
-      <div class="flex justify-center">
-        <div class="svg-btn-container" id="stats__open">
-          <img src="/img/arrow.svg" width="24px" alt="Статистика" />
-        </div>
-      </div>
-    </section>
 
-    <section class="invest-section">
-      <div class="container">
-        <div class="invest-section__title">
-          <h5>Распределение средств</h5>
-          <span class="invest-section__btn-close">×</span>
-        </div>
-
-        <div class="btn-small__wrapper">
-          <span class="btn-small" id="marketMode">Первичный рынок</span>
-          <span class="btn-small" id="checkCompany__open">Проверка займов</span>
-          <div class="load-block-animation market-analiz-block" id="market-companyAnaliz">
-            <div>
-              Всего компаний: <span id="market-numOfAllCompany">Загрузка...</span>
-              <!-- , средняя ставка: <span id="market-averagePercent">Загрузка...</span> -->
-            </div>
+        <div class="flex justify-center">
+          <div class="svg-btn-container" id="stats__open">
+            <img src="/img/arrow.svg" width="24px" alt="Статистика" />
           </div>
         </div>
 
-        <section id="firstMarket" style="margin-bottom: 12px">
-          <div class="contrast-bg list-element">
-            <h5 style="margin-bottom: 10px">Фильтры</h5>
-            <div class="invest-section__input-title">Срок займа в днях (от / до):</div>
-            <input class="invest-section__input filterInput" id="fmDaysFrom" type="number" min="0" max="5000" step="50" placeholder="от 0 дней" /> / <input class="invest-section__input filterInput" id="fmDaysTo" type="number" min="0" max="5000" step="50" placeholder="до 5000 дней" />
-            <div class="invest-section__input-title">Рейтинг (от / до):</div>
-            <input class="invest-section__input filterInput" id="fmRatingFrom" type="number" min="1" max="20" placeholder="от 1" /> / <input class="invest-section__input filterInput" id="fmRatingTo" type="number" min="1" max="20" placeholder="до 20" />
-            <div class="invest-section__input-title">Ставка (от / до):</div>
-            <input class="invest-section__input filterInput" id="fmRateFrom" type="number" min="0" max="200" placeholder="от 0 %" /> / <input class="invest-section__input filterInput" id="fmRateTo" type="number" min="0" max="200" placeholder="до 200 %" />
-            <div class="invest-section__input-title">Количество займов у заёмщика (от / до):</div>
-            <input class="invest-section__input filterInput" id="fmLoansFrom" type="number" min="1" max="100" placeholder="от 1" /> / <input class="invest-section__input filterInput" id="fmLoansTo" type="number" min="1" max="100" placeholder="до 100" />
-            <div class="invest-section__input-title">Займ в портфеле в ₽ (до) / заёмщик в портфеле в ₽ (до):</div>
-            <input class="invest-section__input filterInput" id="fmMaxLoanSum" type="number" min="0" step="100" placeholder="от 0 ₽" /> / <input class="invest-section__input filterInput" id="fmMaxCompanySum" type="number" min="0" step="100" placeholder="от 0 ₽" />
-            <div class="btn-small__wrapper">
-              <span style="font-size: 16px" id="fm-numOfSortedCompany">Загрузка...</span>
-              <span class="btn-small display-none" id="fm-btn-update">Обновить</span>
-              <span class="btn-small display-none" id="fm-btn-show">Показать список</span>
-              <span class="btn-small" id="fm-btn-stop">Остановить</span>
-            </div>
-            <div class="btn-small__wrapper">
-              <span style="font-size: 16px" id="fmr-numOfSortedCompany"></span>
-              <span class="btn-small" id="fmr-btn-update">Загрузить список зарезервированных займов</span>
-              <span class="btn-small display-none" id="fmr-btn-show">Показать список</span>
-              <span class="btn-small display-none" id="fmr-btn-stop">Остановить</span>
+        <div class="stats-section">
+          <div class="container">
+            <div class="load-spinner__container" style="margin-bottom: 32px"><span class="load-spinner" style="width: 32px"></span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="invest-section">
+        <div class="container">
+          <div class="invest-section__title">
+            <h5>Распределение средств</h5>
+            <span class="invest-section__btn-close">×</span>
+          </div>
+
+          <div class="btn-small__wrapper">
+            <span class="btn-small" id="marketMode">Первичный рынок</span>
+            <span class="btn-small" id="checkCompany__open">Проверка займов</span>
+            <div class="load-block-animation market-analiz-block" id="market-companyAnaliz">
+              <div>
+                Всего компаний: <span id="market-numOfAllCompany">Загрузка...</span>
+                <!-- , средняя ставка: <span id="market-averagePercent">Загрузка...</span> -->
+              </div>
             </div>
           </div>
-          <div class="contrast-bg list-element">
-            <h5 style="margin-bottom: 10px">Распределение <span class="invest-section__title-sum">(Загрузка...)</span></h5>
-            <div class="invest-section__input-title">
-              Ограничение суммы (в один займ / в одного заёмщика):
-              <span class="btn-orb tooltip"
-                >?
-                <template class="tooltip-content">
-                  <p>Для каждого займа скрипт будет распределять средства до тех пор, пока не будет достигнут предел одного из значений, при условии, что это возможно.</p>
-                  <p>! Не даст выйти за предел инвестирования в один конкретный займ/компанию.</p>
-                  <p>!! Не влияет на фильтрацию, работает только в распределении.</p>
-                </template>
-              </span>
-            </div>
-            <input class="invest-section__input filterInput" id="fmStopLoanSum" type="number" min="0" step="100" placeholder="от 0 ₽" /> / <input class="invest-section__input filterInput" id="fmStopCompanySum" type="number" min="0" step="100" placeholder="от 0 ₽" />
 
-            <div class="invest-section__input-title">Сумма (в один займ / всего распределить средств):</div>
-            <input class="invest-section__input filterInput" id="fmInvestSum" type="number" min="100" step="100" placeholder="от 100 ₽" /> / <input class="invest-section__input" id="fmInvestSumAll" type="number" min="100" step="100" placeholder="до свободных средств" />
-
-            <label style="display: block; font-size: 12px; margin: 10px 0; user-select: none; cursor: pointer">
-              <input style="margin-right: 5px" id="fmInvestAgree" type="checkbox" checked />
-              <span id="fmInvestAgreeText">Подтверждаю, что ознакомился с <a style="text-decoration: underline; color: #8888e6" href="https://jetlend.ru/doc-view/rules" target="»_blank">правилами</a> и принимаю риски, связанные с инвестициями, а также, что сумма инвестиций с начала текущего года на всех инвестиционных платформах не превышает 600 000 ₽. Кроме того, я не предъявляю никаких претензий к разработчикам данного расширения и несу ответственность за все свои инвестиционные операции, выполненные с использованием данного расширения.</span>
-            </label>
-            <button class="btn" id="firstMarketSubmit">Распределить средства</button>
-          </div>
-        </section>
-
-        <section class="display-none" id="secondMarket" style="margin-bottom: 12px">
-          <div class="contrast-bg list-element">
-            <h5 style="margin-bottom: 10px">Фильтры</h5>
-            <div class="invest-section__input-title">Остаток срока займа в днях (от / до):</div>
-            <input class="invest-section__input filterInput" id="smDaysFrom" type="number" min="0" max="5000" step="50" placeholder="от 0 дней" /> / <input class="invest-section__input filterInput" id="smDaysTo" type="number" min="0" max="5000" step="50" placeholder="до 5000 дней" />
-            <div class="invest-section__input-title">Рейтинг (от / до):</div>
-            <input class="invest-section__input filterInput" id="smRatingFrom" type="number" min="1" max="20" placeholder="от 1" /> / <input class="invest-section__input filterInput" id="smRatingTo" type="number" min="1" max="20" placeholder="до 20" />
-            <div class="invest-section__input-title">
-              Эффективная ставка (от / до):
-              <span class="btn-orb tooltip"
-                >?
-                <template class="tooltip-content">
-                  <p>Эффективная ставка — это доход, выраженный в процентах годовых, который получит инвестор, если купит данный заем по указанной цене.</p>
-                  <p>Эффективная ставка учитывает разницу между стоимостью займа и ценой покупки, а также проценты, которые будут начислены по данному займу.</p>
-                </template>
-              </span>
+          <section id="firstMarket" style="margin-bottom: 12px">
+            <div class="contrast-bg list-element">
+              <h5 style="margin-bottom: 10px">Фильтры</h5>
+              <div class="invest-section__input-title">Срок займа в днях (от / до):</div>
+              <input class="invest-section__input filterInput" id="fmDaysFrom" type="number" min="0" max="5000" step="50" placeholder="от 0 дней" /> / <input class="invest-section__input filterInput" id="fmDaysTo" type="number" min="0" max="5000" step="50" placeholder="до 5000 дней" />
+              <div class="invest-section__input-title">Рейтинг (от / до):</div>
+              <input class="invest-section__input filterInput" id="fmRatingFrom" type="number" min="1" max="20" placeholder="от 1" /> / <input class="invest-section__input filterInput" id="fmRatingTo" type="number" min="1" max="20" placeholder="до 20" />
+              <div class="invest-section__input-title">Ставка (от / до):</div>
+              <input class="invest-section__input filterInput" id="fmRateFrom" type="number" min="0" max="200" placeholder="от 0 %" /> / <input class="invest-section__input filterInput" id="fmRateTo" type="number" min="0" max="200" placeholder="до 200 %" />
+              <div class="invest-section__input-title">Количество займов у заёмщика (от / до):</div>
+              <input class="invest-section__input filterInput" id="fmLoansFrom" type="number" min="1" max="100" placeholder="от 1" /> / <input class="invest-section__input filterInput" id="fmLoansTo" type="number" min="1" max="100" placeholder="до 100" />
+              <div class="invest-section__input-title">Займ в портфеле в ₽ (до) / заёмщик в портфеле в ₽ (до):</div>
+              <input class="invest-section__input filterInput" id="fmMaxLoanSum" type="number" min="0" step="100" placeholder="от 0 ₽" /> / <input class="invest-section__input filterInput" id="fmMaxCompanySum" type="number" min="0" step="100" placeholder="от 0 ₽" />
+              <div class="btn-small__wrapper">
+                <span style="font-size: 16px" id="fm-numOfSortedCompany">Загрузка...</span>
+                <span class="btn-small display-none" id="fm-btn-update">Обновить</span>
+                <span class="btn-small display-none" id="fm-btn-show">Показать список</span>
+                <span class="btn-small" id="fm-btn-stop">Остановить</span>
+              </div>
+              <div class="btn-small__wrapper">
+                <span style="font-size: 16px" id="fmr-numOfSortedCompany"></span>
+                <span class="btn-small" id="fmr-btn-update">Загрузить список зарезервированных займов</span>
+                <span class="btn-small display-none" id="fmr-btn-show">Показать список</span>
+                <span class="btn-small display-none" id="fmr-btn-stop">Остановить</span>
+              </div>
             </div>
-            <input class="invest-section__input filterInput" id="smRateFrom" type="number" min="0" max="200" step="1" placeholder="от 0 %" /> / <input class="invest-section__input filterInput" id="smRateTo" type="number" min="0" max="200" step="1" placeholder="до 200 %" />
-            <div class="invest-section__input-title">
-              ФД заёмщика (от / до):
-              <span class="btn-orb tooltip"
-                >?
-                <template class="tooltip-content">
-                  <p>Финансовая дисциплина заёмщика отражает, насколько своевременно заёмщик погашает долг.</p>
-                  <p>Дисциплина снижается на 10% при допущении просрочки на 1 день от даты платежа по графику.</p>
-                </template>
-              </span>
-            </div>
-            <input class="invest-section__input filterInput" id="smFdFrom" type="number" min="0" max="100" step="1" placeholder="от 0 %" /> / <input class="invest-section__input filterInput" id="smFdTo" type="number" min="0" max="100" step="1" placeholder="до 100 %" />
-            <div class="invest-section__input-title">Процент погашения займа (от / до):</div>
-            <input class="invest-section__input filterInput" id="smProgressFrom" type="number" min="0" max="100" step="1" placeholder="от 0 %" /> / <input class="invest-section__input filterInput" id="smProgressTo" type="number" min="0" max="100" step="1" placeholder="до 100 %" />
-            <div class="invest-section__input-title">Цена в процентах (от / до):</div>
-            <input class="invest-section__input filterInput" id="smPriceFrom" type="number" min="0" max="200" step="0.1" placeholder="от 0 %" /> / <input class="invest-section__input filterInput" id="smPriceTo" type="number" min="1" max="200" step="0.1" placeholder="до 200 %" />
-            <div class="invest-section__input-title">
-              Класс займа (от / до):
-              <span class="btn-orb tooltip"
-                >?
-                <template class="tooltip-content">
-                  <p>Класс займа указывает была реструктуризация или нет:</p>
-                  <p>0 - реструктуризации не было.</p>
-                  <p>1 - займ реструктуризирован.</p>
-                  <p>2 и 3 — разные виды дефолтов (управляемый и неуправляемый оператором).</p>
-                  <p>Детально классы займа описаны в правилах платформы.</p>
-                </template>
-              </span>
-            </div>
-            <input class="invest-section__input filterInput" id="smClassFrom" type="number" min="0" max="3" step="1" placeholder="от 0" /> / <input class="invest-section__input filterInput" id="smClassTo" type="number" min="0" max="3" step="1" placeholder="до 3" />
-            <!-- <div class="invest-section__input-title">Дата регистрации бизнеса (от / до)</div>
-            <label><input class="invest-section__input filterInput" id="smRegDateFrom" type="date" /></label> / <label><input class="invest-section__input filterInput" id="smRegDateTo" type="date" /></label> -->
-            <div class="invest-section__input-title">Займ в портфеле в ₽ (до) / заёмщик в портфеле в ₽ (до):</div>
-            <input class="invest-section__input filterInput" id="smMaxLoanSum" type="number" min="0" step="100" placeholder="от 0 ₽" /> / <input class="invest-section__input filterInput" id="smMaxCompanySum" type="number" min="0" step="100" placeholder="от 0 ₽" />
-            <div class="btn-small__wrapper">
-              <span style="font-size: 16px" id="sm-numOfSortedCompany">Загрузка...</span>
-              <span class="btn-small display-none" id="sm-btn-update">Обновить</span>
-              <span class="btn-small display-none" id="sm-btn-show">Показать список</span>
-              <span class="btn-small" id="sm-btn-stop">Остановить</span>
-            </div>
-          </div>
-          <div class="contrast-bg list-element">
-            <h5 style="margin-bottom: 10px">Распределение <span class="invest-section__title-sum">(Загрузка...)</span></h5>
-            <div class="invest-section__input-title">
-              Ограничение суммы (в один займ / в одного заёмщика):
-              <span class="btn-orb tooltip"
-                >?
-                <template class="tooltip-content">
-                  <p>Для каждого займа скрипт будет распределять средства до тех пор, пока не будет достигнут предел одного из значений, при условии, что это возможно.</p>
-                  <p>! Не даст выйти за предел инвестирования в один конкретный займ/компанию.</p>
-                  <p>!! Не влияет на фильтрацию, работает только в распределении.</p>
-                </template>
-              </span>
-            </div>
-            <input class="invest-section__input filterInput" id="smStopLoanSum" type="number" min="0" step="100" placeholder="от 0 ₽" /> / <input class="invest-section__input filterInput" id="smStopCompanySum" type="number" min="0" step="100" placeholder="от 0 ₽" />
+            <div class="contrast-bg list-element">
+              <h5 style="margin-bottom: 10px">Распределение <span class="invest-section__title-sum">(Загрузка...)</span></h5>
+              <div class="invest-section__input-title">
+                Ограничение суммы (в один займ / в одного заёмщика):
+                <span class="btn-orb tooltip"
+                  >?
+                  <template class="tooltip-content">
+                    <p>Для каждого займа скрипт будет распределять средства до тех пор, пока не будет достигнут предел одного из значений, при условии, что это возможно.</p>
+                    <p>! Не даст выйти за предел инвестирования в один конкретный займ/компанию.</p>
+                    <p>!! Не влияет на фильтрацию, работает только в распределении.</p>
+                  </template>
+                </span>
+              </div>
+              <input class="invest-section__input filterInput" id="fmStopLoanSum" type="number" min="0" step="100" placeholder="от 0 ₽" /> / <input class="invest-section__input filterInput" id="fmStopCompanySum" type="number" min="0" step="100" placeholder="от 0 ₽" />
 
-            <div class="invest-section__input-title">Сумма (в один займ / всего распределить средств):</div>
-            <input class="invest-section__input filterInput" id="smInvestSum" type="number" min="100" step="100" placeholder="от 100 ₽" /> / <input class="invest-section__input" id="smInvestSumAll" type="number" min="100" step="100" placeholder="до свободных средств" />
+              <div class="invest-section__input-title">Сумма (в один займ / всего распределить средств):</div>
+              <input class="invest-section__input filterInput" id="fmInvestSum" type="number" min="100" step="100" placeholder="от 100 ₽" /> / <input class="invest-section__input" id="fmInvestSumAll" type="number" min="100" step="100" placeholder="до свободных средств" />
 
-            <label style="display: block; font-size: 12px; margin: 10px 0; user-select: none; cursor: pointer">
-              <input style="margin-right: 5px" id="smInvestAgree" type="checkbox" checked />
-              <span id="smInvestAgreeText">Подтверждаю, что я не предъявляю никаких претензий к разработчикам данного расширения и несу ответственность за все свои инвестиционные операции, выполненные с использованием данного расширения.</span>
-            </label>
-            <button class="btn" id="secondMarketSubmit">Распределить средства</button>
-          </div>
-        </section>
-      </div>
-    </section>
+              <label style="display: block; font-size: 12px; margin: 10px 0; user-select: none; cursor: pointer">
+                <input style="margin-right: 5px" id="fmInvestAgree" type="checkbox" checked />
+                <span id="fmInvestAgreeText">Подтверждаю, что ознакомился с <a style="text-decoration: underline; color: #8888e6" href="https://jetlend.ru/doc-view/rules" target="»_blank">правилами</a> и принимаю риски, связанные с инвестициями, а также, что сумма инвестиций с начала текущего года на всех инвестиционных платформах не превышает 600 000 ₽. Кроме того, я не предъявляю никаких претензий к разработчикам данного расширения и несу ответственность за все свои инвестиционные операции, выполненные с использованием данного расширения.</span>
+              </label>
+              <button class="btn" id="firstMarketSubmit">Распределить средства</button>
+            </div>
+          </section>
 
-    <section class="stats-section">
-      <div class="container">
-        <div class="load-spinner__container" style="margin-bottom: 32px"><span class="load-spinner" style="width: 32px"></span></div>
-      </div>
-    </section>
+          <section class="display-none" id="secondMarket" style="margin-bottom: 12px">
+            <div class="contrast-bg list-element">
+              <h5 style="margin-bottom: 10px">Фильтры</h5>
+              <div class="invest-section__input-title">Остаток срока займа в днях (от / до):</div>
+              <input class="invest-section__input filterInput" id="smDaysFrom" type="number" min="0" max="5000" step="50" placeholder="от 0 дней" /> / <input class="invest-section__input filterInput" id="smDaysTo" type="number" min="0" max="5000" step="50" placeholder="до 5000 дней" />
+              <div class="invest-section__input-title">Рейтинг (от / до):</div>
+              <input class="invest-section__input filterInput" id="smRatingFrom" type="number" min="1" max="20" placeholder="от 1" /> / <input class="invest-section__input filterInput" id="smRatingTo" type="number" min="1" max="20" placeholder="до 20" />
+              <div class="invest-section__input-title">
+                Эффективная ставка (от / до):
+                <span class="btn-orb tooltip"
+                  >?
+                  <template class="tooltip-content">
+                    <p>Эффективная ставка — это доход, выраженный в процентах годовых, который получит инвестор, если купит данный заем по указанной цене.</p>
+                    <p>Эффективная ставка учитывает разницу между стоимостью займа и ценой покупки, а также проценты, которые будут начислены по данному займу.</p>
+                  </template>
+                </span>
+              </div>
+              <input class="invest-section__input filterInput" id="smRateFrom" type="number" min="0" max="200" step="1" placeholder="от 0 %" /> / <input class="invest-section__input filterInput" id="smRateTo" type="number" min="0" max="200" step="1" placeholder="до 200 %" />
+              <div class="invest-section__input-title">
+                ФД заёмщика (от / до):
+                <span class="btn-orb tooltip"
+                  >?
+                  <template class="tooltip-content">
+                    <p>Финансовая дисциплина заёмщика отражает, насколько своевременно заёмщик погашает долг.</p>
+                    <p>Дисциплина снижается на 10% при допущении просрочки на 1 день от даты платежа по графику.</p>
+                  </template>
+                </span>
+              </div>
+              <input class="invest-section__input filterInput" id="smFdFrom" type="number" min="0" max="100" step="1" placeholder="от 0 %" /> / <input class="invest-section__input filterInput" id="smFdTo" type="number" min="0" max="100" step="1" placeholder="до 100 %" />
+              <div class="invest-section__input-title">Процент погашения займа (от / до):</div>
+              <input class="invest-section__input filterInput" id="smProgressFrom" type="number" min="0" max="100" step="1" placeholder="от 0 %" /> / <input class="invest-section__input filterInput" id="smProgressTo" type="number" min="0" max="100" step="1" placeholder="до 100 %" />
+              <div class="invest-section__input-title">Цена в процентах (от / до):</div>
+              <input class="invest-section__input filterInput" id="smPriceFrom" type="number" min="0" max="200" step="0.1" placeholder="от 0 %" /> / <input class="invest-section__input filterInput" id="smPriceTo" type="number" min="1" max="200" step="0.1" placeholder="до 200 %" />
+              <div class="invest-section__input-title">
+                Класс займа (от / до):
+                <span class="btn-orb tooltip"
+                  >?
+                  <template class="tooltip-content">
+                    <p>Класс займа указывает была реструктуризация или нет:</p>
+                    <p>0 - реструктуризации не было.</p>
+                    <p>1 - займ реструктуризирован.</p>
+                    <p>2 и 3 — разные виды дефолтов (управляемый и неуправляемый оператором).</p>
+                    <p>Детально классы займа описаны в правилах платформы.</p>
+                  </template>
+                </span>
+              </div>
+              <input class="invest-section__input filterInput" id="smClassFrom" type="number" min="0" max="3" step="1" placeholder="от 0" /> / <input class="invest-section__input filterInput" id="smClassTo" type="number" min="0" max="3" step="1" placeholder="до 3" />
+              <!-- <div class="invest-section__input-title">Дата регистрации бизнеса (от / до)</div>
+              <label><input class="invest-section__input filterInput" id="smRegDateFrom" type="date" /></label> / <label><input class="invest-section__input filterInput" id="smRegDateTo" type="date" /></label> -->
+              <div class="invest-section__input-title">Займ в портфеле в ₽ (до) / заёмщик в портфеле в ₽ (до):</div>
+              <input class="invest-section__input filterInput" id="smMaxLoanSum" type="number" min="0" step="100" placeholder="от 0 ₽" /> / <input class="invest-section__input filterInput" id="smMaxCompanySum" type="number" min="0" step="100" placeholder="от 0 ₽" />
+              <div class="btn-small__wrapper">
+                <span style="font-size: 16px" id="sm-numOfSortedCompany">Загрузка...</span>
+                <span class="btn-small display-none" id="sm-btn-update">Обновить</span>
+                <span class="btn-small display-none" id="sm-btn-show">Показать список</span>
+                <span class="btn-small" id="sm-btn-stop">Остановить</span>
+              </div>
+            </div>
+            <div class="contrast-bg list-element">
+              <h5 style="margin-bottom: 10px">Распределение <span class="invest-section__title-sum">(Загрузка...)</span></h5>
+              <div class="invest-section__input-title">
+                Ограничение суммы (в один займ / в одного заёмщика):
+                <span class="btn-orb tooltip"
+                  >?
+                  <template class="tooltip-content">
+                    <p>Для каждого займа скрипт будет распределять средства до тех пор, пока не будет достигнут предел одного из значений, при условии, что это возможно.</p>
+                    <p>! Не даст выйти за предел инвестирования в один конкретный займ/компанию.</p>
+                    <p>!! Не влияет на фильтрацию, работает только в распределении.</p>
+                  </template>
+                </span>
+              </div>
+              <input class="invest-section__input filterInput" id="smStopLoanSum" type="number" min="0" step="100" placeholder="от 0 ₽" /> / <input class="invest-section__input filterInput" id="smStopCompanySum" type="number" min="0" step="100" placeholder="от 0 ₽" />
+
+              <div class="invest-section__input-title">Сумма (в один займ / всего распределить средств):</div>
+              <input class="invest-section__input filterInput" id="smInvestSum" type="number" min="100" step="100" placeholder="от 100 ₽" /> / <input class="invest-section__input" id="smInvestSumAll" type="number" min="100" step="100" placeholder="до свободных средств" />
+
+              <label style="display: block; font-size: 12px; margin: 10px 0; user-select: none; cursor: pointer">
+                <input style="margin-right: 5px" id="smInvestAgree" type="checkbox" checked />
+                <span id="smInvestAgreeText">Подтверждаю, что я не предъявляю никаких претензий к разработчикам данного расширения и несу ответственность за все свои инвестиционные операции, выполненные с использованием данного расширения.</span>
+              </label>
+              <button class="btn" id="secondMarketSubmit">Распределить средства</button>
+            </div>
+          </section>
+        </div>
+      </section>
+      <section id="page">
+        <!-- Контент -->
+      </section>
+    </div>
 
     <div class="modal-container display-none" id="events" style="height: 650px">
       <section class="modal">
@@ -264,7 +296,14 @@
           <span class="btn-small" id="npl1__open">NPL1+</span>
           <span class="btn-small" id="npl15__open">NPL15+</span>
           <span class="btn-small" id="restructs__open">Реструктуризации</span>
-          <span class="btn-small" id="defaults__open">Дефолты</span>
+          <span class="btn-small tooltip" id="defaults__open"
+            >Дефолты
+            <template class="tooltip-content"> Загрузка может занять время. </template>
+          </span>
+          <span class="btn-small tooltip" id="problemLoans__open"
+            >Проблемные займы
+            <template class="tooltip-content"> Загрузка может занять время. </template>
+          </span>
         </div>
         <div id="portfolio__list"></div>
       </section>

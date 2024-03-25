@@ -30,6 +30,20 @@ async function fetchChunks(link, offset = 0, limit = 100, total = 0, resArr = []
   return fetchChunks(link, offset, limit, fetchRes.data.total, resArr, fetchRes);
 }
 
+async function getCache(key, def = null) {
+  return new Promise((res) => {
+    chrome.storage.local.get(key, function (data) {
+      res(data[key] ?? def);
+    });
+  });
+}
+
+async function updateCache(cacheName, cacheKey, newValue) {
+  const cache = await getCache(cacheName, {});
+  cache[cacheKey] = newValue;
+  chrome.storage.local.set({ [cacheName]: cache });
+}
+
 function daysEnding(days) {
   const lastTwoDigits = days % 100;
   return days === 1 ? " день" : lastTwoDigits >= 11 && lastTwoDigits <= 14 ? " дней" : lastTwoDigits % 10 === 1 ? " день" : lastTwoDigits % 10 >= 2 && lastTwoDigits % 10 <= 4 ? " дня" : " дней";
@@ -98,13 +112,6 @@ async function getBadge() {
       resolve(response.badgeText);
     });
   });
-}
-
-// Функция обновления настроек инвестирования
-async function updateInvestSettings(setting) {
-  const settings = await getCache("investSettings", {});
-  settings[setting.id] = setting.value;
-  chrome.storage.local.set({ investSettings: settings });
 }
 
 // Функция открытия инвест страницы
@@ -389,7 +396,7 @@ async function fmLoadLoans(mode) {
   }
 }
 
-async function smLoadLoans(mode, offset, limit, total = 0) {
+async function smLoadLoans(mode, offset = 0, limit = 100, total = 0, blackList = []) {
   if (!smCompanyUpdate && mode === "popup") {
     smCompanyUpdate = true;
     return;
@@ -420,12 +427,18 @@ async function smLoadLoans(mode, offset, limit, total = 0) {
           obj.invested_debt <= parseFloat(filters.smMaxLoanSum) /* Сумма в один займ */ &&
           obj.invested_company_debt <= parseFloat(filters.smMaxCompanySum) /* Сумма в одного заёмщика */ &&
           obj.financial_discipline >= valueToPercent(filters.smFdFrom) &&
-          obj.financial_discipline <= valueToPercent(filters.smFdTo) /* ФД заёмщика */ &&
-          obj.status === "active" /* Статус - выплачивается */
+          obj.financial_discipline <= valueToPercent(filters.smFdTo) /* ФД заёмщика */
+        // obj.status === "active" /* Статус - выплачивается */
       )
     );
+    // smInvestCompanyArray = smInvestCompanyArray.concat(res.data.data);
+    // Удаление ненадежных заёмщиков
+    blackList = blackList.concat(smInvestCompanyArray.filter((loan) => loan.status !== "active").map((loan) => loan.company));
+    blackList = [...new Set(blackList)];
+    smInvestCompanyArray = smInvestCompanyArray.filter((loan) => !blackList.includes(loan.company));
     // Удаление дубликатов
     smInvestCompanyArray = smInvestCompanyArray.filter((obj, index, self) => index === self.findIndex((t) => t.loan_id === obj.loan_id));
+    // Ретурн если ytm меньше минимального в фильтре
     if (res.data.data.at(-1).ytm < valueToPercent(filters.smRateFrom)) {
       return;
     }
@@ -436,8 +449,20 @@ async function smLoadLoans(mode, offset, limit, total = 0) {
     if (mode === "badge") {
       setBadge(((offset / res.data.total) * 100).toFixed(0) + "%");
     }
-    await smLoadLoans(mode, offset, limit, res.data.total);
+    await smLoadLoans(mode, offset, limit, res.data.total, blackList);
   }
+}
+
+async function loadProblemLoans(offset = 0, limit = 100, resArr = []) {
+  const link = "https://jetlend.ru/invest/api/exchange/loans?sort_field=status&sort_order=desc";
+  const url = `${link}&limit=${limit}&offset=${offset}`;
+  const fetchRes = await fetchData(url);
+  resArr = resArr.concat(fetchRes.data.data);
+  if (resArr.at(-1).status === "active") {
+    return [...new Set(resArr.filter((loan) => loan.status !== "active").map((loan) => loan.company))];
+  }
+  offset += limit;
+  return loadProblemLoans(offset, limit, resArr);
 }
 
 async function checkingCompany(companyId, fm, sm) {
@@ -586,14 +611,6 @@ const companyHtmlNotification = (company, invest) => {
     `;
 };
 
-async function getCache(key, def = null) {
-  return new Promise((res) => {
-    chrome.storage.local.get(key, function (data) {
-      res(data[key] ?? def);
-    });
-  });
-}
-
 function getAverage(arr) {
   const sum = arr.reduce((acc, curr) => acc + curr);
   return sum / arr.length;
@@ -678,3 +695,15 @@ function getModa(arr) {
 //   ignored: false,
 //   region: "",
 // };
+
+// (async function () {
+//   await smLoadLoans("loadLoans", 0, 100);
+//   console.log("sm1", smInvestCompanyArray);
+//   await smLoadLoans("loadLoans", 0, 100);
+//   console.log("sm2", smInvestCompanyArray);
+// })();
+
+function setTheme(theme) {
+  document.documentElement.className = theme + "-theme";
+}
+// setTheme("test");

@@ -1,4 +1,4 @@
-const version = "0.9.0";
+const version = chrome.runtime.getManifest().version;
 
 function $get(selector) {
   if (selector.startsWith("#")) {

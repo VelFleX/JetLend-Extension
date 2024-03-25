@@ -1,26 +1,26 @@
 :root {
-  --jle-green: #186251;
+  /* --jle-green: #186251; */
   --jle-bgColor: #fff;
-  --jle-secondBgColor: #F3F4F6;
+  --jle-secondBgColor: #f3f4f6;
   --jle-fontColor: #1e2021;
   --jle-buttonColor: #1e2021;
   --jle-buttonHoverColor: #363a3c;
   --jle-buttonTextColor: #fff;
-  --jle-smallBtnColor: #e0e0e0;;
+  --jle-smallBtnColor: #e0e0e0;
   --jle-smallBtnColor--hover: #cecece;
   --jle-svgBgColor: #f1f1f1;
 
   --jle-first-color: #ededed;
   --jle-second-color: #e8e8e8;
-  --jle-universalColor: #C8CED2;
+  --jle-universalColor: #c8ced2;
 
-  --jle-green: #00BA88;
-  --jle-lightGreen: #97D8CA;
+  --jle-green: #00ba88;
+  --jle-lightGreen: #97d8ca;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --jle-bgColor: #1F2022;
+    --jle-bgColor: #1f2022;
     --jle-secondBgColor: #272928;
     --jle-fontColor: #fefefe;
     --jle-buttonColor: #186251;
@@ -35,6 +35,26 @@
 
     --jle-lightGreen: #00e7b5;
   }
+}
+
+.test-theme {
+  --jle-green: #00ffc3;
+  --jle-bgColor: #c63535;
+  --jle-secondBgColor: #06225b;
+  --jle-fontColor: #e2ecf1;
+  --jle-buttonColor: #043201;
+  --jle-buttonHoverColor: #66ccff;
+  --jle-buttonTextColor: #fff;
+  --jle-smallBtnColor: #ec0000;
+  --jle-smallBtnColor--hover: #cecece;
+  --jle-svgBgColor: #f1f1f1;
+
+  --jle-first-color: #ededed;
+  --jle-second-color: #e8e8e8;
+  --jle-universalColor: #c8ced2;
+
+  --jle-green: #00ba88;
+  --jle-lightGreen: #97d8ca;
 }
 
 @keyframes slideAnimation {
