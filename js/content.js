@@ -1,8 +1,9 @@
 const normalizedURL = window.location.href.replace(/(https?:\/\/)?(www\.)?/i, "").replace(/\/$/, "");
+console.log("url: ", normalizedURL);
 // Распределение средств (первичка)
 async function fmInvest() {
   if (normalizedURL !== "jetlend.ru/invest/v3/?state=login") return;
-  const cache = await getCache("fmInvest");
+  const cache = await getCache("fmInvest", null);
   if (!cache) return;
   chrome.storage.local.remove("fmInvest");
   document.title = "Распределение средств";
@@ -57,7 +58,7 @@ async function fmInvest() {
       `Общая сумма: ${toCurrencyFormat(investedSum)}. 
       Количество займов: ${companyCount} из ${companyArrayLength}. Ошибки: ${errorCount}.`
     );
-    const settings = await getCache("settings", {});
+    const settings = await getCache("settings");
     const badgeMode = settings.badgeMode;
     if (badgeMode === "money") {
       const statsUrl = "https://jetlend.ru/invest/api/account/details";
@@ -81,7 +82,7 @@ fmInvest();
 //https://jetlend.ru/invest/api/exchange/loans/12026/buy/preview
 async function smInvest() {
   if (normalizedURL !== "jetlend.ru/invest/v3/?state=login") return;
-  const cache = await getCache("smInvest");
+  const cache = await getCache("smInvest", null);
   if (!cache) return;
   chrome.storage.local.remove("smInvest");
   document.title = "Распределение средств";
@@ -98,7 +99,7 @@ async function smInvest() {
         max_price: price, // Процент
       };
       // Создание промиса для fetch запроса
-      let fetchPromise = fetch(`https://jetlend.ru/invest/api/exchange/loans/${company.loan_id}/buy`, {
+      const fetchPromise = fetch(`https://jetlend.ru/invest/api/exchange/loans/${company.loan_id}/buy`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json;charset=UTF-8",
@@ -107,16 +108,15 @@ async function smInvest() {
         credentials: "include",
         body: JSON.stringify(user),
       }).then((response) => response.json());
-      let timeoutPromise = new Promise((resolve, reject) => {
+
+      const timeoutPromise = new Promise((resolve, reject) => {
         setTimeout(() => {
-          errorCount++;
-          console.log("Таймаут, id: ", company.loan_id);
           reject(new Error(`Время ожидания истекло (10 сек).\nID займа: ${company.loan_id}.`));
         }, 10000);
       });
 
       try {
-        let data = await Promise.race([fetchPromise, timeoutPromise]);
+        const data = await Promise.race([fetchPromise, timeoutPromise]);
         if (data.status.toLowerCase() === "ok") {
           sendNotification(`Успешная инвестиция ID${company.loan_id}`, companyHtmlNotification(company, { sum: data.data.amount, price: price }));
           sumAll = parseFloat((sumAll - data.data.amount).toFixed(2));
@@ -129,6 +129,7 @@ async function smInvest() {
         }
       } catch (error) {
         sendNotification(`Ошибка ID${company.loan_id}`, companyHtmlNotification(company, { error: error.message }));
+        errorCount++;
       }
     }
 
@@ -178,7 +179,7 @@ async function smInvest() {
       `Общая сумма: ${toCurrencyFormat(investedSum)}. 
                                   Количество займов: ${companyCount} из ${companyArrayLength}. Ошибки: ${errorCount}.`
     );
-    const settings = await getCache("settings", {});
+    const settings = await getCache("settings");
     const badgeMode = settings.badgeMode;
     if (badgeMode === "money") {
       const statsUrl = "https://jetlend.ru/invest/api/account/details";
@@ -200,12 +201,12 @@ smInvest();
 
 async function updateBadge() {
   if (document.hidden) return;
-  const settings = await getCache("settings", {});
+  const settings = await getCache("settings");
   const badgeMode = settings.badgeMode ?? "0";
   const autoInvestMode = settings.autoInvestMode ?? "0";
   const safe = settings.autoInvestSafe ?? 0;
   const investInterval = settings.autoInvestInterval ?? 6;
-  const lastData = await getCache("JLE_content", {});
+  const lastData = await getCache("JLE_content");
   const lastUpdateTime = lastData.lastUpdate ?? 0;
   const lastAutoInvest = lastData.lastAutoInvest ?? 0;
   const timeCd = 6;
@@ -220,7 +221,7 @@ async function updateBadge() {
         chrome.storage.local.set({
           JLE_content: { lastUpdate: new Date().getTime() },
         });
-        const filters = await getCache("investSettings", {});
+        const filters = await getCache("investSettings");
         if (badgeMode === "loans") {
           await smLoadLoans("badge", 0, 100);
           await fmLoadLoans("badge");
@@ -300,8 +301,7 @@ async function mainUpdate() {
     const userStatsUrl = "https://jetlend.ru/invest/api/account/details";
     const platformStatsUrl = "https://jetlend.ru/invest/api/public/stats";
 
-    const userStats = await fetchData(userStatsUrl);
-    const platformStats = await fetchData(platformStatsUrl);
+    const [userStats, platformStats] = await Promise.all([fetchData(userStatsUrl), fetchData(platformStatsUrl)]);
 
     const allAssetsBlock = document.querySelector(".block_header__title__text__NTBZ-"); //Заголовок "Все активы"
     const balanceTitleBlock = document.querySelector(".SummaryBlock_property-item-title__VbKja"); //Заголовок активов
@@ -373,24 +373,21 @@ async function mainUpdate() {
       };
 
       allAssetsBlock.innerHTML = `Все активы <span style="font-weight:300;">(${getUpdateTime(new Date().getTime())})</span>`;
-      balanceTitleBlock.innerHTML = `<span>Активы / Активы без НПД</span>`;
-      balanceBlock.innerHTML = `<span>${toCurrencyFormat(balance)} / ${toCurrencyFormat(cleanBalance)}</span>`;
+      balanceTitleBlock.innerHTML = `<span>Активы | Активы без НПД</span>`;
+      balanceBlock.innerHTML = `<span>${toCurrencyFormat(balance)} <span style="opacity: 0.5">|</span> ${toCurrencyFormat(cleanBalance)}</span>`;
       collectionIncomeBlock.innerHTML = `<span>${toPercentFormat(platformObj.average_interest_rate_30days)}</span>`;
 
       // Загрузка настроек из хранилища
-      chrome.storage.local.get("settings", function (data) {
-        if (data.settings) {
-          if (!data.settings || data.settings.timePeriod == undefined || data.settings.timePeriod == "всё время") {
-            incomeTitleBlock.textContent = "Доход за всё время (без НПД / чистый доход)";
-            incomeBlock.textContent = `${toCurrencyFormat(allTime.profitWithoutNpd)} / ${toCurrencyFormat(allTime.cleanProfit)}`;
-            incomePercentBlock.innerHTML = `<span>${toPercentFormat(allTime.percentProfit)}</span>`;
-          } else if (data.settings.timePeriod == "год") {
-            incomeTitleBlock.innerHTML = `<span>Доход за год (без НПД / чистый доход)</span>`;
-            incomeBlock.innerHTML = `<span>${toCurrencyFormat(yearTime.profitWithoutNpd)} / ${toCurrencyFormat(yearTime.cleanProfit)}</span>`;
-            incomePercentBlock.innerHTML = `<span>${toPercentFormat(yearTime.percentProfit)}</span>`;
-          }
-        }
-      });
+      const cache = await getCache("settings");
+      if (!cache.timePeriod || cache.timePeriod === "all") {
+        incomeTitleBlock.innerHTML = `<span>Доход за всё время (без НПД | чистый доход)</span>`;
+        incomeBlock.innerHTML = `<span>${toCurrencyFormat(allTime.profitWithoutNpd)} <span style="opacity: 0.5">|</span> ${toCurrencyFormat(allTime.cleanProfit)}</span>`;
+        incomePercentBlock.innerHTML = `<span>${toPercentFormat(allTime.percentProfit)}</span>`;
+      } else if (cache.timePeriod === "year") {
+        incomeTitleBlock.innerHTML = `<span>Доход за год (без НПД | чистый доход)</span>`;
+        incomeBlock.innerHTML = `<span>${toCurrencyFormat(yearTime.profitWithoutNpd)} <span style="opacity: 0.5">|</span> ${toCurrencyFormat(yearTime.cleanProfit)}</span>`;
+        incomePercentBlock.innerHTML = `<span>${toPercentFormat(yearTime.percentProfit)}</span>`;
+      }
     }
 
     if (userStats.error || platformStats.error) {

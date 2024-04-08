@@ -30,7 +30,7 @@ async function fetchChunks(link, offset = 0, limit = 100, total = 0, resArr = []
   return fetchChunks(link, offset, limit, fetchRes.data.total, resArr, fetchRes);
 }
 
-async function getCache(key, def = null) {
+async function getCache(key, def = {}) {
   return new Promise((res) => {
     chrome.storage.local.get(key, function (data) {
       res(data[key] ?? def);
@@ -39,7 +39,7 @@ async function getCache(key, def = null) {
 }
 
 async function updateCache(cacheName, cacheKey, newValue) {
-  const cache = await getCache(cacheName, {});
+  const cache = await getCache(cacheName);
   cache[cacheKey] = newValue;
   chrome.storage.local.set({ [cacheName]: cache });
 }
@@ -74,19 +74,27 @@ function toSuperShortCurrencyFormat(num) {
 }
 
 function openModal(modalId) {
-  $get(`${modalId}`).classList.remove("display-none");
+  $get(modalId).classList.remove("display-none");
   setTimeout(() => {
-    $get(`${modalId}`).style.opacity = "1";
+    $get(modalId).style.opacity = "1";
   }, 0);
   document.body.style.overflow = "hidden";
 }
 
 function closeModal(modalId) {
-  $get(`${modalId}`).style.opacity = "0";
+  $get(modalId).style.opacity = "0";
   setTimeout(() => {
-    $get(`${modalId}`).classList.add("display-none");
+    $get(modalId).classList.add("display-none");
   }, 300);
   document.body.style.overflow = "auto";
+}
+
+function openPage(pageId) {
+  if (window.innerWidth <= 768) {
+    openModal(pageId);
+    return;
+  }
+  $get("#page").innerHTML = $get(pageId).innerHTML;
 }
 
 // Функция изменения текста на значке расширения
@@ -116,7 +124,7 @@ async function getBadge() {
 
 // Функция открытия инвест страницы
 function openInvestPage() {
-  document.querySelector(".invest-section").style.top = "0";
+  document.querySelector("#invest-section").style.top = "0";
   document.body.style.height = "650px";
   $get("#stats__open").style.transform = "scaleY(-1)";
   $get(".stats-section").style.maxHeight = "0px";
@@ -124,7 +132,7 @@ function openInvestPage() {
 
 // Функция закрытия инвест страницы
 function closeInvestPage() {
-  document.querySelector(".invest-section").style.top = "-5000px";
+  document.querySelector("#invest-section").style.top = "-5000px";
   document.body.style.height = "";
 }
 
@@ -180,8 +188,8 @@ const toCurrencyFormat = (num) => parseFloat(num).toLocaleString("ru-RU", { styl
 // Функция перевода из числа в проценты (0.2 => 20 %)
 const toPercentFormat = (num) => `${(num * 100).toFixed(2).replace(".", ",")} %`;
 
-// Функция получения цвета в зависимости от числа (зеленый, красный, дефолт)
-const decorNumber = (num) => (num > 0 ? "#00ba88" : num != 0 ? "#f23c3c" : "var(--vanumolor)");
+// Функция получения цвета в зависимости от числа (зеленый, красный, дефолтный)
+const decorNumber = (num) => (num > 0 ? "var(--jle-green)" : num != 0 ? "var(--jle-red)" : "var(--jle-fontColor)");
 
 // Функция добавления знака "+" положительным числам
 const numberSign = (num) => (num > 0 ? "+" : "");
@@ -367,7 +375,7 @@ function dateDiff(firstDate, secondDate = 0) {
 
 async function fmLoadLoans(mode) {
   const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
-  const filters = await getCache("investSettings", {});
+  const filters = await getCache("investSettings");
   if (res.data) {
     fmInvestCompanyArray = res.data.requests.filter(
       (obj) =>
@@ -406,7 +414,7 @@ async function smLoadLoans(mode, offset = 0, limit = 100, total = 0, blackList =
   }
   const url = `https://jetlend.ru/invest/api/exchange/loans?limit=${limit}&offset=${offset}&sort_dir=desc&sort_field=ytm`;
   const res = await fetchData(url);
-  const filters = await getCache("investSettings", {});
+  const filters = await getCache("investSettings");
   if (res.data) {
     smInvestCompanyArray = smInvestCompanyArray.concat(
       res.data.data.filter(
@@ -466,7 +474,7 @@ async function loadProblemLoans(offset = 0, limit = 100, resArr = []) {
 }
 
 async function checkingCompany(companyId, fm, sm) {
-  const filters = await getCache("investSettings", {});
+  const filters = await getCache("investSettings");
   const errors = [];
   let company = null;
   const fmCompany = fm.data.requests.find((obj) => obj.id === companyId);
@@ -481,9 +489,9 @@ async function checkingCompany(companyId, fm, sm) {
                 href="https://jetlend.ru/invest/v3/company/${company.id || company.loan_id}">${company.loan_name}</a>
               <span style="font-size: 14px">${company.loan_isin}</span>
               <span style="font-size: 14px">
-                <b style="${company.rating.includes("A") ? "color: limegreen;" : company.rating.includes("B") ? "color: orange;" : "color: orangered;"}">${company.rating}|${ratingArray.indexOf(company.rating)}
+                <b style="${company.rating.includes("A") ? "color: var(--jle-green);" : company.rating.includes("B") ? "color: var(--jle-orange);" : "color: var(--jle-red);"}">${company.rating}|${ratingArray.indexOf(company.rating)}
                 </b>, 
-                <b style="${company.financial_discipline === 1 ? "color: limegreen;" : company.financial_discipline <= 0.4 ? "color: red;" : "color: orange;"}">ФД: ${(company.financial_discipline * 100).toFixed(0)}%
+                <b style="${company.financial_discipline === 1 ? "color: var(--jle-green);" : company.financial_discipline <= 0.4 ? "color: red;" : "color: var(--jle-orange);"}">ФД: ${(company.financial_discipline * 100).toFixed(0)}%
                 </b> 
               </span>
             </div>
@@ -574,7 +582,7 @@ async function checkingCompany(companyId, fm, sm) {
     }
     return errorsHtml();
   }
-  return `<div class="list-element contrast-bg"><div style="margin: 8px 0">Компания ${companyId} не найдена.</div></div>`;
+  return `<div class="list-element contrast-bg"><div style="margin: 8px 0">Компания ${companyId} не найдена, либо не соответсвует фильтрам.</div></div>`;
 }
 
 const companyHtmlNotification = (company, invest) => {
@@ -586,9 +594,9 @@ const companyHtmlNotification = (company, invest) => {
         <b>${company.loan_name}</b>
       </a>
       <div style="margin-top: 3px;">
-        <b style="${company.rating.includes("A") ? "color: limegreen;" : company.rating.includes("B") ? "color: orange;" : "color: orangered;"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
-        <b style="${company.financial_discipline === 1 ? "color: limegreen;" : company.financial_discipline <= 0.4 ? "color: red;" : "color: orange;"}">ФД: ${(company.financial_discipline * 100).toFixed(0)}%</b>
-        ${company.loan_class !== undefined ? `, <b style="${company.loan_class === 0 ? "color: limegreen;" : company.loan_class === 1 ? "color: orange;" : "color: orangered;"}">Класс: ${company.loan_class}</b>` : ""}
+        <b style="${company.rating.includes("A") ? "color: var(--jle-green);" : company.rating.includes("B") ? "color: var(--jle-orange);" : "color: var(--jle-red);"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
+        <b style="${company.financial_discipline === 1 ? "color: var(--jle-green);" : company.financial_discipline <= 0.4 ? "color: red;" : "color: var(--jle-orange);"}">ФД: ${(company.financial_discipline * 100).toFixed(0)}%</b>
+        ${company.loan_class !== undefined ? `, <b style="${company.loan_class === 0 ? "color: var(--jle-green);" : company.loan_class === 1 ? "color: var(--jle-orange);" : "color: var(--jle-red);"}">Класс: ${company.loan_class}</b>` : ""}
       </div>
     </div>
     ${
@@ -605,7 +613,7 @@ const companyHtmlNotification = (company, invest) => {
     }
     </section>
     <div style="background: var(--jle-universalColor); width: 100%; height: 4px; border-radius: 5px; margin-top: 5px;">
-      <div style="background: limegreen; width: 40%; height: inherit; border-radius: inherit;"></div>
+      <div style="background: var(--jle-green); width: 40%; height: inherit; border-radius: inherit;"></div>
     </div>
     ${invest.error ? `<div style="margin-top: 5px;">${invest.error}</div>` : ""}
     `;
@@ -697,13 +705,26 @@ function getModa(arr) {
 // };
 
 // (async function () {
-//   await smLoadLoans("loadLoans", 0, 100);
-//   console.log("sm1", smInvestCompanyArray);
-//   await smLoadLoans("loadLoans", 0, 100);
-//   console.log("sm2", smInvestCompanyArray);
+//   const cache = await getCache("test");
+//   console.log(cache.m ?? "none");
 // })();
 
 function setTheme(theme) {
+  if (theme === "0") {
+    document.documentElement.className = "";
+    return;
+  }
   document.documentElement.className = theme + "-theme";
+  return;
 }
-// setTheme("test");
+
+// Костыль. Замена данных из старых версий (0.9.1 и ниже) на новые.
+(async function () {
+  const cache = await getCache("settings");
+  if (cache.timePeriod === "всё время") {
+    await updateCache("settings", "timePeriod", "all");
+  } else if (cache.timePeriod === "год") {
+    await updateCache("settings", "timePeriod", "year");
+  }
+  return;
+})();

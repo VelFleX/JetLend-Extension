@@ -51,13 +51,13 @@
 }
 
 ::-moz-selection {
-  color: white;
-  background: #186251;
+  color: var(--jle-buttonTextColor);
+  background: var(--jle-buttonColor);
 }
 
 ::selection {
-  color: white;
-  background: #186251;
+  color: var(--jle-buttonTextColor);
+  background: var(--jle-buttonColor);
 }
 
 body {
@@ -90,7 +90,7 @@ b {
 
 .link {
   text-decoration: underline;
-  color: #8888e6;
+  color: var(--jle-link);
 }
 
 .container {
@@ -108,7 +108,7 @@ b {
   max-width: 450px;
   color: var(--jle-fontColor);
   font-size: 14px;
-  background: var(--jle-second-color);
+  background: var(--jle-contrast-hover);
   padding: 4px 8px;
   pointer-events: none;
   opacity: 0;
@@ -177,7 +177,7 @@ b {
   transition: background 0.3s;
 }
 .dashboard__btn:hover {
-  background: var(--jle-secondBgColor);
+  background: var(--jle-contrast);
 }
 
 #page {
@@ -262,7 +262,7 @@ b {
 }
 
 .income__value {
-  color: #00ba88;
+  color: var(--jle-green);
 }
 
 .stats-section {
@@ -277,7 +277,7 @@ b {
 
 .select {
   width: 145px;
-  background: var(--jle-smallBtnColor);
+  background: var(--jle-inputs);
   border: none;
   color: var(--jle-fontColor);
   border-radius: 10px;
@@ -288,7 +288,11 @@ b {
   transition: all 0.185s ease-in-out;
 }
 .select:hover {
-  background: var(--jle-smallBtnColor--hover);
+  background: var(--jle-inputs-hover);
+}
+
+option {
+  background: var(--jle-contrast-hover);
 }
 
 .invest-section {
@@ -319,13 +323,13 @@ b {
   border-radius: 10px;
   padding-left: 10px;
   padding-top: 1px;
-  border: 1px solid var(--jle-second-color);
-  background: var(--jle-smallBtnColor);
+  border: none;
+  background: var(--jle-inputs);
   color: var(--jle-fontColor);
   transition: all 0.185s ease-in-out;
 }
 .invest-section__input:hover {
-  background: var(--jle-smallBtnColor--hover);
+  background: var(--jle-inputs-hover);
 }
 .invest-section__input-btn {
   width: 40px;
@@ -381,7 +385,7 @@ b {
 }
 
 .btn-orb {
-  background: var(--jle-smallBtnColor);
+  background: var(--jle-inputs);
   border-radius: 50%;
   width: 20px;
   height: 20px;
@@ -394,7 +398,7 @@ b {
   transition: all 0.185s ease-in-out;
 }
 .btn-orb:hover {
-  background: var(--jle-smallBtnColor--hover);
+  background: var(--jle-inputs-hover);
 }
 
 .swap {
@@ -450,7 +454,7 @@ b {
   font-size: 16px;
   text-align: center;
   display: inline-block;
-  background: var(--jle-smallBtnColor);
+  background: var(--jle-inputs);
   padding: 8px;
   margin: 10px 0;
   border-radius: 12px;
@@ -469,7 +473,7 @@ b {
   align-items: center;
 }
 .btn-small:hover {
-  background: var(--jle-smallBtnColor--hover);
+  background: var(--jle-inputs-hover);
 }
 .btn-small:active {
   scale: 0.99;
@@ -516,12 +520,12 @@ b {
 .contrast-bg {
   padding: 14px 12px;
   border-radius: 12px;
-  background: var(--jle-secondBgColor);
+  background: var(--jle-contrast);
 }
 
 .load-block-animation {
   border-radius: 4px;
-  background-color: var(--jle-first-color);
+  background-color: var(--jle-contrast);
   max-width: 100%;
   display: inline-flex;
   flex-shrink: 0;
@@ -538,7 +542,7 @@ b {
   right: 0;
   height: 100%;
   background-repeat: no-repeat;
-  background-image: linear-gradient(90deg, var(--jle-first-color), var(--jle-second-color), var(--jle-first-color));
+  background-image: linear-gradient(90deg, var(--jle-contrast), var(--jle-contrast-hover), var(--jle-contrast));
   transform: translateX(-100%);
   animation: translateRight normal 1.5s ease-in-out infinite;
 }
@@ -585,7 +589,7 @@ b {
   position: absolute;
   width: 100%;
   height: 100%;
-  background: var(--jle-svgBgColor);
+  background: var(--jle-contrast-hover);
   border-radius: 50%;
   transform: scale(0);
   transition: transform 0.25s ease-in-out;

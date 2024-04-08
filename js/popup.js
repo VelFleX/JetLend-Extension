@@ -1,11 +1,34 @@
 $get("#version").innerHTML = version;
 
+// Загрузка кэша
 (async function () {
-  const settings = await getCache("settings", {});
+  const data = await getCache("cacheJetlend");
+  $get(".lastUpdateDate").innerHTML = `Все активы <span style="position: relative">(${getUpdateTime(data.updateTime ?? new Date().getTime())}) <span class="load-spinner" title="Загузка актуальных данных..." style="cursor: pointer; width: 16px"></span></span>`;
+  $get(".balance__title").innerHTML = `<span>${data.balanceTitle ?? ""}</span> <span>${data.collectionIncomeTitle ?? ""}</span>`;
+  $get(".balance__value").innerHTML = `<div><span class="load-opacity-animation">${data.balance ?? "-"}</span><span style="opacity: .5;"> | </span><span class="load-opacity-animation">${data.cleanBalance ?? "-"}</span></div> <span class="load-opacity-animation">${data.collectionIncomeText ?? "-"}</span>`;
+  $get(".income__title").innerHTML = `<span>${data.incomeTitle ?? ""}</span> <span>${data.incomePercent ?? ""}</span>`;
+
+  $get(".income__currency").innerHTML = `<span class="load-opacity-animation">${data.income ?? ""}</span><span style="opacity: .5;"> | </span><span class="load-opacity-animation">${data.cleanIncome ?? ""}</span>`;
+  $get(".income__percent").innerHTML = `<span class="load-opacity-animation"><img src="/img/income.svg">${data.percentIncomeNum ?? ""}</span>`;
+  cache.balance = data.balance;
+  cache.cleanBalance = data.cleanBalance;
+
+  if (data.qualification) {
+    $get("#fmInvestAgreeText").textContent = $get("#smInvestAgreeText").textContent;
+  }
+})();
+
+// Загрузка настроек
+(async function () {
+  const settings = await getCache("settings");
+  time_setting.value = settings.timePeriod ?? "all";
+  theme_setting.value = settings.theme ?? 0;
   badgeMode_setting.value = settings.badgeMode ?? 0;
   autoInvest_mode.value = settings.autoInvestMode ?? 0;
   autoInvest_safe.value = settings.autoInvestSafe ?? 0;
   autoInvest_interval.value = settings.autoInvestInterval ?? 6;
+
+  setTheme(theme_setting.value);
 })();
 
 $get("#stats__open").addEventListener("click", function () {
@@ -17,6 +40,16 @@ $get("#stats__open").addEventListener("click", function () {
     $get(".stats-section").style.maxHeight = "1000px";
   }
 });
+
+// Загрузка фильтров
+(async function () {
+  const filters = await getCache("investSettings");
+  const keys = Object.keys(filters);
+  keys.forEach((key) => {
+    const formFilter = $get("#" + key);
+    formFilter.value = filters[key];
+  });
+})();
 
 document.addEventListener("mouseover", function (e) {
   let tooltipHtml = e.target.closest(".tooltip");
@@ -60,15 +93,15 @@ document.addEventListener("mouseover", function (e) {
 });
 
 document.addEventListener("click", function (event) {
-  // Свап отображения в настрйоках
-  if (event.target.classList.contains("swap")) {
-    if ($get(".swap").textContent == "всё время") {
-      statsSection.innerHTML = dataTextYearTime;
-    } else if ($get(".swap").textContent == "год") {
-      statsSection.innerHTML = dataTextAllTime;
-    }
-    return;
-  }
+  // Свап отображения в статистике
+  // if (event.target.classList.contains("swap")) {
+  //   if (time_setting.value === "all") {
+  //     $get(".stats-section").innerHTML = dataTextYearTime;
+  //   } else if (time_setting.value == "year") {
+  //     $get(".stats-section").innerHTML = dataTextAllTime;
+  //   }
+  //   return;
+  // }
   // Таргет урл
   if (event.target.classList.contains("target-url")) {
     event.preventDefault();
@@ -94,26 +127,14 @@ document.addEventListener("click", function (event) {
   // if (event.target.closest(".open-events")) return openModal("#events");
 });
 
-let freeBalance = 0;
-let cleanBalance = 0;
-let balance = 0;
-let cachedBalance = 0;
-let cachedCleanBalance = 0;
-
-let timePeriod = "";
-let dataTextAllTime = "";
-let dataTextYearTime = "";
-let sameDataText = "";
-
 const formsElements = $getAll(".filterInput");
-
 formsElements.forEach((element) =>
   element.addEventListener("change", async function () {
     await updateCache("investSettings", this.id, this.value);
   })
 );
-btnInvestOpen.onclick = openInvestPage;
-btnInvestClose.onclick = closeInvestPage;
+$get(".invest-section__btn-open ").onclick = openInvestPage;
+$get(".invest-section__btn-close").onclick = closeInvestPage;
 
 $get("#event-transactions__open").onclick = () => transactionsShow();
 $get("#event-invests__open").onclick = () => investHistoryShow();
@@ -127,6 +148,11 @@ $get("#problemLoans__open").onclick = () => problemLoansShow();
 
 $get("#revenue__open").onclick = () => revenueShow();
 
+$get("#time_setting").onchange = async (event) => await updateCache("settings", "timePeriod", event.target.value);
+$get("#theme_setting").onchange = async (event) => {
+  await updateCache("settings", "theme", event.target.value);
+  setTheme(event.target.value);
+};
 $get("#autoInvest_mode").onchange = async (event) => await updateCache("settings", "autoInvestMode", event.target.value);
 $get("#autoInvest_safe").onchange = async (event) => await updateCache("settings", "autoInvestSafe", event.target.value);
 $get("#autoInvest_interval").onchange = async (event) => await updateCache("settings", "autoInvestInterval", event.target.value);
@@ -159,15 +185,6 @@ $get("#marketMode").onclick = marketSwap;
 $get("#checkCompany__open").onclick = () => openModal("#checkCompany__section");
 $get("#checkCompany__btn").onclick = () => checkCompany();
 
-(async function () {
-  const filters = await getCache("investSettings", {});
-  const keys = Object.keys(filters);
-  keys.forEach((key) => {
-    const formFilter = $get("#" + key);
-    formFilter.value = filters[key];
-  });
-})();
-
 async function transactionsShow() {
   $get("#events__btn-section")
     .querySelectorAll(".btn-small")
@@ -199,9 +216,9 @@ async function transactionsShow() {
   function createListElement(element) {
     function setColor(num) {
       if (num > 0) {
-        return "limegreen";
+        return "var(--jle-green)";
       } else {
-        return "red";
+        return "var(--jle-red)";
       }
     }
     return `
@@ -215,7 +232,7 @@ async function transactionsShow() {
         <div style="font-weight: 600; text-wrap: nowrap;">
           ${element.income && element.income !== 0.0 ? `${toCurrencyFormat(element.income)}` : ""}
         </div>
-        <div style="color: orangered; font-weight: 600; text-wrap: nowrap; margin-top: 5px;">
+        <div style="color: var(--jle-red); font-weight: 600; text-wrap: nowrap; margin-top: 5px;">
           ${element.expense && element.expense !== 0.0 ? (element.expense > 0 ? `-${toCurrencyFormat(element.expense)}` : `${toCurrencyFormat(element.expense)}`) : ""}
         </div> 
         <div style="color: ${setColor(element.revenue)}; font-weight: 600; text-wrap: nowrap; margin-top: 5px;">
@@ -234,20 +251,17 @@ async function investHistoryShow() {
   $get("#event-invests__open").classList.add("btn-small--active");
   const list = $get("#events__list");
   list.innerHTML = spinLoad.innerHTML;
-  let investHistory = [];
-  chrome.storage.local.get("investHistory", function (data) {
-    if (!data.investHistory) {
-      list.innerHTML = "История пуста.";
-      return;
-    }
-    list.innerHTML = "";
-    investHistory = data.investHistory;
-    investHistory.forEach((element) => {
-      const listItem = document.createElement("div");
-      listItem.classList.add("list-element", "contrast-bg");
-      listItem.innerHTML = createListElement(element);
-      list.appendChild(listItem);
-    });
+  const history = await getCache("investHistory", []);
+  if (!history) {
+    list.innerHTML = "История пуста.";
+    return;
+  }
+  list.innerHTML = "";
+  history.forEach((element) => {
+    const listItem = document.createElement("div");
+    listItem.classList.add("list-element", "contrast-bg");
+    listItem.innerHTML = createListElement(element);
+    list.appendChild(listItem);
   });
 
   function createListElement(company) {
@@ -259,13 +273,13 @@ async function investHistoryShow() {
           ${company.name}
         </a>
         <div style="margin-top: 3px;">
-          <b style="${company.rating.includes("A") ? "color: limegreen;" : company.rating.includes("B") ? "color: orange;" : "color: orangered;"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
-          <b style="${company.fd === 1 ? "color: limegreen;" : company.fd <= 0.4 ? "color: red;" : "color: orange;"}">ФД: ${(company.fd * 100).toFixed(0)}%</b>
-          ${company.class !== undefined ? `, <b style="${company.class === 0 ? "color: limegreen;" : company.class === 1 ? "color: orange;" : "color: orangered;"}">Класс: ${company.class}</b>` : ""}
+          <b style="${company.rating.includes("A") ? "color: var(--jle-green);" : company.rating.includes("B") ? "color: var(--jle-orange);" : "color: var(--jle-red);"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
+          <b style="${company.fd === 1 ? "color: var(--jle-green);" : company.fd <= 0.4 ? "color: var(--jle-red);" : "color: var(--jle-orange);"}">ФД: ${(company.fd * 100).toFixed(0)}%</b>
+          ${company.class !== undefined ? `, <b style="${company.class === 0 ? "color: var(--jle-green);" : company.class === 1 ? "color: var(--jle-orange);" : "color: var(--jle-red);"}">Класс: ${company.class}</b>` : ""}
         </div>
         <div style="margin-top: 3px;">
           ${company.mode === "auto" ? "Эффективная ставка: " : "Ставка: "}
-          <b>${toPercentFormat(company.percent)}</b>${company.mode === "auto" ? `, <b style="color: #8888e6;">auto</b>` : ""}
+          <b>${toPercentFormat(company.percent)}</b>${company.mode === "auto" ? `, <b style="color: var(--jle-link);">auto</b>` : ""}
         </div>
       </div>
 
@@ -322,12 +336,12 @@ async function portfolioAllShow() {
            Реструктуризации.
           </template>
         </div>
-        <div class="tooltip" style="background: orange; width: ${(delayed.length / allCompays.data.total) * 100}%">
+        <div class="tooltip" style="background: var(--jle-orange); width: ${(delayed.length / allCompays.data.total) * 100}%">
           <template class="tooltip-content">
             Задержки.
           </template>
         </div>
-        <div class="tooltip" style="background: red; width: ${(defaulted.length / allCompays.data.total) * 100}%">
+        <div class="tooltip" style="background: var(--jle-red); width: ${(defaulted.length / allCompays.data.total) * 100}%">
           <template class="tooltip-content">
             Дефолты.
           </template>
@@ -370,15 +384,15 @@ async function nplShow(nplNum) {
     list.innerHTML = `<div class="contrast-bg" style="margin-bottom: 12px">
         <p>Всего задержанных займов: <b>${res.data.total}</b> шт.</p>
         <p>Сумма NPL${nplNum}+ задержек: <b>${toCurrencyFormat(debtSum)}</b> 
-          (<b class="tooltip">${toPercentFormat(debtSum / cleanBalance)}
-            <template class="tooltip-content"><b>${toPercentFormat(debtSum / balance)}</b>, если делить на баланс с НПД.</template>
+          (<b class="tooltip">${toPercentFormat(debtSum / user.cleanBalance)}
+            <template class="tooltip-content"><b>${toPercentFormat(debtSum / user.balance)}</b>, если делить на баланс с НПД.</template>
           </b> от портфеля).
         </p>
         <p>Сумма всех задержек: <b class="tooltip">${toCurrencyFormat(res.data.aggregation.principal_debt)}
             <template class="tooltip-content">Сумма инвестиций: <b>${toCurrencyFormat(res.data.aggregation.purchased_amount)}</b>.</template>
           </b> 
-          (<b class="tooltip">${toPercentFormat(res.data.aggregation.principal_debt / cleanBalance)}
-            <template class="tooltip-content"><b>${toPercentFormat(res.data.aggregation.principal_debt / balance)}</b>, если делить на баланс с НПД.</template>
+          (<b class="tooltip">${toPercentFormat(res.data.aggregation.principal_debt / user.cleanBalance)}
+            <template class="tooltip-content"><b>${toPercentFormat(res.data.aggregation.principal_debt / user.balance)}</b>, если делить на баланс с НПД.</template>
           </b> от портфеля).
         </p>
         <p>Выплаченные проценты: <b>${toCurrencyFormat(res.data.aggregation.paid_interest)}</b>.</p>
@@ -404,7 +418,7 @@ async function nplShow(nplNum) {
           ${company.loan_name}
         </a>
           <div style="font-size: 14px; margin-top: 3px;">
-            <b style="${company.rating.includes("A") ? "color: limegreen;" : company.rating.includes("B") ? "color: orange;" : "color: orangered;"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
+            <b style="${company.rating.includes("A") ? "color: var(--jle-green);" : company.rating.includes("B") ? "color: var(--jle-orange);" : "color: var(--jle-red);"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
             <span class="tooltip"> 
               NPL <b>${company.npl} д.</b>
               <template class="tooltip-content">
@@ -426,7 +440,7 @@ async function nplShow(nplNum) {
         </div>
         <div class="tooltip" style="text-wrap: nowrap; margin-top: 5px;">
           <span>Остаток долга: </span>
-          <b style="color: orange;">${toCurrencyFormat(company.principal_debt)}</b>
+          <b style="color: var(--jle-orange);">${toCurrencyFormat(company.principal_debt)}</b>
           <template class="tooltip-content">
             Остаток тела долга по займу.
           </template>
@@ -441,7 +455,7 @@ async function nplShow(nplNum) {
       </div>
     </section>
     <div class="progressbar__container" style="margin-top: 5px;">
-      <div class="progressbar" style="width: ${company.progress * 100}%; background: ${company.status === "delayed" ? "orange" : "var(--jle-lightGreen)"};"></div>
+      <div class="progressbar" style="width: ${company.progress * 100}%; background: ${company.status === "delayed" ? "var(--jle-orange)" : "var(--jle-lightGreen)"};"></div>
     </div>
     `;
   }
@@ -468,8 +482,8 @@ async function restructsShow() {
       <p>Сумма: <b class="tooltip">${toCurrencyFormat(res.data.aggregation.principal_debt)}
           <template class="tooltip-content">Сумма инвестиций: <b>${toCurrencyFormat(res.data.aggregation.purchased_amount)}</b>.</template>
         </b> 
-        (<b class="tooltip">${toPercentFormat(res.data.aggregation.principal_debt / cleanBalance)}
-          <template class="tooltip-content"><b>${toPercentFormat(res.data.aggregation.principal_debt / balance)}</b>, если делить на баланс с НПД.</template>
+        (<b class="tooltip">${toPercentFormat(res.data.aggregation.principal_debt / user.cleanBalance)}
+          <template class="tooltip-content"><b>${toPercentFormat(res.data.aggregation.principal_debt / user.balance)}</b>, если делить на баланс с НПД.</template>
         </b> от портфеля).
       </p>
       <p>Выплаченные проценты: <b>${toCurrencyFormat(res.data.aggregation.paid_interest)}</b>.</p>
@@ -495,7 +509,7 @@ async function restructsShow() {
           ${company.loan_name}
         </a>
           <div style="font-size: 14px; margin-top: 3px;">
-            <b style="${company.rating.includes("A") ? "color: limegreen;" : company.rating.includes("B") ? "color: orange;" : "color: orangered;"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>
+            <b style="${company.rating.includes("A") ? "color: var(--jle-green);" : company.rating.includes("B") ? "color: var(--jle-orange);" : "color: var(--jle-red);"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>
           </div>
           <div style="margin-top: 5px; font-size: 14px; text-wrap: nowrap;">
             <span>Инвестиция: </span>
@@ -511,7 +525,7 @@ async function restructsShow() {
         </div>
         <div class="tooltip" style="text-wrap: nowrap; margin-top: 5px;">
           <span>Остаток долга: </span>
-          <b style="color: orange;">${toCurrencyFormat(company.principal_debt)}</b>
+          <b style="color: var(--jle-orange);">${toCurrencyFormat(company.principal_debt)}</b>
           <template class="tooltip-content">
             Остаток тела долга по займу.
           </template>
@@ -539,12 +553,7 @@ async function defaultsShow() {
   $get("#defaults__open").classList.add("btn-small--active");
   const list = $get("#portfolio__list");
   list.innerHTML = spinLoad.innerHTML;
-  let cache = [];
-  chrome.storage.local.get("defaults", function (date) {
-    if (date.defaults) {
-      cache = date.defaults;
-    }
-  });
+  const cache = await getCache("defaults", []);
   const url = "https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22default%22%5D%2C%22field%22%3A%22status%22%7D%5D";
   const res = await fetchChunks(url);
   if (res.data) {
@@ -626,7 +635,7 @@ async function defaultsShow() {
           ${company.loan_name}
         </a>
           <div style="font-size: 14px; margin-top: 3px;">
-            <b style="${company.rating.includes("A") ? "color: limegreen;" : company.rating.includes("B") ? "color: orange;" : "color: orangered;"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
+            <b style="${company.rating.includes("A") ? "color: var(--jle-green);" : company.rating.includes("B") ? "color: var(--jle-orange);" : "color: var(--jle-red);"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
             <span class="tooltip"> 
               NPL <b>${company.npl} д.</b>
               <template class="tooltip-content">
@@ -648,14 +657,14 @@ async function defaultsShow() {
         </div>
         <div class="tooltip" style="text-wrap: nowrap; margin-top: 5px;">
           <span>Остаток долга: </span>
-          <b style="color: orangered;">${toCurrencyFormat(-company.principal_debt)}</b>
+          <b style="color: var(--jle-red);">${toCurrencyFormat(-company.principal_debt)}</b>
           <template class="tooltip-content">
             Остаток тела долга по займу.
           </template>
         </div> 
         <div class="tooltip" style="text-wrap: nowrap; margin-top: 5px;">
           <span>Совокупный доход: </span>
-          <b style="color: orangered;">${toCurrencyFormat(company.profit)}</b>
+          <b style="color: var(--jle-red);">${toCurrencyFormat(company.profit)}</b>
           <template class="tooltip-content">
             Совокупный доход по займу, включая полученный процентный доход, а также пени за просрочку платежей. 
           </template>
@@ -663,7 +672,7 @@ async function defaultsShow() {
       </div>
     </section>
     <div class="progressbar__container" style="margin-top: 5px;">
-      <div class="progressbar" style="width: ${company.progress * 100}%; background: orangered;"></div>
+      <div class="progressbar" style="width: ${company.progress * 100}%; background: var(--jle-red);"></div>
     </div>
     `;
   }
@@ -709,7 +718,7 @@ async function problemLoansShow() {
         ${company.loan_name}
       </a>
         <div style="font-size: 14px; margin-top: 3px;">
-          <b style="${company.rating.includes("A") ? "color: limegreen;" : company.rating.includes("B") ? "color: orange;" : "color: orangered;"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>,
+          <b style="${company.rating.includes("A") ? "color: var(--jle-green);" : company.rating.includes("B") ? "color: var(--jle-orange);" : "color: var(--jle-red);"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>,
           <b class="tooltip">${toPercentFormat(company.ytm)}
             <template class="tooltip-content">
               Эффективная ставка.
@@ -739,7 +748,7 @@ async function problemLoansShow() {
     </div>
   </section>
   <div class="progressbar__container" style="margin-top: 5px;">
-    <div class="progressbar" style="width: ${company.progress * 100}%; background: limegreen;"></div>
+    <div class="progressbar" style="width: ${company.progress * 100}%; background: var(--jle-green);"></div>
   </div>
   `;
   }
@@ -753,12 +762,7 @@ async function revenueShow() {
 
   const list = $get("#analytics__list");
   list.innerHTML = spinLoad.innerHTML;
-  let cache = [];
-  chrome.storage.local.get("defaults", function (date) {
-    if (date.defaults) {
-      cache = date.defaults;
-    }
-  });
+  const cache = await getCache("defaults", []);
   const url = "https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22default%22%5D%2C%22field%22%3A%22status%22%7D%5D";
   const res = await fetchChunks(url);
   if (res.data) {
@@ -813,21 +817,21 @@ async function revenueShow() {
         <div>22.12.2022</div>
       </div>
       <div style="width: 50px; align-self: start; text-wrap: nowrap; justify-self: flex-end">50 000,50 R</div>
-      <hr style="border: none; border-top: 2px dashed red" />
+      <hr style="border: none; border-top: 2px dashed var(--jle-red)" />
       <div class="flex items-end" style="gap: 4px">
         <div class="blackout" style="height: 10px; width: 100%; background: var(--jle-green)"></div>
         <div class="blackout" style="height: 25px; width: 100%; background: var(--jle-green)"></div>
         <div class="blackout" style="height: 20px; width: 100%; background: var(--jle-green)"></div>
       </div>
       <div class="flex items-start" style="gap: 4px">
-        <div class="blackout" style="height: 10px; width: 100%; background: gray"></div>
-        <div class="blackout" style="height: 25px; width: 100%; background: gray"></div>
-        <div class="blackout" style="height: 20px; width: 100%; background: gray"></div>
+        <div class="blackout" style="height: 10px; width: 100%; background: var(--jle-gray)"></div>
+        <div class="blackout" style="height: 25px; width: 100%; background: var(--jle-gray)"></div>
+        <div class="blackout" style="height: 20px; width: 100%; background: var(--jle-gray)"></div>
       </div>
-      <hr style="border: none; border-top: 2px dashed red" />
+      <hr style="border: none; border-top: 2px dashed var(--jle-red)" />
       <div style="width: 50px; align-self: start; text-wrap: nowrap">-50 000,50 R</div>
     </div>
-  `;
+    `;
     companysArr.forEach((element) => {
       // const listItem = document.createElement("div");
       // listItem.classList.add("list-element", "contrast-bg");
@@ -858,7 +862,7 @@ async function checkCompany() {
 
 function fmCompanyShow(arr, blockId) {
   const removeElement = (index) => arr.splice(index, 1);
-  const list = $get(`${blockId}`);
+  const list = $get(blockId);
   list.innerHTML = ""; // очищаем текущий список
   function createListElement(company, details) {
     return `
@@ -870,24 +874,24 @@ function fmCompanyShow(arr, blockId) {
                 href="https://jetlend.ru/invest/v3/company/${company.id}">${company.loan_name}</a>
               <span style="font-size: 14px">${company.loan_isin}</span>
               <span style="font-size: 14px">
-                <b style="${company.rating.includes("A") ? "color: limegreen;" : company.rating.includes("B") ? "color: orange;" : "color: orangered;"}">${company.rating}|${ratingArray.indexOf(company.rating)}
+                <b style="${company.rating.includes("A") ? "color: var(--jle-green);" : company.rating.includes("B") ? "color: var(--jle-orange);" : "color: var(--jle-red);"}">${company.rating}|${ratingArray.indexOf(company.rating)}
                 </b>, 
-                <b style="${company.financial_discipline === 1 ? "color: limegreen;" : company.financial_discipline <= 0.4 ? "color: red;" : "color: orange;"}">ФД: ${(company.financial_discipline * 100).toFixed(0)}%
+                <b style="${company.financial_discipline === 1 ? "color: var(--jle-green);" : company.financial_discipline <= 0.4 ? "color: var(--jle-red);" : "color: var(--jle-orange);"}">ФД: ${(company.financial_discipline * 100).toFixed(0)}%
                 </b> 
               </span>
             </div>
             <div style="display: block; flex: 1; margin-left: -50px; font-size: 14px;">
-              <b style="${company.company_investing_amount === null ? "color: limegreen;" : company.company_investing_amount === "0.00" ? "color: #8888e6;" : "color: orange;"}
+              <b style="${company.company_investing_amount === null ? "color: var(--jle-green);" : company.company_investing_amount === "0.00" ? "color: var(--jle-link);" : "color: var(--jle-orange);"}
                             text-wrap: nowrap; float: right">
                             ${company.company_investing_amount === null ? "Заёмщика нет в портфеле" : company.company_investing_amount === "0.00" ? "Заёмщик был в портфеле" : `Компания в портфеле: ${toCurrencyFormat(company.company_investing_amount)}`}
               </b> 
-              <div style="${company.investing_amount !== null ? "color: orange;" : ""} font-weight: 600; float: right">
+              <div style="${company.investing_amount !== null ? "color: var(--jle-orange);" : ""} font-weight: 600; float: right">
                           ${company.investing_amount !== null ? `Зарезервировано: ${toCurrencyFormat(company.investing_amount)}` : ""}
               </div>
             </div>
           </div>
           <div class="progressbar__container" style="margin-bottom: 8px;">
-            <div class="progressbar" style="width: ${company.collected_percentage}%; background: limegreen;"></div>
+            <div class="progressbar" style="width: ${company.collected_percentage}%; background: var(--jle-green);"></div>
           </div>
         </header>
         <main>
@@ -962,28 +966,20 @@ function fmCompanyShow(arr, blockId) {
 function updateFmArrayText() {
   $get("#fm-numOfSortedCompany").textContent = `Найдено: ${fmInvestCompanyArray.length} ${getZaimEnding(fmInvestCompanyArray.length)} `;
   $get("#fm-btn-update").classList.remove("display-none");
-  if (fmInvestCompanyArray.length >= 1) {
-    $get("#fm-btn-show").classList.remove("display-none");
-  } else if (fmInvestCompanyArray.length === 0) {
-    $get("#fm-btn-show").classList.add("display-none");
-  }
+  fmInvestCompanyArray.length > 0 ? $get("#fm-btn-show").classList.remove("display-none") : $get("#fm-btn-show").classList.add("display-none");
   $get("#fm-btn-stop").classList.add("display-none");
 }
 
 function updateSmArrayText() {
   $get("#sm-numOfSortedCompany").textContent = `Найдено: ${smInvestCompanyArray.length} ${getZaimEnding(smInvestCompanyArray.length)} `;
   $get("#sm-btn-update").classList.remove("display-none");
-  if (smInvestCompanyArray.length >= 1) {
-    $get("#fm-btn-show").classList.remove("display-none");
-  } else if (smInvestCompanyArray.length === 0) {
-    $get("#sm-btn-show").classList.add("display-none");
-  }
+  smInvestCompanyArray.length > 0 ? $get("#sm-btn-show").classList.remove("display-none") : $get("#sm-btn-show").classList.add("display-none");
   $get("#sm-btn-stop").classList.add("display-none");
 }
 
 function smCompanyShow(arr, blockId) {
   const removeElement = (index) => arr.splice(index, 1);
-  const list = $get(`${blockId}`);
+  const list = $get(blockId);
   list.innerHTML = "";
   function createListElement(company, details) {
     return `
@@ -995,26 +991,26 @@ function smCompanyShow(arr, blockId) {
               href="https://jetlend.ru/invest/v3/company/${company.loan_id}">${company.loan_name}</a>
             <span style="font-size: 14px">${company.loan_isin}</span>
             <span style="font-size: 14px">
-              <b style="${company.rating.includes("A") ? "color: limegreen;" : company.rating.includes("B") ? "color: orange;" : "color: orangered;"}">${company.rating}|${ratingArray.indexOf(company.rating)}
+              <b style="${company.rating.includes("A") ? "color: var(--jle-green);" : company.rating.includes("B") ? "color: var(--jle-orange);" : "color: var(--jle-red);"}">${company.rating}|${ratingArray.indexOf(company.rating)}
               </b>, 
-              <b style="${company.financial_discipline === 1 ? "color: limegreen;" : company.financial_discipline <= 0.4 ? "color: red;" : "color: orange;"}">ФД: ${(company.financial_discipline * 100).toFixed(0)}%
+              <b style="${company.financial_discipline === 1 ? "color: var(--jle-green);" : company.financial_discipline <= 0.4 ? "color: var(--jle-red);" : "color: var(--jle-orange);"}">ФД: ${(company.financial_discipline * 100).toFixed(0)}%
               </b>, 
-              <b style="${company.loan_class === 0 ? "color: limegreen;" : company.loan_class === 1 ? "color: orange;" : "color: orangered;"}">Класс: ${company.loan_class}
+              <b style="${company.loan_class === 0 ? "color: var(--jle-green);" : company.loan_class === 1 ? "color: var(--jle-orange);" : "color: var(--jle-red);"}">Класс: ${company.loan_class}
               </b>  
             </span>
           </div>
           <div style="display: block; flex: 1; margin-left: -50px; font-size: 14px;">
-            <b style="${company.invested_company_debt === null ? "color: limegreen;" : company.invested_company_debt === 0 ? "color: #8888e6;" : "color: orange;"}
+            <b style="${company.invested_company_debt === null ? "color: var(--jle-green);" : company.invested_company_debt === 0 ? "color: var(--jle-link);" : "color: var(--jle-orange);"}
                           text-wrap: nowrap; float: right">
                           ${company.invested_company_debt === null ? "Заёмщика нет в портфеле" : company.invested_company_debt === 0 ? "Заёмщик был в портфеле" : `Компания в портфеле: ${toCurrencyFormat(company.invested_company_debt)}`}
             </b> 
-            <div style="${company.invested_debt !== null ? "color: orange;" : ""} font-weight: 600; float: right">
+            <div style="${company.invested_debt !== null ? "color: var(--jle-orange);" : ""} font-weight: 600; float: right">
                       ${company.invested_debt !== null ? `Займ в портфеле: ${toCurrencyFormat(company.invested_debt)}` : ""}
             </div>
           </div>
         </div>
         <div class="progressbar__container" style="margin-bottom: 8px">
-          <div class="progressbar" style="width: ${company.progress * 100}%; background: limegreen;"></div>
+          <div class="progressbar" style="width: ${company.progress * 100}%; background: var(--jle-green);"></div>
         </div>
       </header>
 
@@ -1084,23 +1080,8 @@ function smCompanyShow(arr, blockId) {
   });
 }
 
-chrome.storage.local.get("settings", function (data) {
-  if (data.settings) {
-    timeSettingBtn.textContent = data.settings.timePeriod;
-
-    if (data.settings.timePeriod == "всё время") {
-      timePeriod = "allTime";
-    } else if (data.settings.timePeriod == "год") {
-      timePeriod = "year";
-    }
-  } else if (!data.settings || data.settings.timePeriod == undefined || investDays() <= 365) {
-    timeSettingBtn.textContent = "всё время";
-    timePeriod = "allTime";
-  }
-});
-
 async function mainUpdateFunction() {
-  lastUpdateDateTag.innerHTML = `Все активы <span style="position: relative"><span class="load-spinner" title="Загузка актуальных данных..." style="cursor: pointer; width: 16px"></span></span>`;
+  $get(".lastUpdateDate").innerHTML = `Все активы <span style="position: relative"><span class="load-spinner" title="Загузка актуальных данных..." style="cursor: pointer; width: 16px"></span></span>`;
   for (let span of $getAll(".invest-section__title-sum")) {
     span.textContent = `(Загрузка...)`;
   }
@@ -1114,140 +1095,43 @@ async function mainUpdateFunction() {
     const [userStats, userData, platformStats, amountCompany, xirrData] = await Promise.all([fetchData(userStatsUrl), fetchData(userDataUrl), fetchData(platformStatsUrl), fetchData(amountCompanyUrl), fetchChunks(xirrUrl)]);
 
     const userStatsObj = userStats.data;
-    const userObj = userData.data;
     const platformObj = platformStats.data;
     const statAllTime = userStatsObj.data.summary;
     const statYearTime = userStatsObj.data.summary_year;
     const balanceStats = userStatsObj.data.balance;
 
-    balance = balanceStats.total; // Баланс
-    cleanBalance = balance - balanceStats.nkd; // Баланс без НПД
-    freeBalance = balanceStats.free; // Свободные средства
+    // const all = {
+    //   stats: userStats.data.data,
+    //   platform: platformStats.data.data,
+    //   statsAllTime: statAllTime,
+    // };
 
-    const allTime = {
-      percentProfit: statAllTime.yield_rate, // Доходность в процентах за всё время
-      interest: statAllTime.details.interest, // Процентный доход за всё время
-      fine: statAllTime.details.fine, // Пени за всё время
-      bonus: statAllTime.details.bonus, // Бонусы за всё время
-      reffBonus: statAllTime.details.referral_bonus, // Реферальные бонусы за всё время
-      sale: statAllTime.details.sale, // Доход на вторичке за всё время
-      loss: statAllTime.loss, // Потери за всё время
-      ndfl: statAllTime.profit_ndfl, // НДФЛ за всё время
-      get profitWithoutNpd() {
-        // Доход без НПД за всё время
-        return this.interest + this.fine + this.bonus + this.reffBonus + this.sale - this.loss;
-      },
-      get cleanProfit() {
-        // Чистый доход за всё время
-        return this.profitWithoutNpd - this.ndfl;
-      },
-      get profitWithoutNdfl() {
-        // Доход без НДФЛ за всё время
-        return this.cleanProfit + balanceStats.nkd;
-      },
-      xirr: function (type) {
-        let cashFlows = [];
-        let dates = [];
-        if (type === "npd") {
-          type = balance;
-        } else if (type === "clean") {
-          type = cleanBalance;
-        }
-        for (element of xirrData.data.data) {
-          cashFlows.push(element.amount);
-          dates.push(new Date(element.date));
-        }
-        cashFlows.push(-type);
-        dates.push(new Date());
-        return calculateXIRR(cashFlows, dates);
-      },
-      get incomeSum() {
-        let sum = 0;
-        for (element of xirrData.data.data) {
-          sum += element.income;
-        }
-        return sum;
-      },
-      get expenseSum() {
-        let sum = 0;
-        for (element of xirrData.data.data) {
-          sum += element.expense;
-        }
-        return sum;
-      },
-    };
+    user._userStats = userStatsObj.data;
 
-    const yearTime = {
-      percentProfit: statYearTime.yield_rate, // Доходность в процентах за год
-      interest: statYearTime.details.interest, // Процентный доход за год
-      fine: statYearTime.details.fine, // Пени за год
-      bonus: statYearTime.details.bonus, // Бонусы за год
-      reffBonus: statYearTime.details.referral_bonus, // Реферальные бонусы за год
-      sale: statYearTime.details.sale, // Доход на вторичке за год
-      loss: statYearTime.loss, // Потери за год
-      ndfl: statYearTime.profit_ndfl, // НДФЛ за год
-      get profitWithoutNpd() {
-        // Доход без НПД за год
-        return this.interest + this.fine + this.bonus + this.reffBonus + this.sale - this.loss;
-      },
-      get cleanProfit() {
-        // Чистый доход за год
-        return this.profitWithoutNpd - this.ndfl;
-      },
-      get profitWithoutNdfl() {
-        // Доход без НДФЛ за год
-        return this.cleanProfit + balanceStats.nkd;
-      },
-      xirr: function (type) {
-        const timeYearAgo = new Date().getTime() - 31536000000; // Время в unix год назад
-        let cashFlows = [];
-        let dates = [];
-        let sumYear = 0; // Сумма транзакций за год
-        let beforeFlows = 0; // Сумма транзакций до текущего года
-        let profitSum = allTime.cleanProfit - this.cleanProfit; // Профит год назад
-        if (type === "npd") {
-          type = balance;
-          // profitSum = allTime.cleanProfit - this.cleanProfit;
-        } else if (type === "clean") {
-          type = cleanBalance;
-        }
-        for (element of xirrData.data.data) {
-          if (timeYearAgo < new Date(element.date).getTime()) {
-            sumYear += element.amount;
-            cashFlows.push(element.amount);
-            dates.push(new Date(element.date));
-          } else {
-            beforeFlows += element.amount;
-          }
-        }
-        cashFlows.unshift(beforeFlows + profitSum);
-        dates.unshift(new Date(timeYearAgo));
-        // cashFlows[0] += beforeFlows;
-        cashFlows.push(-type);
-        dates.push(new Date());
-        return calculateXIRR(cashFlows, dates);
-      },
-      get incomeSum() {
-        const timeYearAgo = new Date().getTime() - 31536000000;
-        let sum = 0;
-        for (element of xirrData.data.data) {
-          if (timeYearAgo < new Date(element.date).getTime()) {
-            sum += element.income;
-          }
-        }
-        return sum;
-      },
-      get expenseSum() {
-        const timeYearAgo = new Date().getTime() - 31536000000;
-        let sum = 0;
-        for (element of xirrData.data.data) {
-          if (timeYearAgo < new Date(element.date).getTime()) {
-            sum += element.expense;
-          }
-        }
-        return sum;
-      },
-    };
+    user.id = userData.data.data.id; // Айди юзера
+    user.register_date = userData.data.data.register_date; // Дата регистрации
+    user.companies_count = amountCompany.data.data.companies_count; // Количество компаний
+    user.qualification = userStats.data.data.status.qualification.passed; // Статус квала
+    user.balance = balanceStats.total; // Баланс
+    user.npd = balanceStats.nkd; // НПД
+    user.freeBalance = balanceStats.free; // Свободные средства
+    user.xirrData = xirrData.data.data; // Данные для подсчета xirr (пополнения, выводы)
+    allTime.percentProfit = statAllTime.yield_rate; // Доходность в процентах за всё время
+    allTime.interest = statAllTime.details.interest; // Процентный доход за всё время
+    allTime.fine = statAllTime.details.fine; // Пени за всё время
+    allTime.bonus = statAllTime.details.bonus; // Бонусы за всё время
+    allTime.reffBonus = statAllTime.details.referral_bonus; // Реферальные бонусы за всё время
+    allTime.sale = statAllTime.details.sale; // Доход на вторичке за всё время
+    allTime.loss = statAllTime.loss; // Потери за всё время
+    allTime.ndfl = statAllTime.profit_ndfl; // НДФЛ за всё время
+    yearTime.percentProfit = statYearTime.yield_rate; // Доходность в процентах за год
+    yearTime.interest = statYearTime.details.interest; // Процентный доход за год
+    yearTime.fine = statYearTime.details.fine; // Пени за год
+    yearTime.bonus = statYearTime.details.bonus; // Бонусы за год
+    yearTime.reffBonus = statYearTime.details.referral_bonus; // Реферальные бонусы за год
+    yearTime.sale = statYearTime.details.sale; // Доход на вторичке за год
+    yearTime.loss = statYearTime.loss; // Потери за год
+    yearTime.ndfl = statYearTime.profit_ndfl; // НДФЛ за год
 
     // Функция подсчёта дней инвестирования
     function investDays() {
@@ -1264,32 +1148,13 @@ async function mainUpdateFunction() {
       return days + text;
     }
 
-    if (!timeSettingBtn.clickListenerAdded) {
-      timeSettingBtn.addEventListener("click", function () {
-        if (timeSettingBtn.textContent == "всё время" && investDays() >= 365) {
-          timeSettingBtn.textContent = "год";
-          timePeriod = "year";
-          updateProfit();
-        } else if (timeSettingBtn.textContent == "год") {
-          timeSettingBtn.textContent = "всё время";
-          timePeriod = "allTime";
-          updateProfit();
-        }
-        let extensionSettings = {
-          timePeriod: timeSettingBtn.textContent,
-        };
-        chrome.storage.local.set({ settings: extensionSettings });
-      });
-      timeSettingBtn.clickListenerAdded = true;
-    }
-
     for (let span of $getAll(".invest-section__title-sum")) {
       span.textContent = `(Свободно: ${toCurrencyFormat(balanceStats.free)})`;
     }
     fmInvestSumAll.value = balanceStats.free;
     smInvestSumAll.value = balanceStats.free;
 
-    sameDataText = `
+    const sameDataText = `
       <div class="contrast-bg">
         <h3>Статистика платформы:</h3>
         <p>Ставка на сборе (за всё время / за 30 дней): <b>${toPercentFormat(platformObj.data.average_interest_rate)}</b> / <b>${toPercentFormat(platformObj.data.average_interest_rate_30days)}</b></p>
@@ -1300,10 +1165,10 @@ async function mainUpdateFunction() {
       <br>
       <div class="contrast-bg">
         <h3>Прочее:</h3>
-        <p>Айди: <b>${userObj.data.id}</b></p>
-        <p>Дата регистрации: <b>${formatReadableDate(userObj.data.register_date)}</b></p>
+        <p>Айди: <b>${user.id}</b></p>
+        <p>Дата регистрации: <b>${formatReadableDate(user.register_date)}</b></p>
         <p>Срок инвестирования: <b>${getInvestDays()}</b></p>
-        <p>Компаний в портфеле: <b>${amountCompany.data.data.companies_count}</b></p>
+        <p>Компаний в портфеле: <b>${user.companies_count}</b></p>
       </div>
       ${
         window.innerWidth <= 768
@@ -1316,7 +1181,7 @@ async function mainUpdateFunction() {
     </div>
     `;
 
-    dataTextAllTime = `<div class="container">
+    const dataTextAllTime = `<div class="container">
       <div class="contrast-bg">
         <h3>Статистика за <span class="swap">всё время</span>:</h3>
         <p>Процентный доход: <b style="color:${decorNumber(allTime.interest)}">${numberSign(allTime.interest)}${toCurrencyFormat(allTime.interest)}</b></p>
@@ -1338,7 +1203,7 @@ async function mainUpdateFunction() {
     ${(innerHTML = sameDataText)}
     `;
 
-    dataTextYearTime = `<div class="container">
+    const dataTextYearTime = `<div class="container">
       <div class="contrast-bg">
         <h3>Статистика за <span class="swap">год</span>:</h3>
         <p>Процентный доход: <b style="color:${decorNumber(yearTime.interest)}">${numberSign(yearTime.interest)}${toCurrencyFormat(yearTime.interest)}</b></p>
@@ -1361,99 +1226,88 @@ async function mainUpdateFunction() {
     `;
 
     function updateProfit() {
-      if (investDays() < 365) {
-        incomeTitle.innerHTML = `<span>Доход за ${getInvestDays()} (без НПД | чистый доход)</span> <span>Доходность</span>`;
-        $get(".income__currency").innerHTML = `<span id="income">${toCurrencyFormat(allTime.profitWithoutNpd)}</span><span style="opacity: .5;"> | </span><span id="income--clean">${toCurrencyFormat(allTime.cleanProfit)}</span>`;
-        $get(".income__percent").innerHTML = `<span><img src="/img/income.svg">${toPercentFormat(allTime.percentProfit)}</span>`;
-      } else if (timePeriod == "allTime") {
-        incomeTitle.innerHTML = `<span>Доход за всё время (без НПД | чистый доход)</span> <span>Доходность</span>`;
-        $get(".income__currency").innerHTML = `<span id="income">${toCurrencyFormat(allTime.profitWithoutNpd)}</span><span style="opacity: .5;"> | </span><span id="income--clean">${toCurrencyFormat(allTime.cleanProfit)}</span>`;
-        $get(".income__percent").innerHTML = `<span><img src="/img/income.svg">${toPercentFormat(allTime.percentProfit)}</span>`;
-      } else if (timePeriod == "year" && investDays() >= 365) {
-        incomeTitle.innerHTML = `<span>Доход за год (без НПД | чистый доход)</span> <span>Доходность</span>`;
-        $get(".income__currency").innerHTML = `<span id="income">${toCurrencyFormat(yearTime.profitWithoutNpd)}</span><span style="opacity: .5;"> | </span><span id="income--clean">${toCurrencyFormat(yearTime.cleanProfit)}</span>`;
-        $get(".income__percent").innerHTML = `<span><img src="/img/income.svg">${toPercentFormat(yearTime.percentProfit)}</span>`;
-      }
+      const title = time_setting.value === "all" ? "Доход за всё время (без НПД | чистый доход)" : investDays() < DAYS_IN_YEAR ? `Доход за ${getInvestDays()} (без НПД | чистый доход)` : "Доход за год (без НПД | чистый доход)";
+      const profit = time_setting.value === "year" && investDays() >= DAYS_IN_YEAR ? yearTime.profitWithoutNpd : allTime.profitWithoutNpd;
+      const cleanProfit = time_setting.value === "year" && investDays() >= DAYS_IN_YEAR ? yearTime.cleanProfit : allTime.cleanProfit;
+      const percent = time_setting.value === "year" && investDays() >= DAYS_IN_YEAR ? yearTime.percentProfit : allTime.percentProfit;
+
+      $get(".income__title").innerHTML = `<span>${title}</span> <span>Доходность</span>`;
+      $get(".income__currency").innerHTML = `<span id="income">${toCurrencyFormat(profit)}</span><span style="opacity: .5;"> | </span><span id="income--clean">${toCurrencyFormat(cleanProfit)}</span>`;
+      $get(".income__percent").innerHTML = `<span><img src="/img/income.svg">${toPercentFormat(percent)}</span>`;
     }
 
-    lastUpdateDateTag.innerHTML = `Все активы <span>(${getUpdateTime(new Date().getTime())})</span>`;
-    balanceTitle.innerHTML = `<span>Активы | Активы без НПД</span> <span>Ставка на сборе</span>`;
-    balanceTag.innerHTML = `<span style="text-wrap: nowrap"><span id="balance">${toCurrencyFormat(balance)}</span><span style="opacity: .5;"> | </span><span id="balance--clean">${toCurrencyFormat(cleanBalance)}</span></span><span style="text-wrap: nowrap">${toPercentFormat(platformObj.data.average_interest_rate_30days)}</span>`;
-    currencyAnimation("balance", currencyToFloat(cachedBalance), currencyToFloat($get("#balance").textContent), "hideArrow");
-    currencyAnimation("balance--clean", currencyToFloat(cachedCleanBalance), currencyToFloat($get("#balance--clean").textContent));
-    cachedBalance = balance;
-    cachedCleanBalance = cleanBalance;
+    $get(".lastUpdateDate").innerHTML = `Все активы <span>(${getUpdateTime(new Date().getTime())})</span>`;
+    $get(".balance__title").innerHTML = `<span>Активы | Активы без НПД</span> <span>Ставка на сборе</span>`;
+    $get(".balance__value").innerHTML = `<span style="text-wrap: nowrap"><span id="balance">${toCurrencyFormat(user.balance)}</span><span style="opacity: .5;"> | </span><span id="balance--clean">${toCurrencyFormat(user.cleanBalance)}</span></span><span style="text-wrap: nowrap">${toPercentFormat(platformObj.data.average_interest_rate_30days)}</span>`;
+    currencyAnimation("balance", currencyToFloat(cache.balance ?? 0), currencyToFloat(user.balance), "hideArrow");
+    currencyAnimation("balance--clean", currencyToFloat(cache.cleanBalance ?? 0), currencyToFloat(user.cleanBalance));
+    cache.balance = user.balance;
+    cache.cleanBalance = user.cleanBalance;
     updateProfit();
 
-    if (timePeriod == "year" && investDays() >= 365) {
-      statsSection.innerHTML = dataTextYearTime;
-    } else if (timePeriod == "allTime") {
-      statsSection.innerHTML = dataTextAllTime;
+    if (time_setting.value === "year" && investDays() >= DAYS_IN_YEAR) {
+      $get(".stats-section").innerHTML = dataTextYearTime;
+    } else if (time_setting.value === "all") {
+      $get(".stats-section").innerHTML = dataTextAllTime;
     }
 
-    if (investDays() < 365) {
-      await userStats;
-      statsSection.innerHTML = dataTextAllTime;
+    if (investDays() < DAYS_IN_YEAR) {
+      $get(".stats-section").innerHTML = dataTextAllTime;
       $get(".swap").textContent = getInvestDays();
       $get(".swap").style.textDecoration = "none";
       $get(".swap").style.userSelect = "auto";
       $get(".swap").style.cursor = "text";
     }
 
-    // Сохранение данных
-    const cache = {
-      balanceTitle: balanceTitle.querySelectorAll("span")[0].textContent, // Текст заголовка активов (согласно настройкам)
-      balanceText: balanceTag.querySelectorAll("span")[0].textContent, // Текст активов (согласно настройкам)
+    function handleSwapClick(event) {
+      if (event.target.classList.contains("swap")) {
+        if (event.target.textContent === "всё время") {
+          $get(".stats-section").innerHTML = dataTextYearTime;
+        } else if (event.target.textContent === "год") {
+          $get(".stats-section").innerHTML = dataTextAllTime;
+        }
+      }
+    }
 
-      balance: $get("#balance").textContent,
-      cleanBalance: $get("#balance--clean").textContent,
+    $get(".stats-section").removeEventListener("click", handleSwapClick); // Удаление слушателя
+    $get(".stats-section").addEventListener("click", handleSwapClick); // Повторное добавление слушателя
+
+    // Сохранение данных
+    const cacheData = {
+      balanceTitle: $get(".balance__title").querySelectorAll("span")[0].textContent, // Текст заголовка активов (согласно настройкам)
+      balanceText: $get(".balance__value").querySelectorAll("span")[0].textContent, // Текст активов (согласно настройкам)
+
+      balance: toCurrencyFormat(user.balance),
+      cleanBalance: toCurrencyFormat(user.cleanBalance),
 
       income: $get("#income").textContent,
       cleanIncome: $get("#income--clean").textContent,
 
-      collectionIncomeTitle: balanceTitle.querySelectorAll("span")[1].textContent, // Текст заголовка ставки на сборе
-      collectionIncomeText: balanceTag.querySelectorAll("span")[4].textContent, // Текст ставки на сборе
+      collectionIncomeTitle: $get(".balance__title").querySelectorAll("span")[1].textContent, // Текст заголовка ставки на сборе
+      collectionIncomeText: $get(".balance__value").querySelectorAll("span")[4].textContent, // Текст ставки на сборе
 
-      incomeTitle: incomeTitle.querySelectorAll("span")[0].textContent, // Текст заголовка дохода (согласно настройкам)
+      incomeTitle: $get(".income__title").querySelectorAll("span")[0].textContent, // Текст заголовка дохода (согласно настройкам)
       incomeText: $get(".income__currency").textContent, // Текст дохода (согласно настройкам)
 
-      incomePercent: incomeTitle.querySelectorAll("span")[1].textContent, // Текст заголовка процентного дохода
+      incomePercent: $get(".income__title").querySelectorAll("span")[1].textContent, // Текст заголовка процентного дохода
       percentIncomeNum: $get(".income__percent").textContent, // Процентный доход
 
       updateTime: new Date().getTime(), // Текущее время
 
-      qualification: userStatsObj.data.status.qualification.passed, // Статус квала
+      qualification: user.qualification, // Статус квала
     };
-    chrome.storage.local.set({ cacheJetlend: cache });
+    chrome.storage.local.set({ cacheJetlend: cacheData });
   } catch (e) {
-    lastUpdateDateTag.textContent = "Нет авторизации";
+    $get(".lastUpdateDate").textContent = "Нет авторизации";
     $get(".main-section__stats").innerHTML = `<div style="margin: 64px 0px; position: relative; transform: translate(25%, 0%);">Авторизуйтесь на сайте</div>`;
+    console.log(e);
     return;
   }
+  // 1433-1102
 }
 
 mainUpdateFunction();
 setInterval(mainUpdateFunction, 60000);
-
-chrome.storage.local.get("cacheJetlend", function (result) {
-  const data = result.cacheJetlend;
-  if (data) {
-    lastUpdateDateTag.innerHTML = `Все активы <span style="position: relative">(${getUpdateTime(data.updateTime)}) <span class="load-spinner" title="Загузка актуальных данных..." style="cursor: pointer; width: 16px"></span></span>`;
-    balanceTitle.innerHTML = `<span>${data.balanceTitle}</span> <span>${data.collectionIncomeTitle}</span>`;
-    balanceTag.innerHTML = `<div><span class="load-opacity-animation">${data.balance}</span><span style="opacity: .5;"> | </span><span class="load-opacity-animation">${data.cleanBalance}</span></div> <span class="load-opacity-animation">${data.collectionIncomeText}</span>`;
-    incomeTitle.innerHTML = `<span>${data.incomeTitle}</span> <span>${data.incomePercent}</span>`;
-
-    $get(".income__currency").innerHTML = `<span class="load-opacity-animation">${data.income}</span><span style="opacity: .5;"> | </span><span class="load-opacity-animation">${data.cleanIncome}</span>`;
-    $get(".income__percent").innerHTML = `<span class="load-opacity-animation"><img src="/img/income.svg">${data.percentIncomeNum}</span>`;
-
-    cachedBalance = data.balance;
-    cachedCleanBalance = data.cleanBalance;
-
-    if (data.qualification) {
-      $get("#fmInvestAgreeText").textContent = $get("#smInvestAgreeText").textContent;
-    }
-  }
-});
 
 // Обновление списка компаний (первичка)
 async function updateFirstMarket() {
@@ -1537,7 +1391,7 @@ async function updateSecondMarket() {
 
 // Распределение средств (первичка)
 $get("#firstMarketSubmit").addEventListener("click", function () {
-  if ($get("#fmInvestAgree").checked && valueToInt(fmInvestSum.value) <= freeBalance && valueToInt(fmInvestSum.value) >= 100 && !$get("#fm-numOfSortedCompany").textContent.includes("Загрузка...") && freeBalance >= 100 && fmInvestCompanyArray.length >= 1) {
+  if ($get("#fmInvestAgree").checked && valueToInt(fmInvestSum.value) <= user.freeBalance && valueToInt(fmInvestSum.value) >= 100 && !$get("#fm-numOfSortedCompany").textContent.includes("Загрузка...") && user.freeBalance >= 100 && fmInvestCompanyArray.length >= 1) {
     chrome.storage.local.set({
       fmInvest: {
         array: fmInvestCompanyArray,
@@ -1555,7 +1409,7 @@ $get("#firstMarketSubmit").addEventListener("click", function () {
 
 // Распределение средств (вторичка)
 $get("#secondMarketSubmit").addEventListener("click", function () {
-  if ($get("#smInvestAgree").checked && valueToInt(smInvestSum.value) <= freeBalance && valueToInt(smInvestSum.value) >= 100 && !$get("#sm-numOfSortedCompany").textContent.includes("Загрузка...") && freeBalance >= 100 && smInvestCompanyArray.length >= 1) {
+  if ($get("#smInvestAgree").checked && valueToInt(smInvestSum.value) <= user.freeBalance && valueToInt(smInvestSum.value) >= 100 && !$get("#sm-numOfSortedCompany").textContent.includes("Загрузка...") && user.freeBalance >= 100 && smInvestCompanyArray.length >= 1) {
     chrome.storage.local.set({
       smInvest: {
         array: smInvestCompanyArray,

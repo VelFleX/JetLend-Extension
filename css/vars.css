@@ -1,60 +1,73 @@
 :root {
-  /* --jle-green: #186251; */
   --jle-bgColor: #fff;
-  --jle-secondBgColor: #f3f4f6;
   --jle-fontColor: #1e2021;
+  --jle-contrast: #f3f4f5;
+  --jle-contrast-hover: #ececec;
+
   --jle-buttonColor: #1e2021;
-  --jle-buttonHoverColor: #363a3c;
   --jle-buttonTextColor: #fff;
-  --jle-smallBtnColor: #e0e0e0;
-  --jle-smallBtnColor--hover: #cecece;
-  --jle-svgBgColor: #f1f1f1;
+  --jle-buttonHoverColor: #363a3c;
+  --jle-inputs: #e7e7e7;
+  --jle-inputs-hover: #dddddd;
+  --jle-link: #8888e6;
 
-  --jle-first-color: #ededed;
-  --jle-second-color: #e8e8e8;
   --jle-universalColor: #c8ced2;
-
   --jle-green: #00ba88;
-  --jle-lightGreen: #97d8ca;
+  --jle-lightGreen: #6cddc2;
+  --jle-orange: #f2c94c;
+  --jle-red: #ee2656;
+  --jle-gray: #404142;
+  --jle-lightGray: #808080;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --jle-bgColor: #1f2022;
-    --jle-secondBgColor: #272928;
     --jle-fontColor: #fefefe;
+    --jle-contrast: #2b2c2e;
+    --jle-contrast-hover: #303132;
+
     --jle-buttonColor: #186251;
     --jle-buttonHoverColor: #1e3431;
-    --jle-buttonTextColor: #fff;
-    --jle-smallBtnColor: #3f3f3f;
-    --jle-smallBtnColor--hover: #515151;
-    --jle-svgBgColor: #515151;
-
-    --jle-first-color: #292929;
-    --jle-second-color: #333333;
-
-    --jle-lightGreen: #00e7b5;
+    --jle-inputs: #3c3c3c;
+    --jle-inputs-hover: #4d4e4f;
   }
 }
 
-.test-theme {
-  --jle-green: #00ffc3;
-  --jle-bgColor: #c63535;
-  --jle-secondBgColor: #06225b;
-  --jle-fontColor: #e2ecf1;
-  --jle-buttonColor: #043201;
-  --jle-buttonHoverColor: #66ccff;
-  --jle-buttonTextColor: #fff;
-  --jle-smallBtnColor: #ec0000;
-  --jle-smallBtnColor--hover: #cecece;
-  --jle-svgBgColor: #f1f1f1;
+.light-theme {
+  --jle-bgColor: #fff;
+  --jle-fontColor: #1e2021;
+  --jle-contrast: #f3f4f5;
+  --jle-contrast-hover: #ececec;
 
-  --jle-first-color: #ededed;
-  --jle-second-color: #e8e8e8;
-  --jle-universalColor: #c8ced2;
+  --jle-buttonColor: #1e2021;
+  --jle-buttonHoverColor: #363a3c;
+  --jle-inputs: #e7e7e7;
+  --jle-inputs-hover: #dddddd;
+}
 
-  --jle-green: #00ba88;
-  --jle-lightGreen: #97d8ca;
+.dark-theme {
+  --jle-bgColor: #1f2022;
+  --jle-fontColor: #fefefe;
+  --jle-contrast: #2b2c2e;
+  --jle-contrast-hover: #303132;
+
+  --jle-buttonColor: #186251;
+  --jle-buttonHoverColor: #1e3431;
+  --jle-inputs: #3c3c3c;
+  --jle-inputs-hover: #4d4e4f;
+}
+
+.black-theme {
+  --jle-bgColor: #000;
+  --jle-fontColor: #fefefe;
+  --jle-contrast: #121212;
+  --jle-contrast-hover: #202020;
+
+  --jle-buttonColor: #186251;
+  --jle-buttonHoverColor: #1e3431;
+  --jle-inputs: #272727;
+  --jle-inputs-hover: #3d3d3d;
 }
 
 @keyframes slideAnimation {
