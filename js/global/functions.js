@@ -561,7 +561,7 @@ async function smLoadLoans(mode, offset = 0, limit = 100, total = 0, badComps = 
             obj.financial_discipline >= valueToPercent(filters.smFdFrom) &&
             obj.financial_discipline <= valueToPercent(filters.smFdTo) /* ФД заёмщика */ &&
             obj.status !== "waiting") /* Статус НЕ в ожидании (не на сборе) */ ||
-          (filters.smCheckNullRating && obj.borrower_rating === "-")
+          (filters.smCheckNullRating && !obj.borrower_rating)
       )
     );
 
