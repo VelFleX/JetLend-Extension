@@ -1,5 +1,4 @@
 const normalizedURL = window.location.href.replace(/(https?:\/\/)?(www\.)?/i, "").replace(/\/$/, "");
-console.log("url: ", normalizedURL);
 // Распределение средств (первичка)
 async function fmInvest() {
   if (normalizedURL !== "jetlend.ru/invest/v3/?state=login") return;
@@ -30,12 +29,12 @@ async function fmInvest() {
       .then((response) => response.json())
       .then((res) => {
         if (res.status.toLowerCase() === "ok") {
-          sendNotification(`Успешная инвестиция ID${company.id}`, companyHtmlNotification(company, { sum: cache.sum }));
+          sendNotification(`Успешная инвестиция ID${company.id}`, investNotification(company, { sum: cache.sum, percent: company.interest_rate }));
           investedSum += cache.sum;
           companyCount++;
-          investHistory.unshift({ id: company.id, name: company.loan_name, img: company.preview_small_url, fd: company.financial_discipline, rating: company.rating, investSum: cache.sum, percent: company.interest_rate, date: new Date().getTime(), mode: investMode });
+          investHistory.unshift({ id: company.id, name: company.loan_name, img: company.preview_small_url, fd: company.financial_discipline, rating: company.rating, brating: company.borrower_rating, investSum: cache.sum, percent: company.interest_rate, date: new Date().getTime(), mode: investMode });
         } else {
-          sendNotification(`Ошибка ID${company.id}`, companyHtmlNotification(company, { error: res.error }));
+          sendNotification(`Ошибка ID${company.id}`, investNotification(company, { error: res.error }));
           errorCount++;
         }
         console.log(res);
@@ -118,17 +117,17 @@ async function smInvest() {
       try {
         const data = await Promise.race([fetchPromise, timeoutPromise]);
         if (data.status.toLowerCase() === "ok") {
-          sendNotification(`Успешная инвестиция ID${company.loan_id}`, companyHtmlNotification(company, { sum: data.data.amount, price: price }));
+          sendNotification(`Успешная инвестиция ID${company.loan_id}`, investNotification(company, { sum: data.data.amount, price: price, percent: data.data.ytm }));
           sumAll = parseFloat((sumAll - data.data.amount).toFixed(2));
           investedSum += data.data.amount;
           companyCount++;
-          investHistory.unshift({ id: company.loan_id, name: company.loan_name, img: company.preview_small_url, fd: company.financial_discipline, rating: company.rating, investSum: data.data.amount, percent: data.data.ytm, date: new Date().getTime(), mode: investMode, price: price, class: company.loan_class });
+          investHistory.unshift({ id: company.loan_id, name: company.loan_name, img: company.preview_small_url, fd: company.financial_discipline, rating: company.rating, brating: company.borrower_rating, investSum: data.data.amount, percent: data.data.ytm, date: new Date().getTime(), mode: investMode, price: price, class: company.loan_class });
         } else {
-          sendNotification(`Ошибка ID${company.loan_id}`, companyHtmlNotification(company, { error: data.error }));
+          sendNotification(`Ошибка ID${company.loan_id}`, investNotification(company, { error: data.error }));
           errorCount++;
         }
       } catch (error) {
-        sendNotification(`Ошибка ID${company.loan_id}`, companyHtmlNotification(company, { error: error.message }));
+        sendNotification(`Ошибка ID${company.loan_id}`, investNotification(company, { error: error.message }));
         errorCount++;
       }
     }
@@ -221,83 +220,95 @@ async function updateBadge() {
         chrome.storage.local.set({
           JLE_content: { lastUpdate: new Date().getTime() },
         });
-        const filters = await getCache("investSettings");
+        let filters = await getCache(`investPreset_${settings.autoInvestPreset}`, 0);
+        if (filters === 0) filters = await getCache("investSettings");
         if (badgeMode === "loans") {
           await smLoadLoans("badge", 0, 100);
           await fmLoadLoans("badge");
-          setBadge(`${Math.min(fmInvestCompanyArray.length, Math.floor(freeBalance / filters.fmInvestSum), 99)}/${Math.min(smInvestCompanyArray.length, Math.floor(freeBalance / filters.smInvestSum), 99)}`);
+          if (freeBalance / filters.fmInvestSum === NaN || freeBalance / filters.smInvestSum === NaN) {
+            setBadge("0/0");
+          } else {
+            setBadge(`${Math.min(fmInvestCompanyArray.length, Math.floor(freeBalance / filters.fmInvestSum), 99)}/${Math.min(smInvestCompanyArray.length, Math.floor(freeBalance / filters.smInvestSum), 99)}`);
+          }
         } else if (badgeMode === "money") {
           setBadge(toSuperShortCurrencyFormat(freeBalance));
-          if (autoInvestMode !== "0") {
-            if (autoInvestMode === "fm" && freeBalance - safe < filters.fmInvestSum && lastAutoInvest + MINUTE * investInterval > new Date().getTime()) {
-              return;
-            } else if (autoInvestMode === "sm" && freeBalance - safe < filters.smInvestSum && lastAutoInvest + MINUTE * investInterval > new Date().getTime()) {
-              return;
-            } else {
-              await smLoadLoans("loadLoans", 0, 100);
-              await fmLoadLoans("loadLoans");
-              console.log();
-            }
-          }
+        } else if (badgeMode === "allTimePercentProfit") {
+          setBadge(toSuperShortPercentFormat(statsData.data.data.summary.yield_rate));
+        } else if (badgeMode === "yearTimePercentProfit") {
+          setBadge(toSuperShortPercentFormat(statsData.data.data.summary_year.yield_rate));
+        } else if (badgeMode === "allTimeLoss") {
+          setBadge(toSuperShortCurrencyFormat(statsData.data.data.summary.loss));
+        } else if (badgeMode === "yearTimeLoss") {
+          setBadge(toSuperShortCurrencyFormat(statsData.data.data.summary_year.loss));
+        } else if (badgeMode === "defaultsCount") {
+          const url = "https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22default%22%5D%2C%22field%22%3A%22status%22%7D%5D";
+          const res = await fetchData(url);
+          setBadge(res.data.total);
         } else {
           setBadge("");
-          if (autoInvestMode !== "0") {
-            if (autoInvestMode === "fm" && freeBalance - safe < filters.fmInvestSum && lastAutoInvest + MINUTE * investInterval > new Date().getTime()) {
-              return;
-            } else if (autoInvestMode === "sm" && freeBalance - safe < filters.smInvestSum && lastAutoInvest + MINUTE * investInterval > new Date().getTime()) {
-              return;
+        }
+        if (autoInvestMode !== "0" && lastAutoInvest + MINUTE * investInterval > new Date().getTime()) {
+          if (autoInvestMode === "fm" && freeBalance - safe > filters.fmInvestSum) {
+            if (!fmInvestCompanyArray.length) {
+              await fmLoadLoans("loadLoans");
+              if (!fmInvestCompanyArray.length) return;
             }
+            const currentTime = new Date().getTime();
+            chrome.storage.local.set({
+              JLE_content: { lastUpdate: currentTime, lastAutoInvest: currentTime },
+            });
+            chrome.storage.local.set({
+              fmInvest: {
+                array: fmInvestCompanyArray,
+                sum: valueToInt(filters.fmInvestSum),
+                sumAll: currencyToFloat(freeBalance - safe),
+                loanMaxSum: currencyToFloat(filters.fmStopLoanSum),
+                companyMaxSum: currencyToFloat(filters.fmStopCompanySum),
+                mode: "auto",
+              },
+            });
+            fmInvestCompanyArray = [];
+            chrome.runtime.sendMessage({ action: "createTab", url: "https://jetlend.ru/invest/v3/?state=login" });
+          } else if (autoInvestMode === "sm" && freeBalance - safe > filters.smInvestSum) {
+            if (!smInvestCompanyArray.length) {
+              await smLoadLoans("loadLoans", 0, 100);
+              if (!smInvestCompanyArray.length) return;
+            }
+            const currentTime = new Date().getTime();
+            chrome.storage.local.set({
+              JLE_content: { lastUpdate: currentTime, lastAutoInvest: currentTime },
+            });
+            chrome.storage.local.set({
+              smInvest: {
+                array: smInvestCompanyArray,
+                sum: valueToInt(filters.smInvestSum),
+                sumAll: currencyToFloat(freeBalance - safe),
+                minPrice: valueToPercent(filters.smPriceFrom),
+                maxPrice: valueToPercent(filters.smPriceTo),
+                ytmMin: valueToPercent(filters.smRateFrom),
+                ytmMax: valueToPercent(filters.smRateTo),
+                loanMaxSum: currencyToFloat(filters.smStopLoanSum),
+                companyMaxSum: currencyToFloat(filters.smStopCompanySum),
+                mode: "auto",
+              },
+            });
+            smInvestCompanyArray = [];
+            chrome.runtime.sendMessage({ action: "createTab", url: "https://jetlend.ru/invest/v3/?state=login" });
+          } else {
+            return;
           }
         }
-        if (autoInvestMode === "fm" && freeBalance - safe > filters.fmInvestSum && fmInvestCompanyArray.length !== 0) {
-          const currentTime = new Date().getTime();
-          chrome.storage.local.set({
-            JLE_content: { lastUpdate: currentTime, lastAutoInvest: currentTime },
-          });
-          chrome.storage.local.set({
-            fmInvest: {
-              array: fmInvestCompanyArray,
-              sum: valueToInt(filters.fmInvestSum),
-              sumAll: currencyToFloat(freeBalance - safe),
-              loanMaxSum: currencyToFloat(filters.fmStopLoanSum),
-              companyMaxSum: currencyToFloat(filters.fmStopCompanySum),
-              mode: "auto",
-            },
-          });
-          chrome.runtime.sendMessage({ action: "createTab", url: "https://jetlend.ru/invest/v3/?state=login" });
-        } else if (autoInvestMode === "sm" && freeBalance - safe > filters.smInvestSum && smInvestCompanyArray !== 0) {
-          const currentTime = new Date().getTime();
-          chrome.storage.local.set({
-            JLE_content: { lastUpdate: currentTime, lastAutoInvest: currentTime },
-          });
-          chrome.storage.local.set({
-            smInvest: {
-              array: smInvestCompanyArray,
-              sum: valueToInt(filters.smInvestSum),
-              sumAll: currencyToFloat(freeBalance - safe),
-              minPrice: valueToPercent(filters.smPriceFrom),
-              maxPrice: valueToPercent(filters.smPriceTo),
-              ytmMin: valueToPercent(filters.smRateFrom),
-              ytmMax: valueToPercent(filters.smRateTo),
-              loanMaxSum: currencyToFloat(filters.smStopLoanSum),
-              companyMaxSum: currencyToFloat(filters.smStopCompanySum),
-              mode: "auto",
-            },
-          });
-          chrome.runtime.sendMessage({ action: "createTab", url: "https://jetlend.ru/invest/v3/?state=login" });
-        }
-        return;
-      } else {
-        setBadge("🔒❌");
       }
     }
   } catch (error) {
-    console.error("Ошибка: ", error);
+    setBadge("🔒❌");
   }
 }
 
 async function mainUpdate() {
   if (window.location.href.endsWith("invest/v3") || window.location.href.endsWith("invest/v3/?state=login")) {
+    const cache = await getCache("settings");
+    if (!cache.updateVisual) return;
     const userStatsUrl = "https://jetlend.ru/invest/api/account/details";
     const platformStatsUrl = "https://jetlend.ru/invest/api/public/stats";
 

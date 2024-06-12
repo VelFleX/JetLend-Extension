@@ -24,11 +24,12 @@
         <div class="flex flex-col" style="gap: 8px; flex-grow: 1">
           <div class="flex dashboard__btn open-events" style="gap: 8px"><img src="/img/events.svg" width="24px" alt="События" /> <span class="self-center">События</span></div>
           <div class="flex dashboard__btn open-portfolio" style="gap: 8px"><img src="/img/portfolio.svg" width="24px" alt="Портфель" /><span class="self-center">Портфель</span></div>
-          <div class="flex dashboard__btn open-analytics" style="gap: 8px"><img src="/img/analytics.svg" width="24px" alt="Аналитика" /><span class="self-center">Аналитика</span></div>
+          <!-- <div class="flex dashboard__btn open-analytics" style="gap: 8px"><img src="/img/analytics.svg" width="24px" alt="Аналитика" /><span class="self-center">Аналитика</span></div> -->
           <div class="flex dashboard__btn open-settings" style="gap: 8px"><img src="/img/settings.svg" width="22px" alt="Настройки" /><span class="self-center">Настройки</span></div>
         </div>
         <div class="footer-text">
           <p>JetLend Extension v<span id="version"></span></p>
+          <p class="open-updates">История обновлений</p>
           <p class="open-support">Поддержать разработку</p>
         </div>
         <span class="self-center"></span>
@@ -40,7 +41,7 @@
             <div class="main-section__header">
               <h5 class="lastUpdateDate">
                 Все активы
-                <span title="Посетите Jetlend чтобы обновить данные" style="color: var(--jle-orange); cursor: pointer">(Не обновлено)</span>
+                <span style="color: var(--jle-orange); cursor: pointer">(Не обновлено)</span>
               </h5>
               <div class="main-section__buttons">
                 <div class="svg-btn-container tooltip open-events">
@@ -51,10 +52,10 @@
                   <img src="/img/portfolio.svg" width="24px" alt="Портфель" />
                   <template class="tooltip-content">Портфель</template>
                 </div>
-                <div class="svg-btn-container tooltip open-analytics">
+                <!-- <div class="svg-btn-container tooltip open-analytics">
                   <img src="/img/analytics.svg" width="24px" alt="Аналитика" />
                   <template class="tooltip-content">Аналитика</template>
-                </div>
+                </div> -->
                 <div class="svg-btn-container tooltip open-settings">
                   <img src="/img/settings.svg" width="22px" alt="Настройки" />
                   <template class="tooltip-content">Настройки</template>
@@ -126,25 +127,67 @@
         <div class="btn-small__wrapper">
           <span class="btn-small" id="marketMode">Первичный рынок</span>
           <span class="btn-small" id="checkCompany__open">Проверка займов</span>
-          <div class="load-block-animation market-analiz-block" id="market-companyAnaliz">
+          <span class="btn-small" id="blackList__open">Чёрный список</span>
+          <!-- <div class="load-block-animation market-analiz-block" id="market-companyAnaliz">
             <div>
               Всего компаний: <span id="market-numOfAllCompany">Загрузка...</span>
-              <!-- , средняя ставка: <span id="market-averagePercent">Загрузка...</span> -->
             </div>
+          </div> -->
+        </div>
+
+        <div>
+          <h5>
+            Пресеты
+            <span class="btn-orb tooltip"
+              >?
+              <template class="tooltip-content">
+                <p>Наборы фильтров.</p>
+                <p>Сменить название можно нажав ПКМ.</p>
+              </template>
+            </span>
+          </h5>
+          <div class="flex" style="gap: 8px" id="presets">
+            <p class="btn-small flex-1 truncate-text">Пресет 1</p>
+            <p class="btn-small flex-1 truncate-text">Пресет 2</p>
+            <p class="btn-small flex-1 truncate-text">Пресет 3</p>
+            <p class="btn-small flex-1 truncate-text">Пресет 4</p>
+            <p class="btn-small flex-1 truncate-text">Пресет 5</p>
           </div>
         </div>
 
+        <!-- <div class="contrast-bg list-element">
+          <h4>Отображение</h4>
+          <div style="margin: 24px 0 6px">
+            Данные на главном экране
+            <select class="select" id="ti" style="float: right; margin: -4px 0">
+              <option value="all">За всё время</option>
+              <option value="year">За год</option>
+            </select>
+          </div>
+          <div style="margin: 24px 0 6px">
+            Тема расширения
+            <select class="select" id="t" style="float: right; margin: -4px 0">
+              <option value="0">Авто</option>
+              <option value="light">Светлая</option>
+              <option value="dark">Тёмная</option>
+              <option value="black">Чёрная</option>
+            </select>
+          </div>
+        </div> -->
+
         <section id="firstMarket" style="margin-bottom: 12px">
           <div class="contrast-bg list-element">
-            <h5 style="margin-bottom: 10px">Фильтры</h5>
+            <h5 class="mb-10">
+              Фильтры <span class="btn-orb tooltip">!<template class="tooltip-content">Все поля обязательны для заполнения!</template></span>
+            </h5>
             <div class="invest-section__input-title">Срок займа в днях (от / до):</div>
             <input class="invest-section__input filterInput" id="fmDaysFrom" type="number" min="0" max="5000" step="50" placeholder="от 0 дней" /> / <input class="invest-section__input filterInput" id="fmDaysTo" type="number" min="0" max="5000" step="50" placeholder="до 5000 дней" />
-            <div class="invest-section__input-title">Рейтинг (от / до):</div>
+            <div class="invest-section__input-title">Рейтинг займа (от / до):</div>
+            <input class="invest-section__input filterInput" id="fmLoanRatingFrom" type="number" min="1" max="20" placeholder="от 1" /> / <input class="invest-section__input filterInput" id="fmLoanRatingTo" type="number" min="1" max="20" placeholder="до 20" />
+            <div class="invest-section__input-title">Рейтинг заёмщика (от / до):</div>
             <input class="invest-section__input filterInput" id="fmRatingFrom" type="number" min="1" max="20" placeholder="от 1" /> / <input class="invest-section__input filterInput" id="fmRatingTo" type="number" min="1" max="20" placeholder="до 20" />
             <div class="invest-section__input-title">Ставка (от / до):</div>
             <input class="invest-section__input filterInput" id="fmRateFrom" type="number" min="0" max="200" placeholder="от 0 %" /> / <input class="invest-section__input filterInput" id="fmRateTo" type="number" min="0" max="200" placeholder="до 200 %" />
-            <div class="invest-section__input-title">Количество займов у заёмщика (от / до):</div>
-            <input class="invest-section__input filterInput" id="fmLoansFrom" type="number" min="1" max="100" placeholder="от 1" /> / <input class="invest-section__input filterInput" id="fmLoansTo" type="number" min="1" max="100" placeholder="до 100" />
             <div class="invest-section__input-title">Займ в портфеле в ₽ (до) / заёмщик в портфеле в ₽ (до):</div>
             <input class="invest-section__input filterInput" id="fmMaxLoanSum" type="number" min="0" step="100" placeholder="от 0 ₽" /> / <input class="invest-section__input filterInput" id="fmMaxCompanySum" type="number" min="0" step="100" placeholder="от 0 ₽" />
             <div class="btn-small__wrapper">
@@ -161,7 +204,7 @@
             </div>
           </div>
           <div class="contrast-bg list-element">
-            <h5 style="margin-bottom: 10px">Распределение <span class="invest-section__title-sum">(Загрузка...)</span></h5>
+            <h5 class="mb-10">Распределение <span class="invest-section__title-sum">(Загрузка...)</span></h5>
             <div class="invest-section__input-title">
               Ограничение суммы (в один займ / в одного заёмщика):
               <span class="btn-orb tooltip"
@@ -188,10 +231,14 @@
 
         <section class="display-none" id="secondMarket" style="margin-bottom: 12px">
           <div class="contrast-bg list-element">
-            <h5 style="margin-bottom: 10px">Фильтры</h5>
+            <h5 class="mb-10">
+              Фильтры <span class="btn-orb tooltip">!<template class="tooltip-content">Все поля обязательны для заполнения!</template></span>
+            </h5>
             <div class="invest-section__input-title">Остаток срока займа в днях (от / до):</div>
             <input class="invest-section__input filterInput" id="smDaysFrom" type="number" min="0" max="5000" step="50" placeholder="от 0 дней" /> / <input class="invest-section__input filterInput" id="smDaysTo" type="number" min="0" max="5000" step="50" placeholder="до 5000 дней" />
-            <div class="invest-section__input-title">Рейтинг (от / до):</div>
+            <div class="invest-section__input-title">Рейтинг займа (от / до):</div>
+            <input class="invest-section__input filterInput" id="smLoanRatingFrom" type="number" min="1" max="20" placeholder="от 1" /> / <input class="invest-section__input filterInput" id="smLoanRatingTo" type="number" min="1" max="20" placeholder="до 20" />
+            <div class="invest-section__input-title">Рейтинг заёмщика (от / до):</div>
             <input class="invest-section__input filterInput" id="smRatingFrom" type="number" min="1" max="20" placeholder="от 1" /> / <input class="invest-section__input filterInput" id="smRatingTo" type="number" min="1" max="20" placeholder="до 20" />
             <div class="invest-section__input-title">
               Эффективная ставка (от / до):
@@ -233,12 +280,12 @@
               </span>
             </div>
             <input class="invest-section__input filterInput" id="smClassFrom" type="number" min="0" max="3" step="1" placeholder="от 0" /> / <input class="invest-section__input filterInput" id="smClassTo" type="number" min="0" max="3" step="1" placeholder="до 3" />
-            <!-- <div class="invest-section__input-title">Дата регистрации бизнеса (от / до)</div>
-            <label><input class="invest-section__input filterInput" id="smRegDateFrom" type="date" /></label> / <label><input class="invest-section__input filterInput" id="smRegDateTo" type="date" /></label> -->
             <div class="invest-section__input-title">Займ в портфеле в ₽ (до) / заёмщик в портфеле в ₽ (до):</div>
             <input class="invest-section__input filterInput" id="smMaxLoanSum" type="number" min="0" step="100" placeholder="от 0 ₽" /> / <input class="invest-section__input filterInput" id="smMaxCompanySum" type="number" min="0" step="100" placeholder="от 0 ₽" />
-            <!-- <label class="invest-section__input-title filterInput" id="smRecomendedPrice" style="display: block; user-select: none; cursor: pointer"> Не дороже рекомендованное цены.</label> -->
-            <!-- <input class="filterInput" id="smRecomendedPrice" type="checkbox" value="yes" /> -->
+            <label style="display: block; font-size: 16px; margin: 10px 0; user-select: none; cursor: pointer">
+              <input class="filterInput" type="checkbox" id="smCheckNullRating" />
+              <span>Оставлять займы без рейтинга заёмщика.</span>
+            </label>
             <div class="btn-small__wrapper">
               <span style="font-size: 16px" id="sm-numOfSortedCompany">Загрузка...</span>
               <span class="btn-small display-none" id="sm-btn-update">Обновить</span>
@@ -246,8 +293,44 @@
               <span class="btn-small" id="sm-btn-stop">Остановить</span>
             </div>
           </div>
+
           <div class="contrast-bg list-element">
-            <h5 style="margin-bottom: 10px">Распределение <span class="invest-section__title-sum">(Загрузка...)</span></h5>
+            <h5 class="mb-10">
+              Сортировка
+              <span class="btn-orb tooltip"
+                >?
+                <template class="tooltip-content">
+                  <p>Сортировка помогает быстрее фильтровать компании.</p>
+                  <p>Поиск компаний прерывается, когда очередной пакет компаний перестает соответствовать фильтру.</p>
+                  <p>Например: сортировка по "Остаток срока займа (до)" отсортирует данные по остаткам срока займа и будет сверяться с фильтром "Остаток срока займа (до)". В случае нахождения компании, которая не будет удовлетворять условию фильтра, поиск компаний прервется.</p>
+                  <p>Наиболее подходящий вариант можно подобрать эмпирическим методом.</p>
+                </template>
+              </span>
+            </h5>
+            <div class="invest-section__input-title">Фильтр сортировки</div>
+            <select class="select filterInput" style="margin-top: 5px; width: 307px" id="smSortFilter">
+              <option value="0" selected>Отключено</option>
+              <option value="smDaysFrom">Остаток срока займа (от)</option>
+              <option value="smDaysTo">Остаток срока займа (до)</option>
+              <!-- <option value="smLoanRatingFrom">Рейтинг займа (от)</option>
+              <option value="smLoanRatingTo">Рейтинг займа (до)</option>
+              <option value="smRatingFrom">Рейтинг заёмщика (от)</option>
+              <option value="smRatingTo">Рейтинг заёмщика (до)</option> -->
+              <option value="smRateFrom">Эффективная ставка (от)</option>
+              <option value="smRateTo">Эффективная ставка (до)</option>
+              <!-- <option value="smFdFrom">ФД заёмщика (от)</option>
+              <option value="smFdTo">ФД заёмщика (до)</option> -->
+              <option value="smPriceFrom">Цена в процентах (от)</option>
+              <option value="smPriceTo">Цена в процентах (до)</option>
+              <option value="smClassFrom">Класс займа (от)</option>
+              <option value="smClassTo">Класс займа (до)</option>
+              <!-- <option value="smMaxLoanSum">Займ в портфеле (до)</option>
+              <option value="smMaxCompanySum">Заёмщик в портфеле (до)</option> -->
+            </select>
+          </div>
+
+          <div class="contrast-bg list-element">
+            <h5 class="mb-10">Распределение <span class="invest-section__title-sum">(Загрузка...)</span></h5>
             <div class="invest-section__input-title">
               Ограничение суммы (в один займ / в одного заёмщика):
               <span class="btn-orb tooltip"
@@ -312,7 +395,7 @@
       </section>
     </div>
 
-    <div class="modal-container display-none" id="analytics" style="height: 650px">
+    <!-- <div class="modal-container display-none" id="analytics" style="height: 650px">
       <section class="modal">
         <div class="modal__title">
           <h5>Аналитика (в разработке)</h5>
@@ -324,7 +407,7 @@
         </div>
         <div id="analytics__list"></div>
       </section>
-    </div>
+    </div> -->
 
     <div class="modal-container display-none" style="height: 650px" id="settings">
       <section class="modal">
@@ -352,6 +435,12 @@
                 <option value="black">Чёрная</option>
               </select>
             </div>
+            <div style="margin: 24px 0 6px">
+              <label style="display: block; font-size: 16px; margin: 10px 0; user-select: none; cursor: pointer">
+                <span>Заменять отображение баланса и дохода на сайте джета</span>
+                <input id="updateVisual_setting" style="position: relative; top: 2px" type="checkbox" />
+              </label>
+            </div>
           </div>
 
           <div class="contrast-bg list-element">
@@ -370,6 +459,24 @@
                 <option value="0">Отключено</option>
                 <option value="fm">Первичный рынок</option>
                 <option value="sm">Вторичный рынок</option>
+              </select>
+            </div>
+            <div style="margin: 24px 0 6px">
+              <span>Пресет</span>
+              <span class="btn-orb tooltip"
+                >?
+                <template class="tooltip-content">
+                  <p>Набор фильтров для работы скрипта.</p>
+                  <p>Пресеты настраиваются на странице распределения.</p>
+                </template>
+              </span>
+              <select class="select" id="autoInvest_preset" style="float: right; margin: -4px 0">
+                <option value="0">Пресет 1</option>
+                <option value="1">Пресет 2</option>
+                <option value="2">Пресет 3</option>
+                <option value="3">Пресет 4</option>
+                <option value="4">Пресет 5</option>
+                <option value="def" selected>Активный пресет</option>
               </select>
             </div>
             <div style="margin: 24px 0 6px">
@@ -400,15 +507,36 @@
             <span class="btn-orb tooltip"
               >?
               <template class="tooltip-content">
+                <p>Обновление данных происходит каждые 6 минут.</p>
                 <p>В режиме "Доступные займы" будут отображаться доступные на данный момент займы, учитывая свободные средства, в формате "первичный рынок"/"вторичный рынок".</p>
-                <p>В режиме "Свободные средства" будет отображаться количество свободных средств в сокращенном формате, например, 100₽ или 10K.</p>
+                <!-- <p>В режиме "Свободные средства" будет отображаться количество свободных средств в сокращенном формате, например, 100₽ или 10K.</p> -->
               </template>
             </span>
             <select class="select" id="badgeMode_setting" style="float: right; margin: -4px 0">
               <option value="0">Отключено</option>
               <option value="loans">Доступные займы</option>
               <option value="money">Свободные средства</option>
+              <option value="allTimePercentProfit">Доходность в % за всё время</option>
+              <option value="yearTimePercentProfit">Доходность в % за год</option>
+              <option value="allTimeLoss">Потери за всё время в рублях</option>
+              <option value="yearTimeLoss">Потери за год в рублях</option>
+              <option value="defaultsCount">Количество дефолтов</option>
             </select>
+          </div>
+
+          <div class="contrast-bg list-element">
+            <h4>Данные</h4>
+            <div style="margin: 24px 0 6px">
+              <div class="btn-small__wrapper">
+                <span class="btn-small flex-1 m-0" id="import_cache">Импортировать данные</span>
+                <span class="btn-small flex-1 m-0" id="export_cache">Экспортировать данные</span>
+              </div>
+            </div>
+            <div style="margin: 24px 0 6px">
+              <!-- <button class="btn btn-danger" id="clean_cache">Очистить кэш</button>
+              <br /> -->
+              <button class="btn btn-danger" id="clean_history">Очистить историю распределения</button>
+            </div>
           </div>
         </section>
       </section>
@@ -485,6 +613,33 @@
         <div id="checkCompany__spin"></div>
       </section>
     </div>
+
+    <div class="modal-container display-none" id="blackList__section">
+      <section class="modal">
+        <div class="modal__title">
+          <h5>Чёрный список</h5>
+          <span class="modal__btn-close">×</span>
+        </div>
+        <input class="invest-section__input" id="blackList__input" style="width: 100%; height: 34.4px; padding: 8px; margin-bottom: 0; align-self: self-end; flex: 1" type="text" placeholder="id займов в формате JL00012345 или 12345" />
+        <div class="btn-small__wrapper">
+          <span class="btn-small flex-1" id="blackListAddCompany__btn">Добавить компанию в ЧС</span>
+          <span class="btn-small flex-1" id="blackListAddLoan__btn">Добавить займ в ЧС</span>
+        </div>
+        <div id="blackList__ul"></div>
+      </section>
+    </div>
+
+    <div class="modal-container display-none" style="height: 650px" id="update-history">
+      <section class="modal">
+        <div class="modal__title">
+          <h5>История обновлений</h5>
+          <span class="modal__btn-close">×</span>
+        </div>
+        <br />
+        <div id="update-history-ul"></div>
+      </section>
+    </div>
+
     <script src="/js/global/XIRR.js"></script>
     <script src="/js/global/variables.js"></script>
     <script src="/js/global/functions.js"></script>

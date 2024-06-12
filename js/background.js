@@ -4,12 +4,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     fetch(request.url, {
       credentials: "include",
       headers: {
+        "Content-Type": "application/json",
         SameSite: "None; Secure",
       },
     })
       .then((response) => {
         if (!response.ok) {
-          throw new Error("Непредвиденная ошибка. Джет устал, либо проблемы с интернетом.");
+          throw new Error(`Ошибка загрузки.`);
         }
         return response.json();
       })
@@ -19,8 +20,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       .catch((error) => {
         sendResponse({ error: error.message });
       });
+    return true;
   }
-  return true;
 });
 
 // Уведомления баджа

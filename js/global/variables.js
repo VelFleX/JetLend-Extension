@@ -119,14 +119,18 @@ const yearTime = {
   },
 };
 
-function $get(selector) {
-  if (selector.startsWith("#")) {
-    return document.getElementById(selector.substring(1));
-  }
-  return document.querySelector(selector);
-}
+const $create = (selector, classesArr, styles, text) => {
+  const block = document.createElement(selector);
+  classesArr && block.classList.add(...classesArr);
+  styles && (block.style.cssText = styles);
+  text && (block.textContent = text);
+  return block;
+};
 
+const $get = (selector) => (selector.startsWith("#") ? document.getElementById(selector.substring(1)) : document.querySelector(selector));
 const $getAll = document.querySelectorAll.bind(document);
+const $click = (id, func) => ($get(id).onclick = func);
+const $change = (id, func) => ($get(id).onchange = func);
 
 let fmCompanyUpdate = true;
 let fmrCompanyUpdate = false;
@@ -135,7 +139,16 @@ let fmInvestCompanyArray = [];
 let fmrInvestCompanyArray = [];
 let smInvestCompanyArray = [];
 
-const ratingArray = [, "AAA+", "AAA", "AA+", "AA", "A+", "A", "BBB+", "BBB", "BB+", "BB", "B+", "B", "CCC+", "CCC", "CC+", "CC", "C+", "C", "DDD+", "DDD", "DD+", "DD", "D+", "D"];
+const ratingArray = ["-", "AAA+", "AAA", "AA+", "AA", "A+", "A", "BBB+", "BBB", "BB+", "BB", "B+", "B", "CCC+", "CCC", "CC+", "CC", "C+", "C", "DDD+", "DDD", "DD+", "DD", "D+", "D"];
 
-const spinLoad = document.createElement("div");
-spinLoad.innerHTML = `<div class="load-spinner__container"><span class="load-spinner" style="width: 32px;"></span></div>`;
+const printSpinLoad = (container, radius, mode = 0) => {
+  const spinLoad = document.createElement("div");
+  spinLoad.innerHTML = `<div class="load-spinner__container"><span class="load-spinner" style="width: ${radius}px;"></span></div>`;
+  if (mode === "marketLoad") {
+    const create = document.createElement("div");
+    create.classList.add("list-element__load-block");
+    create.innerHTML = spinLoad.innerHTML;
+    return container.appendChild(create);
+  }
+  container.innerHTML = spinLoad.innerHTML;
+};

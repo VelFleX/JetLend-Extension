@@ -3,17 +3,22 @@ const darkTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
 // Фетч для попапа (исправляет проблемы)
 function fetchData(url) {
   return new Promise((resolve, reject) => {
-    if (chrome.runtime && chrome.runtime.sendMessage) {
-      chrome.runtime.sendMessage(
-        {
-          action: "fetchData",
-          url: url,
-        },
-        (response) => {
-          resolve(response);
-        }
-      );
+    if (!chrome.runtime || !chrome.runtime.sendMessage) {
+      return reject(new Error("Runtime messaging is not available."));
     }
+
+    chrome.runtime.sendMessage(
+      {
+        action: "fetchData",
+        url: url,
+      },
+      (response) => {
+        if (response.error) {
+          return reject(new Error(response.error));
+        }
+        resolve(response);
+      }
+    );
   });
 }
 
@@ -25,6 +30,9 @@ async function fetchChunks(link, offset = 0, limit = 100, total = 0, resArr = []
   }
   const url = `${link}&limit=${limit}&offset=${offset}`;
   const fetchRes = await fetchData(url);
+  if (!fetchRes.data.data || fetchRes.data.error) {
+    return "Ошибка";
+  }
   resArr = resArr.concat(fetchRes.data.data);
   offset += limit;
   return fetchChunks(link, offset, limit, fetchRes.data.total, resArr, fetchRes);
@@ -36,6 +44,18 @@ async function getCache(key, def = {}) {
       res(data[key] ?? def);
     });
   });
+}
+
+async function getCacheSize(key = null) {
+  return new Promise((res) => {
+    chrome.storage.local.getBytesInUse(key, function (data) {
+      res(data ?? 0);
+    });
+  });
+}
+
+async function setCache(cacheName, value) {
+  chrome.storage.local.set({ [cacheName]: value });
 }
 
 async function updateCache(cacheName, cacheKey, newValue) {
@@ -73,6 +93,12 @@ function toSuperShortCurrencyFormat(num) {
   return num;
 }
 
+function toSuperShortPercentFormat(num) {
+  num = num * 100;
+  if (parseInt(num).toString().length > 2) return num.toFixed(1).replace(".", ",");
+  return num.toFixed(2).replace(".", ",");
+}
+
 function openModal(modalId) {
   $get(modalId).classList.remove("display-none");
   setTimeout(() => {
@@ -108,7 +134,7 @@ function setBadge(text, bgColor = false) {
   if (chrome.runtime && chrome.runtime.sendMessage) {
     chrome.runtime.sendMessage({
       action: "setBadge",
-      text: text,
+      text: text.toString(),
       color: color,
     });
   }
@@ -125,14 +151,14 @@ async function getBadge() {
 // Функция открытия инвест страницы
 function openInvestPage() {
   document.querySelector("#invest-section").style.top = "0";
-  document.body.style.height = "650px";
+  document.body.style.height = "600px";
   $get("#stats__open").style.transform = "scaleY(-1)";
   $get(".stats-section").style.maxHeight = "0px";
 }
 
 // Функция закрытия инвест страницы
 function closeInvestPage() {
-  document.querySelector("#invest-section").style.top = "-5000px";
+  document.querySelector("#invest-section").style.top = "-2200px";
   document.body.style.height = "";
 }
 
@@ -183,13 +209,14 @@ function getUpdateTime(unixTime) {
 }
 
 // Функция перевода из числового в денежный формат (20.20 => 20,20 ₽)
-const toCurrencyFormat = (num) => parseFloat(num).toLocaleString("ru-RU", { style: "currency", currency: "RUB" });
+const toCurrencyFormat = (num) => parseFloat(num || 0).toLocaleString("ru-RU", { style: "currency", currency: "RUB" });
 
 // Функция перевода из числа в проценты (0.2 => 20 %)
-const toPercentFormat = (num) => `${(num * 100).toFixed(2).replace(".", ",")} %`;
+const toPercentFormat = (num) => (num * 100).toFixed(2).replace(".", ",") + " %";
 
 // Функция получения цвета в зависимости от числа (зеленый, красный, дефолтный)
-const decorNumber = (num) => (num > 0 ? "var(--jle-green)" : num != 0 ? "var(--jle-red)" : "var(--jle-fontColor)");
+// const decorNumber = (num) => (num > 0 ? "var(--jle-green)" : num != 0 ? "var(--jle-red)" : "var(--jle-fontColor)");
+const decorNumber = (num) => (num == 0 ? "var(--jle-fontColor)" : num > 0 ? "var(--jle-green)" : "var(--jle-red)");
 
 // Функция добавления знака "+" положительным числам
 const numberSign = (num) => (num > 0 ? "+" : "");
@@ -199,6 +226,10 @@ const valueToPercent = (value) => (value ? parseFloat((parseFloat(value.toString
 
 // '12,3456R' => 12
 const valueToInt = (value) => (value ? parseInt(value.toString().replace(",", ".")) : 0);
+
+const idToIsin = (id) => "JL" + id.toString().padStart(10, "0");
+
+const byteToKB = (byteSize) => (byteSize / 1024).toFixed(2).replace(".", ",");
 
 // Функция получения куки
 function getCookie(name) {
@@ -243,7 +274,7 @@ function sendNotification(title, content) {
     background: bgColor,
     color: color,
     width: "550px",
-    margin: "10px",
+    margin: "4px 10px",
     padding: "10px 16px",
     borderRadius: "16px",
     lineHeight: "1.5",
@@ -268,22 +299,22 @@ function sendNotification(title, content) {
 }
 
 // Функция свапа рынков в распределении средств
-function marketSwap() {
+async function marketSwap() {
   if ($get("#marketMode").textContent === "Первичный рынок") {
     $get("#marketMode").textContent = "Вторичный рынок";
     $get("#firstMarket").classList.add("display-none");
     $get("#secondMarket").classList.remove("display-none");
-    document.body.style.height = "790px";
     fmCompanyUpdate = false;
     smCompanyUpdate = true;
+    await updateCache("settings", "marketMode", "sm");
     updateSecondMarket();
   } else {
     $get("#marketMode").textContent = "Первичный рынок";
     $get("#secondMarket").classList.add("display-none");
     $get("#firstMarket").classList.remove("display-none");
-    document.body.style.height = "650px";
     fmCompanyUpdate = true;
     smCompanyUpdate = false;
+    await updateCache("settings", "marketMode", "fm");
     updateFirstMarket();
   }
 }
@@ -376,6 +407,9 @@ function dateDiff(firstDate, secondDate = 0) {
 async function fmLoadLoans(mode) {
   const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
   const filters = await getCache("investSettings");
+  const blackList = await getCache("blackList", []);
+  const blackListComps = blackList.filter((e) => e.type === "comp").map((e) => e.company);
+  const blackListLoans = blackList.filter((e) => e.type === "loan").map((e) => e.id);
   if (res.data) {
     fmInvestCompanyArray = res.data.requests.filter(
       (obj) =>
@@ -383,16 +417,18 @@ async function fmLoadLoans(mode) {
         obj.investing_amount === null /* Резервация (нет) */ &&
         obj.term >= parseInt(filters.fmDaysFrom) &&
         obj.term <= parseInt(filters.fmDaysTo) /* Срок займа */ &&
-        ratingArray.indexOf(obj.rating) >= parseInt(filters.fmRatingFrom) &&
-        ratingArray.indexOf(obj.rating) <= parseInt(filters.fmRatingTo) /* Рейтинг займа */ &&
+        ratingArray.indexOf(obj.rating) >= parseInt(filters.fmLoanRatingFrom) &&
+        ratingArray.indexOf(obj.rating) <= parseInt(filters.fmLoanRatingTo) /* Рейтинг займа */ &&
+        ratingArray.indexOf(obj.borrower_rating) >= parseInt(filters.fmRatingFrom) &&
+        ratingArray.indexOf(obj.borrower_rating) <= parseInt(filters.fmRatingTo) /* Рейтинг заёмщика */ &&
         obj.interest_rate >= valueToPercent(filters.fmRateFrom) &&
         obj.interest_rate <= valueToPercent(filters.fmRateTo) /* Ставка */ &&
-        obj.loan_order >= parseFloat(filters.fmLoansFrom) &&
-        obj.loan_order <= parseFloat(filters.fmLoansTo) /* Какой по счёту займ на платформе */ &&
         // && (obj.company_investing_amount <= (parseFloat(filters.fmMaxCompanySum) - parseFloat(filters.fmInvestSum))) /* Сумма в одного заёмщика */
         obj.investing_amount <= parseFloat(filters.fmMaxLoanSum) /* Сумма в один займ */ &&
         obj.company_investing_amount <= parseFloat(filters.fmMaxCompanySum) /* Сумма в одного заёмщика */ &&
-        obj.financial_discipline === 1 /* ФД заёмщика */
+        obj.financial_discipline === 1 /* ФД заёмщика */ &&
+        !blackListLoans.includes(obj.id) /* Займ не в ЧС */ &&
+        !blackListComps.includes(obj.company) /* Компания не в ЧС */
     );
     if (!fmCompanyUpdate && mode === "popup") {
       fmCompanyUpdate = true;
@@ -404,60 +440,144 @@ async function fmLoadLoans(mode) {
   }
 }
 
-async function smLoadLoans(mode, offset = 0, limit = 100, total = 0, blackList = []) {
+async function smLoadLoans(mode, offset = 0, limit = 100, total = 0, badComps = []) {
+  const sortSettings = {
+    smDaysFrom: {
+      dir: "desc",
+      field: "end_date",
+      compare: (company) => company.term_left < parseFloat(filters.smDaysFrom),
+    },
+    smDaysTo: {
+      dir: "asc",
+      field: "end_date",
+      compare: (company) => company.term_left > parseFloat(filters.smDaysTo),
+    },
+    smClassFrom: {
+      dir: "desc",
+      field: "loan_class",
+      compare: (company) => company.loan_class < parseInt(filters.smClassFrom),
+    },
+    smClassTo: {
+      dir: "asc",
+      field: "loan_class",
+      compare: (company) => company.loan_class > parseInt(filters.smClassTo),
+    },
+    smFdFrom: {
+      dir: "desc",
+      field: "financial_discipline",
+      compare: (company) => company.financial_discipline < valueToPercent(filters.smFdFrom),
+    },
+    smFdTo: {
+      dir: "asc",
+      field: "financial_discipline",
+      compare: (company) => company.financial_discipline > valueToPercent(filters.smFdTo),
+    },
+    smMaxCompanySum: {
+      dir: "asc",
+      field: "invested_company_debt",
+      compare: (company) => company.invested_company_debt > parseFloat(filters.smMaxCompanySum),
+    },
+    smMaxLoanSum: {
+      dir: "asc",
+      field: "invested_debt",
+      compare: (company) => company.invested_debt > parseFloat(filters.smMaxLoanSum),
+    },
+    smPriceFrom: {
+      dir: "desc",
+      field: "min_price",
+      compare: (company) => company.min_price < valueToPercent(filters.smPriceFrom),
+    },
+    smPriceTo: {
+      dir: "asc",
+      field: "min_price",
+      compare: (company) => company.min_price > valueToPercent(filters.smPriceTo),
+    },
+    smRateFrom: {
+      dir: "desc",
+      field: "ytm",
+      compare: (company) => company.ytm < valueToPercent(filters.smRateFrom),
+    },
+    smRateTo: {
+      dir: "asc",
+      field: "ytm",
+      compare: (company) => company.ytm > valueToPercent(filters.smRateTo),
+    },
+    smRatingFrom: {
+      dir: "desc",
+      field: "borrower_rating",
+      compare: (company) => ratingArray.indexOf(company.borrower_rating) < parseInt(filters.smRatingFrom),
+    },
+    smRatingTo: {
+      dir: "asc",
+      field: "borrower_rating",
+      compare: (company) => ratingArray.indexOf(company.borrower_rating) > parseInt(filters.smRatingTo),
+    },
+    smLoanRatingFrom: {
+      dir: "desc",
+      field: "loan_rating",
+      compare: (company) => ratingArray.indexOf(company.loan_rating) < parseInt(filters.smLoanRatingFrom),
+    },
+    smLoanRatingTo: {
+      dir: "asc",
+      field: "loan_rating",
+      compare: (company) => ratingArray.indexOf(company.loan_rating) > parseInt(filters.smLoanRatingTo),
+    },
+  };
   if (!smCompanyUpdate && mode === "popup") {
     smCompanyUpdate = true;
     return;
   }
-  if (offset > total) {
-    return;
-  }
-  const url = `https://jetlend.ru/invest/api/exchange/loans?limit=${limit}&offset=${offset}&sort_dir=desc&sort_field=ytm`;
-  const res = await fetchData(url);
+  if (offset > total) return;
+
   const filters = await getCache("investSettings");
+  const blackList = await getCache("blackList", []);
+  const blackListComps = blackList.filter((e) => e.type === "comp").map((e) => e.company);
+  const blackListLoans = blackList.filter((e) => e.type === "loan").map((e) => e.id);
+
+  const url = `https://jetlend.ru/invest/api/exchange/loans?limit=${limit}&offset=${offset}&sort_dir=${sortSettings[filters.smSortFilter]?.dir ?? ""}&sort_field=${sortSettings[filters.smSortFilter]?.field ?? ""}`;
+  const res = await fetchData(url);
+
   if (res.data) {
     smInvestCompanyArray = smInvestCompanyArray.concat(
       res.data.data.filter(
         (obj) =>
-          obj.term_left >= parseFloat(filters.smDaysFrom) &&
-          obj.term_left <= parseFloat(filters.smDaysTo) /* Остаток срока займа */ &&
-          ratingArray.indexOf(obj.rating) >= parseInt(filters.smRatingFrom) &&
-          ratingArray.indexOf(obj.rating) <= parseInt(filters.smRatingTo) /* Рейтинг займа */ &&
-          obj.ytm >= valueToPercent(filters.smRateFrom) &&
-          obj.ytm <= valueToPercent(filters.smRateTo) /* Эффективная ставка в % */ &&
-          obj.progress >= valueToPercent(filters.smProgressFrom) &&
-          obj.progress <= valueToPercent(filters.smProgressTo) /* Выплачено (прогресс в %) */ &&
-          obj.loan_class >= parseInt(filters.smClassFrom) &&
-          obj.loan_class <= parseInt(filters.smClassTo) /* Класс займа */ &&
-          obj.min_price >= valueToPercent(filters.smPriceFrom) &&
-          obj.min_price <= valueToPercent(filters.smPriceTo) /* Мин прайс в % */ &&
-          // && (obj.invested_company_debt <= (parseFloat(filters.smMaxCompanySum) - parseFloat(filters.smInvestSum))) /* Сумма в одного заёмщика */
-          obj.invested_debt <= parseFloat(filters.smMaxLoanSum) /* Сумма в один займ */ &&
-          obj.invested_company_debt <= parseFloat(filters.smMaxCompanySum) /* Сумма в одного заёмщика */ &&
-          obj.financial_discipline >= valueToPercent(filters.smFdFrom) &&
-          obj.financial_discipline <= valueToPercent(filters.smFdTo) /* ФД заёмщика */
-        // obj.status === "active" /* Статус - выплачивается */
+          (obj.term_left >= parseFloat(filters.smDaysFrom) &&
+            obj.term_left <= parseFloat(filters.smDaysTo) /* Остаток срока займа */ &&
+            ratingArray.indexOf(obj.loan_rating) >= parseInt(filters.smLoanRatingFrom) &&
+            ratingArray.indexOf(obj.loan_rating) <= parseInt(filters.smLoanRatingTo) /* Рейтинг займа */ &&
+            ratingArray.indexOf(obj.borrower_rating) >= parseInt(filters.smRatingFrom) &&
+            ratingArray.indexOf(obj.borrower_rating) <= parseInt(filters.smRatingTo) /* Рейтинг заёмщика */ &&
+            obj.ytm >= valueToPercent(filters.smRateFrom) &&
+            obj.ytm <= valueToPercent(filters.smRateTo) /* Эффективная ставка в % */ &&
+            obj.progress >= valueToPercent(filters.smProgressFrom) &&
+            obj.progress <= valueToPercent(filters.smProgressTo) /* Выплачено (прогресс в %) */ &&
+            obj.loan_class >= parseInt(filters.smClassFrom) &&
+            obj.loan_class <= parseInt(filters.smClassTo) /* Класс займа */ &&
+            obj.min_price >= valueToPercent(filters.smPriceFrom) &&
+            obj.min_price <= valueToPercent(filters.smPriceTo) /* Мин прайс в % */ &&
+            // && (obj.invested_company_debt <= (parseFloat(filters.smMaxCompanySum) - parseFloat(filters.smInvestSum))) /* Сумма в одного заёмщика */
+            obj.invested_debt <= parseFloat(filters.smMaxLoanSum) /* Сумма в один займ */ &&
+            obj.invested_company_debt <= parseFloat(filters.smMaxCompanySum) /* Сумма в одного заёмщика */ &&
+            obj.financial_discipline >= valueToPercent(filters.smFdFrom) &&
+            obj.financial_discipline <= valueToPercent(filters.smFdTo) /* ФД заёмщика */ &&
+            obj.status !== "waiting") /* Статус НЕ в ожидании (не на сборе) */ ||
+          (filters.smCheckNullRating && obj.borrower_rating === "-")
       )
     );
-    // smInvestCompanyArray = smInvestCompanyArray.concat(res.data.data);
-    // Удаление ненадежных заёмщиков
-    blackList = blackList.concat(smInvestCompanyArray.filter((loan) => loan.status !== "active").map((loan) => loan.company));
-    blackList = [...new Set(blackList)];
-    smInvestCompanyArray = smInvestCompanyArray.filter((loan) => !blackList.includes(loan.company));
+
+    // Удаление ненадежных заёмщиков и ЧС фильтр
+    badComps = badComps.concat(smInvestCompanyArray.filter((loan) => loan.status !== "active").map((loan) => loan.company));
+    badComps = [...new Set(badComps)];
+    smInvestCompanyArray = smInvestCompanyArray.filter((loan) => !badComps.includes(loan.company) /* Без скрытых дефолтов */ && !blackListComps.includes(loan.company) /* Компания не в ЧС */ && !blackListLoans.includes(loan.loan_id) /* Займ не в ЧС*/);
     // Удаление дубликатов
     smInvestCompanyArray = smInvestCompanyArray.filter((obj, index, self) => index === self.findIndex((t) => t.loan_id === obj.loan_id));
-    // Ретурн если ytm меньше минимального в фильтре
-    if (res.data.data.at(-1).ytm < valueToPercent(filters.smRateFrom)) {
-      return;
-    }
+
+    if (sortSettings[filters.smSortFilter] && sortSettings[filters.smSortFilter].compare(res.data.data.at(-1))) return;
+
     offset += limit;
-    if (mode === "popup") {
-      $get("#sm-numOfSortedCompany").textContent = `Загрузка... (${toPercentFormat(offset / res.data.total)})`;
-    }
-    if (mode === "badge") {
-      setBadge(((offset / res.data.total) * 100).toFixed(0) + "%");
-    }
-    await smLoadLoans(mode, offset, limit, res.data.total, blackList);
+    if (mode === "popup") $get("#sm-numOfSortedCompany").textContent = `Загрузка... (${toPercentFormat(offset / res.data.total)})`;
+    if (mode === "badge") setBadge(((offset / res.data.total) * 100).toFixed(0) + "%");
+    await smLoadLoans(mode, offset, limit, res.data.total, badComps);
   }
 }
 
@@ -475,6 +595,7 @@ async function loadProblemLoans(offset = 0, limit = 100, resArr = []) {
 
 async function checkingCompany(companyId, fm, sm) {
   const filters = await getCache("investSettings");
+  const blackList = await getCache("blackList");
   const errors = [];
   let company = null;
   const fmCompany = fm.data.requests.find((obj) => obj.id === companyId);
@@ -511,20 +632,22 @@ async function checkingCompany(companyId, fm, sm) {
 
   if (fmCompany) {
     company = fmCompany;
-    if (company.investing_amount === null) {
+    if (blackList.find((e) => e.id === company.id && e.type === "loan")) errors.push("Займ в ЧС.");
+    if (blackList.find((e) => e.company === company.company && e.type === "comp")) errors.push("Компания в ЧС.");
+    if (company.investing_amount !== null) {
       errors.push(`Займ уже зарезервирован на сумму ${toCurrencyFormat(company.investing_amount)}.`);
     }
     if (company.term < parseInt(filters.fmDaysFrom) || company.term > parseInt(filters.fmDaysTo)) {
       errors.push(`Срок займа (${company.term}) не входит в диапазон от ${parseInt(filters.fmDaysFrom)} до ${parseInt(filters.fmDaysTo)}.`);
     }
-    if (ratingArray.indexOf(company.rating) < parseInt(filters.fmRatingFrom) || ratingArray.indexOf(company.rating) > parseInt(filters.fmRatingTo)) {
-      errors.push(`Рейтинг займа (${ratingArray.indexOf(company.rating)}) не входит в диапазон от ${parseInt(filters.fmRatingFrom)} до ${parseInt(filters.fmRatingTo)}.`);
+    if (ratingArray.indexOf(company.rating) < parseInt(filters.fmLoanRatingFrom) || ratingArray.indexOf(company.rating) > parseInt(filters.fmLoanRatingTo)) {
+      errors.push(`Рейтинг займа (${ratingArray.indexOf(company.rating)}) не входит в диапазон от ${parseInt(filters.fmLoanRatingFrom)} до ${parseInt(filters.fmLoanRatingTo)}.`);
+    }
+    if (ratingArray.indexOf(company.borrower_rating) < parseInt(filters.fmRatingFrom) || ratingArray.indexOf(company.borrower_rating) > parseInt(filters.fmRatingTo)) {
+      errors.push(`Рейтинг заёмщика (${ratingArray.indexOf(company.borrower_rating)}) не входит в диапазон от ${parseInt(filters.fmRatingFrom)} до ${parseInt(filters.fmRatingTo)}.`);
     }
     if (company.interest_rate < valueToPercent(filters.fmRateFrom) || company.interest_rate > valueToPercent(filters.fmRateTo)) {
       errors.push(`Процентная ставка (${company.interest_rate}) не входит в диапазон от ${valueToPercent(filters.fmRateFrom)} до ${valueToPercent(filters.fmRateTo)}.`);
-    }
-    if (company.loan_order < parseFloat(filters.fmLoansFrom) || company.loan_order > parseFloat(filters.fmLoansTo)) {
-      errors.push(`Ордер займа (${company.loan_order}) не входит в диапазон от ${parseFloat(filters.fmLoansFrom)} до ${parseFloat(filters.fmLoansTo)}.`);
     }
     if (company.investing_amount > parseFloat(filters.fmMaxLoanSum)) {
       errors.push(`Сумма инвестий в займ (${toCurrencyFormat(company.investing_amount)}) превышает ${toCurrencyFormat(parseFloat(filters.fmMaxLoanSum))}.`);
@@ -544,11 +667,16 @@ async function checkingCompany(companyId, fm, sm) {
     return errorsHtml();
   } else if (smCompany) {
     company = smCompany;
+    if (blackList.find((e) => e.id === company.id && e.type === "loan")) errors.push("Займ в ЧС.");
+    if (blackList.find((e) => e.company === company.company && e.type === "comp")) errors.push("Компания в ЧС.");
     if (company.term_left < parseFloat(filters.smDaysFrom) || company.term_left > parseFloat(filters.smDaysTo)) {
       errors.push(`Остаток срока займа (${company.term_left}) не входит в диапазон от ${parseFloat(filters.smDaysFrom)} до ${parseFloat(filters.smDaysTo)}.`);
     }
-    if (ratingArray.indexOf(company.rating) < parseInt(filters.smRatingFrom) || ratingArray.indexOf(company.rating) > parseInt(filters.smRatingTo)) {
-      errors.push(`Рейтинг займа (${ratingArray.indexOf(company.rating)}) не входит в диапазон от ${parseInt(filters.smRatingFrom)} до ${parseInt(filters.smRatingTo)}.`);
+    if (ratingArray.indexOf(company.loan_rating) < parseInt(filters.smLoanRatingFrom) || ratingArray.indexOf(company.loan_rating) > parseInt(filters.smLoanRatingTo)) {
+      errors.push(`Рейтинг займа (${ratingArray.indexOf(company.loan_rating)}) не входит в диапазон от ${parseInt(filters.smLoanRatingFrom)} до ${parseInt(filters.smLoanRatingTo)}.`);
+    }
+    if (ratingArray.indexOf(company.borrower_rating) < parseInt(filters.smRatingFrom) || ratingArray.indexOf(company.borrower_rating) > parseInt(filters.smRatingTo)) {
+      errors.push(`Рейтинг заёмщика (${ratingArray.indexOf(company.borrower_rating)}) не входит в диапазон от ${parseInt(filters.smRatingFrom)} до ${parseInt(filters.smRatingTo)}.`);
     }
     if (company.ytm < valueToPercent(filters.smRateFrom) || company.ytm > valueToPercent(filters.smRateTo)) {
       errors.push(`Эффективная ставка (${toPercentFormat(company.ytm)}) не входит в диапазон от ${toPercentFormat(valueToPercent(filters.smRateFrom))} до ${toPercentFormat(valueToPercent(filters.smRateTo))}.`);
@@ -585,40 +713,6 @@ async function checkingCompany(companyId, fm, sm) {
   return `<div class="list-element contrast-bg"><div style="margin: 8px 0">Компания ${companyId} не найдена, либо не соответсвует фильтрам.</div></div>`;
 }
 
-const companyHtmlNotification = (company, invest) => {
-  return `
-    <section style="display: flex;">
-    <img style="object-fit: cover; height: 50px; width: 50px; border-radius: 100%; margin: 0px 10px 10px 0;" src="https://jetlend.ru${company.preview_small_url}">
-    <div>
-      <a style="text-decoration: underline; color: var(--jle-fontColor);" href="https://jetlend.ru/invest/v3/company/${company.id || company.loan_id}" target="_blank">
-        <b>${company.loan_name}</b>
-      </a>
-      <div style="margin-top: 3px;">
-        <b style="${company.rating.includes("A") ? "color: var(--jle-green);" : company.rating.includes("B") ? "color: var(--jle-orange);" : "color: var(--jle-red);"}">${company.rating}|${ratingArray.indexOf(company.rating)}</b>, 
-        <b style="${company.financial_discipline === 1 ? "color: var(--jle-green);" : company.financial_discipline <= 0.4 ? "color: red;" : "color: var(--jle-orange);"}">ФД: ${(company.financial_discipline * 100).toFixed(0)}%</b>
-        ${company.loan_class !== undefined ? `, <b style="${company.loan_class === 0 ? "color: var(--jle-green);" : company.loan_class === 1 ? "color: var(--jle-orange);" : "color: var(--jle-red);"}">Класс: ${company.loan_class}</b>` : ""}
-      </div>
-    </div>
-    ${
-      !invest.error
-        ? `
-    <div style="display: flex; flex-direction: column; align-items: flex-end; margin-left: auto;">
-      <div style="text-wrap: nowrap;">
-        Cумма: <b>${toCurrencyFormat(invest.sum)}</b>
-      </div>
-      ${invest.price ? `<div style="text-wrap: nowrap; margin-top: 3px;">Цена: <b>${toPercentFormat(invest.price)}</b></div>` : ""}
-    </div>
-      `
-        : ""
-    }
-    </section>
-    <div style="background: var(--jle-universalColor); width: 100%; height: 4px; border-radius: 5px; margin-top: 5px;">
-      <div style="background: var(--jle-green); width: 40%; height: inherit; border-radius: inherit;"></div>
-    </div>
-    ${invest.error ? `<div style="margin-top: 5px;">${invest.error}</div>` : ""}
-    `;
-};
-
 function getAverage(arr) {
   const sum = arr.reduce((acc, curr) => acc + curr);
   return sum / arr.length;
@@ -648,67 +742,6 @@ function getModa(arr) {
   return modes;
 }
 
-// const smc = {
-//   company: 'ООО "СТАНКОСАРАТОВ"',
-//   image_url: "/media/images/e2/d3/e2d3065f-64bd-463d-a468-81237a987b5e.jpg",
-//   preview_small_url: "/media/images/e2/d3/e2d3065f-64bd-463d-a468-81237a987b5e_160x160.jpg",
-//   preview_url: "/media/images/e2/d3/e2d3065f-64bd-463d-a468-81237a987b5e_1024x1024.jpg",
-//   loan_id: 2945,
-//   loan_class: 1,
-//   loan_isin: "JL0000002945",
-//   loan_name: "СТАНКОСАРАТО-В02",
-//   loan_order: 2,
-//   financial_discipline: 0,
-//   term: 882,
-//   term_left: 203,
-//   interest_rate: 0.223,
-//   rating: "BBB+",
-//   status: "restructured",
-//   end_date: "2024-09-17",
-//   progress: 0.80457412625,
-//   amount: 4075.01,
-//   principal_debt: 4494.2,
-//   ytm: 2.2803205040260073,
-//   min_price: 0.65,
-//   invested_contracts_count: null,
-//   invested_debt: null,
-//   invested_company_debt: null,
-//   region: "",
-// };
-
-// const fmc = {
-//   company: "ИП Хаметова Наталья Павловна",
-//   image_url: "/media/images/b4/44/b444861b-c556-4ac2-b854-2924fba29e8d.jpg",
-//   preview_small_url: "/media/images/b4/44/b444861b-c556-4ac2-b854-2924fba29e8d_160x160.jpg",
-//   preview_url: "/media/images/b4/44/b444861b-c556-4ac2-b854-2924fba29e8d_1024x1024.jpg",
-//   id: 19412,
-//   amount: "914500.00",
-//   interest_rate: 0.331,
-//   term: 660,
-//   investing_amount: null,
-//   company_investing_amount: "114.90",
-//   financial_discipline: 1,
-//   rating: "CC",
-//   start_date: "2024-02-26T08:18:08.419163+03:00",
-//   collect_time: "2024-03-11T08:18:08.534221+03:00",
-//   collected_percentage: 100,
-//   status: "waiting",
-//   promo: [],
-//   loan_isin: "JL0000019412",
-//   loan_name: "ХаметоваНП-В20",
-//   loan_order: 20,
-//   allow_delete: false,
-//   allow_delete_cause: "Отмена резерва доступна только в течение 5 дней с момента его создания.",
-//   allow_delete_amount: null,
-//   ignored: false,
-//   region: "",
-// };
-
-// (async function () {
-//   const cache = await getCache("test");
-//   console.log(cache.m ?? "none");
-// })();
-
 function setTheme(theme) {
   if (theme === "0") {
     document.documentElement.className = "";
@@ -728,3 +761,848 @@ function setTheme(theme) {
   }
   return;
 })();
+
+// Костыль. Удаление фильтра "количество займов у заёмщика".
+(async function () {
+  const cache = await getCache("investSettings");
+  if (cache.fmLoansFrom) delete cache.fmLoansFrom;
+  if (cache.fmLoansTo) delete cache.fmLoansTo;
+  chrome.storage.local.set({ investSettings: cache });
+})();
+
+// Костыль. Добавление первого пресета.
+(async function () {
+  const preset = await getCache("investPreset_0", 0);
+  const settings = await getCache("investSettings");
+  if (preset === 0) chrome.storage.local.set({ investPreset_0: settings });
+})();
+
+async function getXirrAll() {
+  const res = () => `<p>Сумма пополнений: <b>${toCurrencyFormat(allTime.incomeSum)}</b></p>
+      <p>Сумма выводов: <b>${toCurrencyFormat(allTime.expenseSum)}</b></p>
+      <p>XIRR (с НПД / без НПД): <b>${toPercentFormat(allTime.xirr("npd"))}</b> / <b>${toPercentFormat(allTime.xirr("clean"))}</b></p>`;
+  if (user.xirrData) {
+    return res();
+  }
+  $get("#xirr-all").classList.remove("btn-small");
+  $get("#xirr-all").textContent = "Загрузка...";
+  const xirr = await fetchChunks(xirrUrl);
+  user.xirrData = xirr.data.data;
+  if (!user.xirrData) {
+    $get("#xirr-all").classList.add("btn-small");
+    $get("#xirr-all").textContent = `Ошибка расчета XIRR. Кликните для повторного запроса.`;
+  }
+  return ($get("#xirr-all").innerHTML = res());
+}
+
+async function getXirrYear() {
+  const res = () => `<p>Сумма пополнений: <b>${toCurrencyFormat(yearTime.incomeSum)}</b></p>
+  <p>Сумма выводов: <b>${toCurrencyFormat(yearTime.expenseSum)}</b></p>
+  <p>XIRR (с НПД / без НПД): <b>${toPercentFormat(yearTime.xirr("npd"))}</b> / <b>${toPercentFormat(yearTime.xirr("clean"))}</b></p>`;
+  if (user.xirrData) {
+    return res();
+  }
+  $get("#xirr-year").classList.remove("btn-small");
+  $get("#xirr-year").textContent = "Загрузка...";
+  const xirr = await fetchChunks(xirrUrl);
+  user.xirrData = xirr.data.data;
+  if (!user.xirrData) {
+    $get("#xirr-year").classList.add("btn-small");
+    $get("#xirr-year").textContent = `Ошибка расчета XIRR. Кликните для повторного запроса.`;
+  }
+  return ($get("#xirr-year").innerHTML = res());
+}
+
+async function printXIrr(mode) {
+  const xirrUrl = "https://jetlend.ru/invest/api/account/notifications/v3?filter=%5B%7B%22values%22%3A%5B%22110%22%2C%22120%22%5D%2C%22field%22%3A%22event_type%22%7D%5D&sort_dir=asc&sort_field=date";
+  let tag;
+  mode === "all" ? (tag = $get("#xirr-all")) : (tag = $get("#xirr-year"));
+  const res = () =>
+    mode === "all"
+      ? `<p>Сумма пополнений: <b>${toCurrencyFormat(allTime.incomeSum)}</b></p>
+  <p>Сумма выводов: <b>${toCurrencyFormat(allTime.expenseSum)}</b></p>
+  <p>XIRR (с НПД / без НПД): <b>${toPercentFormat(allTime.xirr("npd"))}</b> / <b>${toPercentFormat(allTime.xirr("clean"))}</b></p>`
+      : `<p>Сумма пополнений: <b>${toCurrencyFormat(yearTime.incomeSum)}</b></p>
+  <p>Сумма выводов: <b>${toCurrencyFormat(yearTime.expenseSum)}</b></p>
+  <p>XIRR (с НПД / без НПД): <b>${toPercentFormat(yearTime.xirr("npd"))}</b> / <b>${toPercentFormat(yearTime.xirr("clean"))}</b></p>`;
+  if (user.xirrData) {
+    return res();
+  }
+  tag.classList.remove("btn-small");
+  tag.textContent = "Загрузка...";
+  const xirr = await fetchChunks(xirrUrl);
+  user.xirrData = xirr.data.data;
+  if (!user.xirrData) {
+    tag.classList.add("btn-small");
+    tag.textContent = `Ошибка расчета XIRR. Кликните для повторного запроса.`;
+  }
+  return (tag.innerHTML = res());
+}
+
+function btnsSwapActive(section, setActive) {
+  $get(section)
+    .querySelectorAll(".btn-small")
+    .forEach((btn) => btn.classList.remove("btn-small--active"));
+  $get(setActive).classList.add("btn-small--active");
+}
+
+function createListElement(company, sett, details, other = {}) {
+  const green = "color: var(--jle-green);";
+  const orange = "color: var(--jle-orange);";
+  const red = "color: var(--jle-red);";
+  const setColor = {
+    fd: (fd) => (fd === 1 ? green : fd <= 0.4 ? red : orange),
+    rating: (rating) => (rating.includes("A") ? green : rating.includes("B") ? orange : red),
+    class: (comp) => (comp === 0 ? green : comp === 1 ? orange : red),
+    price: (price) => (price < 1 ? green : orange),
+    progress: (progress) => (progress > 0.35 ? green : orange),
+    calculateRating: (rating) => (rating > 80 ? "bg-green" : rating > 35 ? "bg-orange" : "bg-red"),
+  };
+  function calculateRating(loan) {
+    let res = 0;
+    loan.term < 365 ? (res += 20) : loan.term < 730 ? (res += 15) : res < 1000 ? (res += 10) : res;
+    res += 16 - ratingArray.indexOf(loan.loan_rating);
+    loan.financial_discipline === 1 ? (res += 20) : loan.financial_discipline > 0.6 ? (res -= 15) : (res -= 40);
+    loan.loan_class === 0 ? (res += 20) : (res -= 20);
+    loan.progress > 0.5 ? (res += 20) : loan.progress > 0.35 ? (res += 15) : res;
+    loan.min_price < 1 ? (res += 5) : res;
+    return Math.max(res, 0);
+  }
+
+  const print = {
+    investNotification: {
+      str1: () => {
+        return other.sum
+          ? `
+        <div style="text-wrap: nowrap;">
+          Сумма: <b>${toCurrencyFormat(other.sum)}</b>
+        </div>`
+          : "";
+      },
+      str2: () => {
+        return other.price
+          ? `
+            Цена: <b>${toPercentFormat(other.price)}</b>
+        `
+          : "";
+      },
+      str3: () => {
+        return `
+        <span class="fz-14">
+        ${
+          other.percent
+            ? `<span>
+                  <b>${toPercentFormat(other.percent)}</b>
+                </span>
+                <b>|</b>`
+            : ""
+        }
+        <span>
+          <b style="${setColor.rating(company.borrower_rating ?? "-")}">${ratingArray.indexOf(company.borrower_rating ?? "-")}</b>
+          (<b style="${setColor.rating(company.rating ?? "-")}">${ratingArray.indexOf(company.rating ?? "-")}</b>)
+        </span>
+        <b>|</b>
+        <span>
+          <b style="${setColor.fd(company.financial_discipline)}">${(company.financial_discipline * 100).toFixed(0)}%</b>
+        </span>
+        ${
+          company.loan_class
+            ? `<b>|</b>
+              <span>
+                <b style="${setColor.class(company.loan_class)}">${company.loan_class}</b>
+              </span>`
+            : ""
+        }
+      <span>`;
+      },
+    },
+    investHistory: {
+      str1: () => {
+        return `
+        <div class="tooltip" style="text-wrap: nowrap;">
+          <b>${formatReadableDate(company.date)}</b>
+          <template class="tooltip-content">
+            Дата покупки
+          </template>
+        </div>`;
+      },
+      str2: () => {
+        return `
+            <b class="tooltip">${toCurrencyFormat(company.investSum)}
+              <template class="tooltip-content">
+                Сумма инвестиций
+              </template>
+            </b>
+        `;
+      },
+      str3: () => {
+        return `
+        <span class="fz-14">
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Ставка
+          </template>
+          <b>${toPercentFormat(company.percent)}</b>
+        </span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Рейтинг заёмщика (рейтинг займа)
+          </template>
+          <b style="${setColor.rating(company.brating ?? "-")}">${ratingArray.indexOf(company.brating ?? "-")}</b>
+          (<b style="${setColor.rating(company.rating ?? "-")}">${ratingArray.indexOf(company.rating ?? "-")}</b>)
+        </span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            ФД
+          </template>
+          <b style="${setColor.fd(company.fd)}">${(company.fd * 100).toFixed(0)}%</b>
+        </span>
+        ${
+          company.class
+            ? `<b>|</b>
+              <span class="tooltip">
+                <template class="tooltip-content">
+                  Класс
+                </template>
+                <b style="${setColor.class(company.class)}">${company.class}</b>
+              </span>`
+            : ""
+        }
+        ${
+          company.price
+            ? `<b>|</b>
+              <span class="tooltip">
+                <template class="tooltip-content">
+                  Цена
+                </template>
+                <b style="${setColor.price(company.price)}">${toPercentFormat(company.price)}</b>
+              </span>`
+            : ""
+        }
+        ${
+          company.mode === "auto"
+            ? `<b>|</b>
+              <span class="tooltip">
+                <template class="tooltip-content">
+                  Автораспределение
+                </template>
+                <b style="color: var(--jle-link);">auto</b>
+              </span>`
+            : ""
+        }
+      <span>`;
+      },
+    },
+    npls: {
+      str1: () => {
+        return `
+        <div class="tooltip" style="text-wrap: nowrap;">
+          <b>${formatReadableDate(company.next_payment_date, "short")}</b>
+          <template class="tooltip-content">
+            Дата следующего платежа
+          </template>
+        </div>`;
+      },
+      str2: () => {
+        return `
+            <b class="tooltip">${toCurrencyFormat(company.profit)}
+              <template class="tooltip-content">
+                Совокупный доход по займу, включая полученный процентный доход, а также пени за просрочку платежей. 
+              </template>
+            </b>
+            (<b class="tooltip">${toCurrencyFormat(company.principal_debt)}
+              <template class="tooltip-content">
+                Остаток тела долга по займу.
+              </template>
+            </b>)
+        `;
+      },
+      str3: () => {
+        return `
+        <span class="fz-14">
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Ставка
+          </template>
+          <b>${toPercentFormat(company.interest_rate)}</b>
+        </span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Рейтинг заёмщика (рейтинг займа)
+          </template>
+          <b style="${setColor.rating(company.borrower_rating ?? "-")}">${ratingArray.indexOf(company.borrower_rating ?? "-")}</b>
+          (<b style="${setColor.rating(company.rating)}">${ratingArray.indexOf(company.rating)}</b>)
+        </span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Срок просрочки
+          </template>
+          <b>NPL: ${company.npl}</b>
+        </span>
+        <b>|</b>
+        <span>
+          <b>Инвестиция: ${toCurrencyFormat(company.purchased_amount)}</b>
+        </span>
+      <span>`;
+      },
+      str4: () => {
+        return `
+        <div class="progressbar__container mt-5 tooltip" style="margin-bottom: 8px">
+          <div class="progressbar" style="width: ${company.progress * 100}%; background: var(--jle-orange);;"></div>
+          <template class="tooltip-content">
+            Выплачено: <b>${toPercentFormat(company.progress)}</b>
+          </template>
+        </div>`;
+      },
+    },
+    restructs: {
+      str1: () => {
+        return `
+        <div class="tooltip" style="text-wrap: nowrap;">
+          <b>${formatReadableDate(company.next_payment_date, "short")}</b>
+          <template class="tooltip-content">
+            Дата следующего платежа
+          </template>
+        </div>`;
+      },
+      str2: () => {
+        return `
+            <b class="tooltip">${toCurrencyFormat(company.profit)}
+              <template class="tooltip-content">
+                Совокупный доход по займу, включая полученный процентный доход, а также пени за просрочку платежей. 
+              </template>
+            </b>
+            (<b class="tooltip">${toCurrencyFormat(company.principal_debt)}
+              <template class="tooltip-content">
+                Остаток тела долга по займу.
+              </template>
+            </b>)
+        `;
+      },
+      str3: () => {
+        return `
+        <span class="fz-14">
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Ставка
+          </template>
+          <b>${toPercentFormat(company.interest_rate)}</b>
+        </span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Рейтинг заёмщика (рейтинг займа)
+          </template>
+          <b style="${setColor.rating(company.borrower_rating ?? "-")}">${ratingArray.indexOf(company.borrower_rating ?? "-")}</b>
+          (<b style="${setColor.rating(company.rating)}">${ratingArray.indexOf(company.rating)}</b>)
+        </span>
+        <b>|</b>
+        <span>
+          <b>Инвестиция: ${toCurrencyFormat(company.purchased_amount)}</b>
+        </span>
+      <span>`;
+      },
+      str4: () => {
+        return `
+        <div class="progressbar__container mt-5 tooltip" style="margin-bottom: 8px">
+          <div class="progressbar" style="width: ${company.progress * 100}%; background: var(--jle-lightGreen);"></div>
+          <template class="tooltip-content">
+            Выплачено: <b>${toPercentFormat(company.progress)}</b>
+          </template>
+        </div>`;
+      },
+    },
+    defaults: {
+      str1: () => {
+        return `
+        <div class="tooltip" style="text-wrap: nowrap;">
+          <b>${formatReadableDate(company.default_date)}</b>
+          <template class="tooltip-content">
+            Дата дефолта
+          </template>
+        </div>`;
+      },
+      str2: () => {
+        return `
+            <b class="tooltip" style="${red}">${toCurrencyFormat(company.profit)}
+              <template class="tooltip-content">
+                Совокупный доход по займу, включая полученный процентный доход, а также пени за просрочку платежей. 
+              </template>
+            </b>
+            (<b class="tooltip" style="${red}">${toCurrencyFormat(-company.principal_debt)}
+              <template class="tooltip-content">
+                Остаток тела долга по займу.
+              </template>
+            </b>)
+        `;
+      },
+      str3: () => {
+        return `
+        <span class="fz-14">
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Ставка
+          </template>
+          <b>${toPercentFormat(company.interest_rate)}</b>
+        </span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Рейтинг заёмщика (рейтинг займа)
+          </template>
+          <b style="${setColor.rating(company.borrower_rating ?? "-")}">${ratingArray.indexOf(company.borrower_rating ?? "-")}</b>
+          (<b style="${setColor.rating(company.rating)}">${ratingArray.indexOf(company.rating)}</b>)
+        </span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Срок просрочки
+          </template>
+          <b>NPL: ${company.npl}</b>
+        </span>
+        <b>|</b>
+        <span>
+          <b>Инвестиция: ${toCurrencyFormat(company.purchased_amount)}</b>
+        </span>
+      <span>`;
+      },
+      str4: () => {
+        return `
+        <div class="progressbar__container mt-5 tooltip" style="margin-bottom: 8px">
+          <div class="progressbar" style="width: ${company.progress * 100}%; background: var(--jle-red);"></div>
+          <template class="tooltip-content">
+            Выплачено: <b>${toPercentFormat(company.progress)}</b>
+          </template>
+        </div>`;
+      },
+    },
+    problems: {
+      str1: () => {
+        return `
+        <div class="tooltip" style="text-wrap: nowrap;">
+          <b>${formatReadableDate(company.next_payment_date, "short")}</b>
+          <template class="tooltip-content">
+            Дата следующего платежа
+          </template>
+        </div>`;
+      },
+      str2: () => {
+        return `
+            <b class="tooltip">${toCurrencyFormat(company.profit)}
+              <template class="tooltip-content">
+                Совокупный доход по займу, включая полученный процентный доход, а также пени за просрочку платежей. 
+              </template>
+            </b>
+            (<b class="tooltip">${toCurrencyFormat(company.principal_debt)}
+              <template class="tooltip-content">
+                Остаток тела долга по займу.
+              </template>
+            </b>)
+        `;
+      },
+      str3: () => {
+        return `
+        <span class="fz-14">
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Ставка
+          </template>
+          <b>${toPercentFormat(company.interest_rate)}</b>
+        </span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Рейтинг заёмщика (рейтинг займа)
+          </template>
+          <b style="${setColor.rating(company.borrower_rating ?? "-")}">${ratingArray.indexOf(company.borrower_rating ?? "-")}</b>
+          (<b style="${setColor.rating(company.rating)}">${ratingArray.indexOf(company.rating)}</b>)
+        </span>
+        <b>|</b>
+        <span>
+          <b>Инвестиция: ${toCurrencyFormat(company.purchased_amount)}</b>
+        </span>
+      <span>`;
+      },
+      str4: () => {
+        return `
+        <div class="progressbar__container mt-5 tooltip" style="margin-bottom: 8px">
+          <div class="progressbar" style="width: ${company.progress * 100}%; background: var(--jle-green);"></div>
+          <template class="tooltip-content">
+            Выплачено: <b>${toPercentFormat(company.progress)}</b>
+          </template>
+        </div>`;
+      },
+    },
+    fm: {
+      str1: () => {
+        return `
+          <b class="tooltip">${formatReadableDate(company.collect_time)}
+            <template class="tooltip-content">
+              Предельная дата сбора
+            </template>
+          </b>
+          `;
+      },
+      str2: () => {
+        return company.investing_amount || company.company_investing_amount
+          ? `<b class="tooltip">${toCurrencyFormat(company.investing_amount) ?? toCurrencyFormat(0)} / ${toCurrencyFormat(company.company_investing_amount) ?? toCurrencyFormat(0)}
+              <template class="tooltip-content">
+                Зарезервировано / заёмщик в портфеле
+              </template>
+            </b>`
+          : `<b class="tooltip" style="${green}">Нет в портфеле
+              <template class="tooltip-content">
+                Компании нет в портфеле
+              </template>
+            </b>`;
+      },
+      str3: () => {
+        return `
+        <span class="fz-14">
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Ставка
+          </template>
+          <b>${toPercentFormat(company.interest_rate)}</b>
+        </span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Рейтинг заёмщика (рейтинг займа)
+          </template>
+          <b style="${setColor.rating(company.borrower_rating ?? "-")}">${ratingArray.indexOf(company.borrower_rating ?? "-")}</b>
+          (<b style="${setColor.rating(company.rating)}">${ratingArray.indexOf(company.rating)}</b>)
+        </span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Срок
+          </template>
+          <b>${company.term}</b>
+        </span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            ФД
+          </template>
+          <b style="${setColor.fd(company.financial_discipline)}">${(company.financial_discipline * 100).toFixed(0)}%</b>
+        </span>
+      <span>`;
+      },
+      str4: () => {
+        return `
+        <div class="progressbar__container mt-5 tooltip" style="margin-bottom: 8px">
+          <div class="progressbar" style="width: ${company.collected_percentage}%; background: var(--jle-green);"></div>
+          <template class="tooltip-content">
+            Собрано: <b>${toPercentFormat(company.collected_percentage / 100)}. Сумма: ${toCurrencyFormat(company.amount)}.</b>
+          </template>
+        </div>`;
+      },
+    },
+    sm: {
+      badge: () => {
+        return `<span class="badge-rating-min target-url tooltip ${setColor.calculateRating(calculateRating(company))}">${calculateRating(company)}
+        <template class="tooltip-content">
+          Обобщенная оценка займа, учитывает основные показатели. Максимальная оценка 100 баллов.
+        </template>
+      </span>`;
+      },
+      str1: () => {
+        return `
+          <b class="tooltip">${formatReadableDate(company.end_date, "short")}
+            <template class="tooltip-content">
+              Дата погашения
+            </template>
+          </b>
+          `;
+      },
+      str2: () => {
+        return company.invested_debt || company.invested_company_debt
+          ? `<b class="tooltip">${toCurrencyFormat(company.invested_debt) ?? toCurrencyFormat(0)} / ${toCurrencyFormat(company.invested_company_debt) ?? toCurrencyFormat(0)}
+              <template class="tooltip-content">
+                Займ в портфеле / заёмщик в портфеле
+              </template>
+            </b>`
+          : `<b class="tooltip" style="${green}">Нет в портфеле
+              <template class="tooltip-content">
+                Компании нет в портфеле
+              </template>
+            </b>`;
+      },
+      str3: () => {
+        return `
+        <span class="fz-14">
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Ставка (эффективная ставка)
+          </template>
+          <b>${toPercentFormat(company.interest_rate)}</b> (<b>${toPercentFormat(company.ytm)}</b>)
+        </span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Рейтинг заёмщика (рейтинг займа)
+          </template>
+          <b style="${setColor.rating(company.borrower_rating ?? "-")}">${ratingArray.indexOf(company.borrower_rating ?? "-")}</b>
+          (<b style="${setColor.rating(company.loan_rating ?? "-")}">${ratingArray.indexOf(company.loan_rating ?? "-")}</b>)
+        </span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Срок (остаток)
+          </template>
+          <b>${company.term}</b>(<b style="${setColor.progress(company.progress)}">${company.term_left}</b>)</span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            ФД
+          </template>
+          <b style="${setColor.fd(company.financial_discipline)}">${(company.financial_discipline * 100).toFixed(0)}%</b>
+        </span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Класс
+          </template>
+          <b style="${setColor.class(company.loan_class)}">${company.loan_class}</b>
+        </span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Минимальная цена
+          </template>
+          <b style="${setColor.price(company.min_price)}">${toPercentFormat(company.min_price)}</b>
+        </span>
+      <span>`;
+      },
+      str4: () => {
+        return `
+        <div class="progressbar__container mt-5 tooltip" style="margin-bottom: 8px">
+          <div class="progressbar" style="width: ${company.progress * 100}%; background: var(--jle-green);"></div>
+          <template class="tooltip-content">
+            Выплачено: <b>${toPercentFormat(company.progress)}</b>
+          </template>
+        </div>`;
+      },
+    },
+    bl: {
+      str1: () => (company.type === "loan" ? `<p class="decoration-blue">Займ</p>` : `<p class="decoration-green">Вся компания</p>`),
+      str3: () => {
+        return `
+        <span class="fz-14">
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Ставка
+          </template>
+          <b>${toPercentFormat(company.interest_rate)}</b>
+        </span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Рейтинг заёмщика (рейтинг займа)
+          </template>
+          <b style="${setColor.rating(company.borrower_rating)}">${ratingArray.indexOf(company.borrower_rating)}</b>
+          (<b style="${setColor.rating(company.loan_rating)}">${ratingArray.indexOf(company.loan_rating)}</b>)
+        </span>
+        <b>|</b>
+        <span class="tooltip">
+          <template class="tooltip-content">
+            Срок
+          </template>
+          <b>${company.term}</b>
+        </span>
+      <span>`;
+      },
+    },
+  };
+  return `
+  <header>
+    <div class="flex" style="margin-top: 6px;">
+      <img class="list-element__img" src="https://jetlend.ru${company.preview_small_url || company.image_url || company.img}">
+      <div class="flex flex-col" style="text-wrap: nowrap; flex-basis: 100%; width: 0;">
+        <b class="flex justify-between items-center">
+        <div>
+          <a class="list-element__loan-name truncate-text tooltip target-url" style="position: relative; display: inline-block; max-width: 170px"
+            href="https://jetlend.ru/invest/v3/company/${company.loan_id ?? company.id}">${company.loan_name || company.name}
+            <template class="tooltip-content">
+              ${company.company && company.loan_name ? company.company + ", Выпуск №" + +company.loan_name.split("-")[1].replace("В", "") : company.name}
+            </template>
+          </a>
+          ${print[sett].badge?.() ?? ""}
+        </div>
+
+          ${print[sett].str1?.() ?? ""}
+        </b>
+        <div class="flex justify-between fz-14">
+          <p class="tooltip">${company.loan_isin || idToIsin(company.id)}
+            <template class="tooltip-content">
+              Уникальный код займа на платформе JetLend
+            </template>
+          <p>
+          ${print[sett].str2?.() ?? ""}
+        </div>
+        ${print[sett].str3?.() ?? ""}
+      </div>
+    </div>
+    ${print[sett].str4?.() ?? ""}
+  </header>
+  <main>
+    ${
+      details
+        ? `
+      <p>${company.company}</p>  
+      <p>ИНН: <b>${details.inn}</b>, ОГРН: <b>${details.ogrn}</b></p>
+      <p>Выручка за год: <b>${toShortCurrencyFormat(details.revenueForPastYear)}</b>, прибыль за год: <b>${toShortCurrencyFormat(details.profitForPastYear)}</b></p>
+      <p>Дата регистрации: <b>${details.registrationDate}</b></p>
+      <p>Адрес: ${details.address}</p>
+      <p>Деятельность: ${details.primaryCatergory}.</p> 
+      <div class="mt-5">${details.site ? `<a class="target-url link" href="${details.site}">Сайт компании </a>` : "Cайта нет "}|
+        <a class="target-url link" href="${details.profile}"> Контур. Фокус </a>|
+        <a class="target-url link" href="https://vbankcenter.ru/contragent/search?searchStr=${details.inn}"> ВБЦ </a>|
+        <a class="target-url link" href="https://checko.ru/search?query=${details.inn}"> Чекко </a>|
+        <a class="target-url link" href="https://www.rusprofile.ru/search?query=${details.inn}"> Rusprofile </a>
+      </div>`
+        : ""
+    }
+    ${other.error ? `<div style="margin-top: 5px;">${other.error}</div>` : ""}
+  </main>
+`;
+}
+
+const smc = {
+  company: 'ООО "СТАНКОСАРАТОВ"',
+  image_url: "/media/images/e2/d3/e2d3065f-64bd-463d-a468-81237a987b5e.jpg",
+  preview_small_url: "/media/images/e2/d3/e2d3065f-64bd-463d-a468-81237a987b5e_160x160.jpg",
+  preview_url: "/media/images/e2/d3/e2d3065f-64bd-463d-a468-81237a987b5e_1024x1024.jpg",
+  loan_id: 2945,
+  loan_class: 1,
+  loan_isin: "JL0000002945",
+  loan_name: "СТАНКОСАРАТО-В02",
+  loan_order: 2,
+  financial_discipline: 0,
+  term: 882,
+  term_left: 203,
+  interest_rate: 0.223,
+  rating: "BBB+",
+  status: "restructured",
+  end_date: "2024-09-17",
+  progress: 0.80457412625,
+  amount: 4075.01,
+  principal_debt: 4494.2,
+  ytm: 2.2803205040260073,
+  min_price: 0.65,
+  invested_contracts_count: null,
+  invested_debt: null,
+  invested_company_debt: null,
+  region: "",
+};
+
+const fmc = {
+  company: "ИП Хаметова Наталья Павловна",
+  image_url: "/media/images/b4/44/b444861b-c556-4ac2-b854-2924fba29e8d.jpg",
+  preview_small_url: "/media/images/b4/44/b444861b-c556-4ac2-b854-2924fba29e8d_160x160.jpg",
+  preview_url: "/media/images/b4/44/b444861b-c556-4ac2-b854-2924fba29e8d_1024x1024.jpg",
+  id: 19412,
+  amount: "914500.00",
+  interest_rate: 0.331,
+  term: 660,
+  investing_amount: null,
+  company_investing_amount: "114.90",
+  financial_discipline: 1,
+  rating: "CC",
+  start_date: "2024-02-26T08:18:08.419163+03:00",
+  collect_time: "2024-03-11T08:18:08.534221+03:00",
+  collected_percentage: 100,
+  status: "waiting",
+  promo: [],
+  loan_isin: "JL0000019412",
+  loan_name: "ХаметоваНП-В20",
+  loan_order: 20,
+  allow_delete: false,
+  allow_delete_cause: "Отмена резерва доступна только в течение 5 дней с момента его создания.",
+  allow_delete_amount: null,
+  ignored: false,
+  region: "",
+};
+
+function investNotification(company, other = {}) {
+  const green = "color: var(--jle-green);";
+  const orange = "color: var(--jle-orange);";
+  const red = "color: var(--jle-red);";
+  const setColor = {
+    fd: (fd) => (fd === 1 ? green : fd <= 0.4 ? red : orange),
+    rating: (rating) => (rating.includes("A") ? green : rating.includes("B") ? orange : red),
+    class: (comp) => (comp === 0 ? green : comp === 1 ? orange : red),
+    price: (price) => (price < 1 ? green : orange),
+    progress: (progress) => (progress > 0.35 ? green : orange),
+    calculateRating: (rating) => (rating > 80 ? "bg-green" : rating > 35 ? "bg-orange" : "bg-red"),
+  };
+  return `
+    <div style="display: flex; margin-top: 6px;">
+      <img style="object-fit: cover;height: 50px;width: 50px;border-radius: 100%;margin: 0px 10px 10px 0;" src="https://jetlend.ru${company.preview_small_url || company.image_url}">
+      <div style="display:flex; flex-direction: column; text-wrap: nowrap; flex-basis: 100%; width: 0;">
+        <b style="display: flex;justify-content: space-between;align-items: center;">
+        <div>
+          <a style="position: relative; display: inline-block; text-decoration: underline; color: var(--jle-fontColor);" 
+            href="https://jetlend.ru/invest/v3/company/${company.loan_id ?? company.id}" target="_blank">${company.loan_name} 
+          </a>
+        </div>
+          ${
+            other.sum
+              ? `
+          <div style="text-wrap: nowrap;font-weight: normal;">
+            Сумма: <b>${toCurrencyFormat(other.sum)}</b>
+          </div>`
+              : ""
+          }
+        </b>
+        <div style="display: flex;justify-content: space-between;font-size:14px; color: var(--jle-fontColor);"">
+          <span>${company.loan_isin || idToIsin(company.id)}</span>
+          ${
+            other.price
+              ? `
+              <span>Цена: <b>${toPercentFormat(other.price)}</b></span>
+          `
+              : ""
+          }
+        </div>
+      <span style="font-size:14px">
+        ${
+          other.percent
+            ? `<b>${toPercentFormat(other.percent)}</b>
+                <b>|</b>`
+            : ""
+        }
+          <b style="${setColor.rating(company.borrower_rating ?? "-")}">${ratingArray.indexOf(company.borrower_rating ?? "-")}</b>
+          (<b style="${setColor.rating(company.rating ?? "-")}">${ratingArray.indexOf(company.rating ?? "-")}</b>)
+        <b>|</b>
+          <b style="${setColor.fd(company.financial_discipline)}">ФД: ${(company.financial_discipline * 100).toFixed(0)}%</b>
+        ${
+          company.loan_class
+            ? `<b>|</b>
+                <b style="${setColor.class(company.loan_class)}">Класс: ${company.loan_class}</b>
+                `
+            : ""
+        }
+      <span>
+      </div>
+    </div>
+    ${
+      company.progress
+        ? `    <div style="background: var(--jle-universalColor); width: 100%; height: 4px; border-radius: 5px; margin-top: 5px;">
+      <div style="background: var(--jle-green); width: ${company.progress * 100}%; height: inherit; border-radius: inherit;"></div>
+    </div>`
+        : company.collected_percentage
+        ? `    <div style="background: var(--jle-universalColor); width: 100%; height: 4px; border-radius: 5px; margin-top: 5px;">
+      <div style="background: var(--jle-green); width: ${company.collected_percentage}%; height: inherit; border-radius: inherit;"></div>
+    </div>`
+        : ""
+    }
+
+    ${other.error ? `<div style="margin-top: 5px;">${other.error}</div>` : ""}
+`;
+}

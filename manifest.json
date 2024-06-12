@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "0.9.1.1",
+  "version": "1.0.0",
   "action": {
     "default_popup": "html/popup.html"
   },
@@ -11,7 +11,7 @@
     "96": "./img/icons/icon96.png",
     "128": "./img/icons/icon128.png"
   },
-  "permissions": ["storage", "tabs"],
+  "permissions": ["storage", "tabs", "clipboardRead"],
   "background": {
     "service_worker": "js/background.js"
   },
@@ -32,12 +32,6 @@
       "matches": ["<all_urls>"],
       "js": ["js/global/variables.js", "js/global/functions.js", "js/content.js"],
       "css": ["css/vars.css"]
-    }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": ["css/vars.css"],
-      "matches": ["<all_urls>"]
     }
   ]
 }
