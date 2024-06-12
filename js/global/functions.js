@@ -541,27 +541,25 @@ async function smLoadLoans(mode, offset = 0, limit = 100, total = 0, badComps = 
     smInvestCompanyArray = smInvestCompanyArray.concat(
       res.data.data.filter(
         (obj) =>
-          (obj.term_left >= parseFloat(filters.smDaysFrom) &&
-            obj.term_left <= parseFloat(filters.smDaysTo) /* Остаток срока займа */ &&
-            ratingArray.indexOf(obj.loan_rating) >= parseInt(filters.smLoanRatingFrom) &&
-            ratingArray.indexOf(obj.loan_rating) <= parseInt(filters.smLoanRatingTo) /* Рейтинг займа */ &&
-            ratingArray.indexOf(obj.borrower_rating) >= parseInt(filters.smRatingFrom) &&
-            ratingArray.indexOf(obj.borrower_rating) <= parseInt(filters.smRatingTo) /* Рейтинг заёмщика */ &&
-            obj.ytm >= valueToPercent(filters.smRateFrom) &&
-            obj.ytm <= valueToPercent(filters.smRateTo) /* Эффективная ставка в % */ &&
-            obj.progress >= valueToPercent(filters.smProgressFrom) &&
-            obj.progress <= valueToPercent(filters.smProgressTo) /* Выплачено (прогресс в %) */ &&
-            obj.loan_class >= parseInt(filters.smClassFrom) &&
-            obj.loan_class <= parseInt(filters.smClassTo) /* Класс займа */ &&
-            obj.min_price >= valueToPercent(filters.smPriceFrom) &&
-            obj.min_price <= valueToPercent(filters.smPriceTo) /* Мин прайс в % */ &&
-            // && (obj.invested_company_debt <= (parseFloat(filters.smMaxCompanySum) - parseFloat(filters.smInvestSum))) /* Сумма в одного заёмщика */
-            obj.invested_debt <= parseFloat(filters.smMaxLoanSum) /* Сумма в один займ */ &&
-            obj.invested_company_debt <= parseFloat(filters.smMaxCompanySum) /* Сумма в одного заёмщика */ &&
-            obj.financial_discipline >= valueToPercent(filters.smFdFrom) &&
-            obj.financial_discipline <= valueToPercent(filters.smFdTo) /* ФД заёмщика */ &&
-            obj.status !== "waiting") /* Статус НЕ в ожидании (не на сборе) */ ||
-          (filters.smCheckNullRating && !obj.borrower_rating)
+          obj.term_left >= parseFloat(filters.smDaysFrom) &&
+          obj.term_left <= parseFloat(filters.smDaysTo) /* Остаток срока займа */ &&
+          ratingArray.indexOf(obj.loan_rating) >= parseInt(filters.smLoanRatingFrom) &&
+          ratingArray.indexOf(obj.loan_rating) <= parseInt(filters.smLoanRatingTo) /* Рейтинг займа */ &&
+          (filters.smCheckNullRating ? !obj.borrower_rating || (ratingArray.indexOf(obj.borrower_rating) >= parseInt(filters.smRatingFrom) && ratingArray.indexOf(obj.borrower_rating) <= parseInt(filters.smRatingTo)) : ratingArray.indexOf(obj.borrower_rating) >= parseInt(filters.smRatingFrom) && ratingArray.indexOf(obj.borrower_rating) <= parseInt(filters.smRatingTo)) /* Рейтинг заёмщика */ /* Рейтинг заёмщика */ &&
+          obj.ytm >= valueToPercent(filters.smRateFrom) &&
+          obj.ytm <= valueToPercent(filters.smRateTo) /* Эффективная ставка в % */ &&
+          obj.progress >= valueToPercent(filters.smProgressFrom) &&
+          obj.progress <= valueToPercent(filters.smProgressTo) /* Выплачено (прогресс в %) */ &&
+          obj.loan_class >= parseInt(filters.smClassFrom) &&
+          obj.loan_class <= parseInt(filters.smClassTo) /* Класс займа */ &&
+          obj.min_price >= valueToPercent(filters.smPriceFrom) &&
+          obj.min_price <= valueToPercent(filters.smPriceTo) /* Мин прайс в % */ &&
+          // && (obj.invested_company_debt <= (parseFloat(filters.smMaxCompanySum) - parseFloat(filters.smInvestSum))) /* Сумма в одного заёмщика */
+          obj.invested_debt <= parseFloat(filters.smMaxLoanSum) /* Сумма в один займ */ &&
+          obj.invested_company_debt <= parseFloat(filters.smMaxCompanySum) /* Сумма в одного заёмщика */ &&
+          obj.financial_discipline >= valueToPercent(filters.smFdFrom) &&
+          obj.financial_discipline <= valueToPercent(filters.smFdTo) /* ФД заёмщика */ &&
+          obj.status !== "waiting" /* Статус НЕ в ожидании (не на сборе) */
       )
     );
 
