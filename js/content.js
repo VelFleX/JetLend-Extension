@@ -32,7 +32,7 @@ async function fmInvest() {
           sendNotification(`Успешная инвестиция ID${company.id}`, investNotification(company, { sum: cache.sum, percent: company.interest_rate }));
           investedSum += cache.sum;
           companyCount++;
-          investHistory.unshift({ id: company.id, name: company.loan_name, img: company.preview_small_url, fd: company.financial_discipline, rating: company.rating, brating: company.borrower_rating, investSum: cache.sum, percent: company.interest_rate, date: new Date().getTime(), mode: investMode });
+          investHistory.unshift({ id: company.id, name: company.loan_name, img: company.preview_small_url, fd: company.financial_discipline, rating: company.rating, brating: company.borrower_rating, investSum: cache.sum, percent: company.interest_rate, date: Date.now(), mode: investMode });
         } else {
           sendNotification(`Ошибка ID${company.id}`, investNotification(company, { error: res.error }));
           errorCount++;
@@ -121,7 +121,7 @@ async function smInvest() {
           sumAll = parseFloat((sumAll - data.data.amount).toFixed(2));
           investedSum += data.data.amount;
           companyCount++;
-          investHistory.unshift({ id: company.loan_id, name: company.loan_name, img: company.preview_small_url, fd: company.financial_discipline, rating: company.rating, brating: company.borrower_rating, investSum: data.data.amount, percent: data.data.ytm, date: new Date().getTime(), mode: investMode, price: price, class: company.loan_class });
+          investHistory.unshift({ id: company.loan_id, name: company.loan_name, img: company.preview_small_url, fd: company.financial_discipline, rating: company.rating, brating: company.borrower_rating, investSum: data.data.amount, percent: data.data.ytm, date: Date.now(), mode: investMode, price: price, class: company.loan_class });
         } else {
           sendNotification(`Ошибка ID${company.loan_id}`, investNotification(company, { error: data.error }));
           errorCount++;
@@ -211,15 +211,13 @@ async function updateBadge() {
   const timeCd = 6;
   const MINUTE = 60000;
   try {
-    if (lastUpdateTime + MINUTE * timeCd <= new Date().getTime()) {
+    if (Date.now() - lastUpdateTime >= MINUTE * timeCd) {
       setBadge("⌛");
       const statsUrl = "https://jetlend.ru/invest/api/account/details";
       const statsData = await fetchData(statsUrl);
       if (statsData.data) {
         const freeBalance = statsData.data.data.balance.free;
-        chrome.storage.local.set({
-          JLE_content: { lastUpdate: new Date().getTime() },
-        });
+        await updateCache("JLE_content", "lastUpdate", Date.now());
         let filters = await getCache(`investPreset_${settings.autoInvestPreset}`, 0);
         if (filters === 0) filters = await getCache("investSettings");
         if (badgeMode === "loans") {
@@ -247,13 +245,13 @@ async function updateBadge() {
         } else {
           setBadge("");
         }
-        if (autoInvestMode !== "0" && lastAutoInvest + MINUTE * investInterval > new Date().getTime()) {
+        if (autoInvestMode !== "0" && Date.now() - lastAutoInvest >= MINUTE * investInterval) {
           if (autoInvestMode === "fm" && freeBalance - safe > filters.fmInvestSum) {
             if (!fmInvestCompanyArray.length) {
               await fmLoadLoans("loadLoans");
               if (!fmInvestCompanyArray.length) return;
             }
-            const currentTime = new Date().getTime();
+            const currentTime = Date.now();
             chrome.storage.local.set({
               JLE_content: { lastUpdate: currentTime, lastAutoInvest: currentTime },
             });
@@ -274,7 +272,7 @@ async function updateBadge() {
               await smLoadLoans("loadLoans", 0, 100);
               if (!smInvestCompanyArray.length) return;
             }
-            const currentTime = new Date().getTime();
+            const currentTime = Date.now();
             chrome.storage.local.set({
               JLE_content: { lastUpdate: currentTime, lastAutoInvest: currentTime },
             });
@@ -301,6 +299,7 @@ async function updateBadge() {
       }
     }
   } catch (error) {
+    console.log(error);
     setBadge("🔒❌");
   }
 }
@@ -383,7 +382,7 @@ async function mainUpdate() {
         },
       };
 
-      allAssetsBlock.innerHTML = `Все активы <span style="font-weight:300;">(${getUpdateTime(new Date().getTime())})</span>`;
+      allAssetsBlock.innerHTML = `Все активы <span style="font-weight:300;">(${getUpdateTime(Date.now())})</span>`;
       balanceTitleBlock.innerHTML = `<span>Активы | Активы без НПД</span>`;
       balanceBlock.innerHTML = `<span>${toCurrencyFormat(balance)} <span style="opacity: 0.5">|</span> ${toCurrencyFormat(cleanBalance)}</span>`;
       collectionIncomeBlock.innerHTML = `<span>${toPercentFormat(platformObj.average_interest_rate_30days)}</span>`;
