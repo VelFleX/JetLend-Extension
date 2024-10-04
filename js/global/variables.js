@@ -119,6 +119,13 @@ const yearTime = {
   },
 };
 
+const $ = (selector) => (selector.startsWith("#") ? document.getElementById(selector.substring(1)) : document.querySelector(selector));
+const $$ = (selector) => document.querySelectorAll(selector);
+// const $click = (id, func) => ($(id).onclick = func);
+// const $change = (id, func) => ($(id).onchange = func);
+const $on = (event, id, callback) => $(id).addEventListener(event, callback);
+const $off = (event, id, callback) => $(id).removeEventListener(event, callback);
+
 const $create = (selector, classesArr, styles, text) => {
   const block = document.createElement(selector);
   classesArr && block.classList.add(...classesArr);
@@ -126,11 +133,6 @@ const $create = (selector, classesArr, styles, text) => {
   text && (block.textContent = text);
   return block;
 };
-
-const $get = (selector) => (selector.startsWith("#") ? document.getElementById(selector.substring(1)) : document.querySelector(selector));
-const $getAll = document.querySelectorAll.bind(document);
-const $click = (id, func) => ($get(id).onclick = func);
-const $change = (id, func) => ($get(id).onchange = func);
 
 let fmCompanyUpdate = true;
 let fmrCompanyUpdate = false;

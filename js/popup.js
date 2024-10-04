@@ -1,4 +1,4 @@
-$get("#version").innerHTML = version;
+$("#version").innerHTML = version;
 
 (async function () {
   await mainUpdateFunction();
@@ -8,41 +8,41 @@ setInterval(async () => await mainUpdateFunction(), 60000);
 // Загрузка кэша
 async function loadCache() {
   const data = await getCache("cacheJetlend");
-  $get(".lastUpdateDate").innerHTML = `Все активы <span style="position: relative">(${getUpdateTime(data.updateTime ?? new Date().getTime())}) <span class="load-spinner" title="Загузка актуальных данных..." style="cursor: pointer; width: 16px"></span></span>`;
-  $get(".balance__title").innerHTML = `<span>${data.balanceTitle ?? ""}</span> <span>${data.collectionIncomeTitle ?? ""}</span>`;
-  $get(".balance__value").innerHTML = `<div><span class="load-opacity-animation">${data.balance ?? "-"}</span><span style="opacity: .5;"> | </span><span class="load-opacity-animation">${data.cleanBalance ?? "-"}</span></div> <span class="load-opacity-animation">${data.collectionIncomeText ?? "-"}</span>`;
-  $get(".income__title").innerHTML = `<span>${data.incomeTitle ?? ""}</span> <span>${data.incomePercent ?? ""}</span>`;
+  $(".lastUpdateDate").innerHTML = `Все активы <span style="position: relative">(${getUpdateTime(data.updateTime ?? new Date().getTime())}) <span class="load-spinner" title="Загузка актуальных данных..." style="cursor: pointer; width: 16px"></span></span>`;
+  $(".balance__title").innerHTML = `<span>${data.balanceTitle ?? ""}</span> <span>${data.collectionIncomeTitle ?? ""}</span>`;
+  $(".balance__value").innerHTML = `<div><span class="load-opacity-animation">${data.balance ?? "-"}</span><span style="opacity: .5;"> | </span><span class="load-opacity-animation">${data.cleanBalance ?? "-"}</span></div> <span class="load-opacity-animation">${data.collectionIncomeText ?? "-"}</span>`;
+  $(".income__title").innerHTML = `<span>${data.incomeTitle ?? ""}</span> <span>${data.incomePercent ?? ""}</span>`;
 
-  $get(".income__currency").innerHTML = `<span class="load-opacity-animation">${data.income ?? ""}</span><span style="opacity: .5;"> | </span><span class="load-opacity-animation">${data.cleanIncome ?? ""}</span>`;
-  $get(".income__percent").innerHTML = `<span class="load-opacity-animation"><img src="/img/income.svg">${data.percentIncomeNum ?? ""}</span>`;
+  $(".income__currency").innerHTML = `<span class="load-opacity-animation">${data.income ?? ""}</span><span style="opacity: .5;"> | </span><span class="load-opacity-animation">${data.cleanIncome ?? ""}</span>`;
+  $(".income__percent").innerHTML = `<span class="load-opacity-animation"><img src="/img/income.svg">${data.percentIncomeNum ?? ""}</span>`;
   cache.balance = data.balance;
   cache.cleanBalance = data.cleanBalance;
 
   const activeInvestPreset = await getCache("investPreset_active", 0);
   user.activePreset = activeInvestPreset;
-  $get("#presets").querySelectorAll("p")[activeInvestPreset].classList.add("btn-small--active");
+  $("#presets").querySelectorAll("p")[activeInvestPreset].classList.add("btn-small--active");
 
   for (let i = 0; i < 5; i++) {
     const cache = await getCache(`investPreset_${i}`);
     const presetName = cache.presetName || `Пресет ${i + 1}`;
-    $get("#presets").querySelectorAll("p")[i].textContent = presetName;
-    $get("#autoInvest_preset").querySelectorAll("option")[i].textContent = presetName;
+    $("#presets").querySelectorAll("p")[i].textContent = presetName;
+    $("#autoInvest_preset").querySelectorAll("option")[i].textContent = presetName;
   }
 
   if (data.qualification) {
-    $get("#fmInvestAgreeText").textContent = $get("#smInvestAgreeText").textContent;
+    $("#fmInvestAgreeText").textContent = $("#smInvestAgreeText").textContent;
   }
 
   // const allCacheSize = await getCacheSize();
   const historySize = await getCacheSize("investHistory");
 
-  // $get("#clean_cache").textContent += ` (${byteToKB(allCacheSize - historySize)})`;
-  $get("#clean_history").textContent += ` (${byteToKB(historySize)} KB)`;
+  // $("#clean_cache").textContent += ` (${byteToKB(allCacheSize - historySize)})`;
+  $("#clean_history").textContent += ` (${byteToKB(historySize)} KB)`;
 
   const updateHistory = await fetchData("/updates.json");
   const versionsArray = updateHistory.data.versions;
   // Загрузка истории обновлений
-  const listUpdate = $get("#update-history-ul");
+  const listUpdate = $("#update-history-ul");
   versionsArray.forEach((version) => {
     const listItem = $create("div", ["list-element", "contrast-bg"]);
     listItem.innerHTML = `<h2>v${version.version_number}</h2> <h4 style="opacity: .5">${version.update_date}</h4>`;
@@ -54,7 +54,7 @@ async function loadCache() {
   const helloMsg = await getCache("helloMsg");
   if (!helloMsg || helloMsg.version !== version) {
     openModal("#update-history");
-    await updateCache("helloMsg", "version", version);
+    await updateCache("helloMsg", { version: version });
   }
 }
 
@@ -77,26 +77,26 @@ async function loadSetting() {
   await loadSetting();
 })();
 
-$get("#stats__open").addEventListener("click", function () {
-  if ($get(".stats-section").style.maxHeight === "100%" || (!this.style.cssText && window.innerWidth >= 768)) {
+$on("click", "#stats__open", function () {
+  if ($(".stats-section").style.maxHeight === "100%" || (!this.style.cssText && window.innerWidth >= 768)) {
     this.style.transform = "scaleY(-1)";
-    $get(".stats-section").style.maxHeight = "0px";
+    $(".stats-section").style.maxHeight = "0px";
   } else {
     this.style.transform = "scaleY(1)";
-    $get(".stats-section").style.maxHeight = "100%";
+    $(".stats-section").style.maxHeight = "100%";
   }
 });
 
-const formsElements = $getAll(".filterInput");
+const formsElements = $$(".filterInput");
 formsElements.forEach((e) =>
   e.addEventListener("change", async function () {
     fmCompanyUpdate = false;
     fmrCompanyUpdate = false;
     smCompanyUpdate = false;
     if (this.id.includes("Check")) {
-      await updateCache(`investPreset_${user.activePreset}`, this.id, this.checked);
+      await updateCache(`investPreset_${user.activePreset}`, { [this.id]: this.checked });
     } else {
-      await updateCache(`investPreset_${user.activePreset}`, this.id, this.value);
+      await updateCache(`investPreset_${user.activePreset}`, { [this.id]: this.value });
     }
     const filters = await getCache(`investPreset_${user.activePreset}`);
     await setCache("investSettings", filters);
@@ -112,15 +112,15 @@ async function loadFilters() {
   const diff = formsIds.filter((x) => !keys.includes(x));
   diff.forEach((id) => {
     if (id.includes("Check")) {
-      $get("#" + id).checked = false;
+      $("#" + id).checked = false;
     } else {
-      $get("#" + id).value = "";
+      $("#" + id).value = "";
     }
   });
   keys
     .filter((key) => key !== "presetName")
     .forEach((key) => {
-      const formFilter = $get("#" + key);
+      const formFilter = $("#" + key);
       if (key.includes("Check")) {
         formFilter.checked = filters[key];
       } else {
@@ -132,7 +132,7 @@ async function loadFilters() {
   await loadFilters();
 })();
 
-const presetsElements = $get("#presets").querySelectorAll("p");
+const presetsElements = $("#presets").querySelectorAll("p");
 presetsElements.forEach((preset, index) => {
   preset.addEventListener("click", async function () {
     presetsElements.forEach((btn) => btn.classList.remove("btn-small--active"));
@@ -155,8 +155,8 @@ presetsElements.forEach((preset, index) => {
     this.contentEditable = false;
   });
   preset.addEventListener("input", async function () {
-    await updateCache(`investPreset_${index}`, "presetName", this.textContent);
-    $get("#autoInvest_preset").querySelectorAll("option")[index].textContent = this.textContent;
+    await updateCache(`investPreset_${index}`, { presetName: this.textContent });
+    $("#autoInvest_preset").querySelectorAll("option")[index].textContent = this.textContent;
   });
 });
 
@@ -199,102 +199,102 @@ document.addEventListener("mouseover", function (e) {
   });
 });
 
-document.addEventListener("click", async function (event) {
+document.addEventListener("click", async function (e) {
   // Таргет урл
-  if (event.target.classList.contains("target-url")) {
-    event.preventDefault();
+  if (e.target.classList.contains("target-url")) {
+    e.preventDefault();
     const ensureHttpPrefix = (url) => (!/^https?:\/\//i.test(url) ? "http://" + url : url);
-    chrome.windows.create({ url: ensureHttpPrefix(event.target.href), type: "popup", focused: true });
+    chrome.windows.create({ url: ensureHttpPrefix(e.target.href), type: "popup", focused: true });
     return;
   }
   // Модалка
-  if (event.target.classList.contains("modal-container")) return closeModal("#" + event.target.id);
+  if (e.target.classList.contains("modal-container")) return closeModal("#" + e.target.id);
   // Модалка №2
-  if (event.target.classList.contains("modal__btn-close")) return closeModal("#" + event.target.parentNode.parentNode.parentNode.id);
+  if (e.target.classList.contains("modal__btn-close")) return closeModal("#" + e.target.parentNode.parentNode.parentNode.id);
   // Открыть историю обновлений
-  if (event.target.classList.contains("open-updates")) return openModal("#update-history");
+  if (e.target.classList.contains("open-updates")) return openModal("#update-history");
   // Открыть поддержку проекта
-  if (event.target.classList.contains("open-support")) return openModal("#support-section");
+  if (e.target.classList.contains("open-support")) return openModal("#support-section");
   // Рассчитать XIRR
-  if (event.target.id.includes("xirr-all")) return await printXIrr("all");
+  if (e.target.id.includes("xirr-all")) return await printXIrr("all");
   // Рассчитать XIRR
-  if (event.target.id.includes("xirr-year")) return await printXIrr("year");
+  if (e.target.id.includes("xirr-year")) return await printXIrr("year");
   // Открыть события
-  if (event.target.closest(".open-events")) return openModal("#events");
+  if (e.target.closest(".open-events")) return openModal("#events");
   // Открыть портфель
-  if (event.target.closest(".open-portfolio")) return openModal("#portfolio");
+  if (e.target.closest(".open-portfolio")) return openModal("#portfolio");
   // Открыть аналитику
-  // if (event.target.closest(".open-analytics")) return openModal("#analytics");
+  // if (e.target.closest(".open-analytics")) return openModal("#analytics");
   // Открыть настройки
-  if (event.target.closest(".open-settings")) return openModal("#settings");
+  if (e.target.closest(".open-settings")) return openModal("#settings");
   // Открыть распределение
-  // if (event.target.closest(".open-events")) return openModal("#events");
+  // if (e.target.closest(".open-events")) return openModal("#events");
 });
 
-$click(".invest-section__btn-open", openInvestPage);
-$click(".invest-section__btn-close", closeInvestPage);
+$on("click", ".invest-section__btn-open", openInvestPage);
+$on("click", ".invest-section__btn-close", closeInvestPage);
 
-$click("#event-transactions__open", transactionsShow);
-$click("#event-invests__open", investHistoryShow);
+$on("click", "#event-transactions__open", transactionsShow);
+$on("click", "#event-invests__open", investHistoryShow);
 
-$click("#portfolio-all__open", portfolioAllShow);
-$click("#npl1__open", () => nplShow(1));
-$click("#npl15__open", () => nplShow(15));
-$click("#restructs__open", restructsShow);
-$click("#defaults__open", defaultsShow);
-$click("#problemLoans__open", problemLoansShow);
+$on("click", "#portfolio-all__open", portfolioAllShow);
+$on("click", "#npl1__open", () => nplShow(1));
+$on("click", "#npl15__open", () => nplShow(15));
+$on("click", "#restructs__open", restructsShow);
+$on("click", "#defaults__open", defaultsShow);
+$on("click", "#problemLoans__open", problemLoansShow);
 
-// $click("#revenue__open", revenueShow);
+// $on('click', "#revenue__open", revenueShow);
 
-$change("#time_setting", async (e) => await updateCache("settings", "timePeriod", e.target.value));
-$change("#theme_setting", async (e) => {
-  await updateCache("settings", "theme", e.target.value);
+$on("change", "#time_setting", async (e) => await updateCache("settings", { timePeriod: e.target.value }));
+$on("change", "#theme_setting", async (e) => {
+  await updateCache("settings", { theme: e.target.value });
   setTheme(e.target.value);
 });
-$click("#updateVisual_setting", async (e) => await updateCache("settings", "updateVisual", e.target.checked));
+$on("change", "#updateVisual_setting", async (e) => await updateCache("settings", { updateVisual: e.target.checked }));
 
-$change("#autoInvest_mode", async (e) => await updateCache("settings", "autoInvestMode", e.target.value));
-$change("#autoInvest_preset", async (e) => await updateCache("settings", "autoInvestPreset", e.target.value));
-$change("#autoInvest_safe", async (e) => await updateCache("settings", "autoInvestSafe", e.target.value));
-$change("#autoInvest_interval", async (e) => await updateCache("settings", "autoInvestInterval", e.target.value));
-$change("#badgeMode_setting", async (e) => await updateCache("settings", "badgeMode", e.target.value));
+$on("change", "#autoInvest_mode", async (e) => await updateCache("settings", { autoInvestMode: e.target.value }));
+$on("change", "#autoInvest_preset", async (e) => await updateCache("settings", { autoInvestPreset: e.target.value }));
+$on("change", "#autoInvest_safe", async (e) => await updateCache("settings", { autoInvestSafe: e.target.value }));
+$on("change", "#autoInvest_interval", async (e) => await updateCache("settings", { autoInvestInterval: e.target.value }));
+$on("change", "#badgeMode_setting", async (e) => await updateCache("settings", { badgeMode: e.target.value }));
 
-$click(".open-newTab", () => chrome.tabs.create({ url: chrome.runtime.getURL("html/popup.html") }));
+$on("click", ".open-newTab", () => chrome.tabs.create({ url: chrome.runtime.getURL("html/popup.html") }));
 
-$click("#fm-btn-update", updateFirstMarket);
-$get("#fm-btn-show").onclick = () => {
+$on("click", "#fm-btn-update", updateFirstMarket);
+$on("click", "#fm-btn-show", () => {
   openModal("#fm-list");
   fmCompanyShow(fmInvestCompanyArray, "#fm-list-ul");
-};
-$get("#fm-btn-stop").onclick = () => (fmCompanyUpdate = false);
+});
+$on("click", "#fm-btn-stop", () => (fmCompanyUpdate = false));
 
-$get("#fmr-btn-update").onclick = updateFirstMarketReserv;
-$get("#fmr-btn-show").onclick = () => {
+$on("click", "#fmr-btn-update", updateFirstMarketReserv);
+$on("click", "#fmr-btn-show", () => {
   openModal("#fmr-list");
   fmCompanyShow(fmrInvestCompanyArray, "#fmr-list-ul");
-};
-$get("#fmr-btn-stop").onclick = () => (fmrCompanyUpdate = false);
+});
+$on("click", "#fmr-btn-stop", () => (fmrCompanyUpdate = false));
 
-$get("#sm-btn-update").onclick = updateSecondMarket;
-$get("#sm-btn-show").onclick = () => {
+$on("click", "#sm-btn-update", updateSecondMarket);
+$on("click", "#sm-btn-show", () => {
   openModal("#sm-list");
   smCompanyShow(smInvestCompanyArray, "#sm-list-ul");
-};
-$get("#sm-btn-stop").onclick = () => (smCompanyUpdate = false);
+});
+$on("click", "#sm-btn-stop", () => (smCompanyUpdate = false));
 
-$get("#marketMode").onclick = async () => await marketSwap();
-$get("#checkCompany__open").onclick = () => openModal("#checkCompany__section");
-$get("#checkCompany__btn").onclick = () => checkCompany();
-$get("#blackList__open").onclick = async () => {
+$on("click", "#marketMode", async () => await marketSwap());
+$on("click", "#checkCompany__open", () => openModal("#checkCompany__section"));
+$on("click", "#checkCompany__btn", () => checkCompany());
+$on("click", "#blackList__open", async () => {
   openModal("#blackList__section");
   await blackListShow("#blackList__ul", await getCache("blackList", []));
-};
-$get("#blackListAddCompany__btn").onclick = async () => await addBlackList("comp");
-$get("#blackListAddLoan__btn").onclick = async () => await addBlackList("loan");
+});
+$on("click", "#blackListAddCompany__btn", async () => await addBlackList("comp"));
+$on("click", "#blackListAddLoan__btn", async () => await addBlackList("loan"));
 
-$click("#export_cache", copyToClipboard);
-$click("#import_cache", async () => await importDataToStorage());
-$click("#clean_history", async (e) => {
+$on("click", "#export_cache", copyToClipboard);
+$on("click", "#import_cache", async () => await importDataToStorage());
+$on("click", "#clean_history", async (e) => {
   await setCache("investHistory", []);
   e.target.textContent = "История очищена (0 KB)";
   e.target.classList.toggle("btn-danger");
@@ -332,11 +332,11 @@ function copyToClipboard() {
 }
 
 async function transactionsShow() {
-  $get("#events__btn-section")
+  $("#events__btn-section")
     .querySelectorAll(".btn-small")
     .forEach((btn) => btn.classList.remove("btn-small--active"));
-  $get("#event-transactions__open").classList.add("btn-small--active");
-  const list = $get("#events__list");
+  $("#event-transactions__open").classList.add("btn-small--active");
+  const list = $("#events__list");
   printSpinLoad(list, 32);
   const transactionsData = await fetchData("https://jetlend.ru/invest/api/account/transactions");
   const operations = {
@@ -391,11 +391,11 @@ async function transactionsShow() {
 
 // История распределения
 async function investHistoryShow() {
-  $get("#events__btn-section")
+  $("#events__btn-section")
     .querySelectorAll(".btn-small")
     .forEach((btn) => btn.classList.remove("btn-small--active"));
-  $get("#event-invests__open").classList.add("btn-small--active");
-  const list = $get("#events__list");
+  $("#event-invests__open").classList.add("btn-small--active");
+  const list = $("#events__list");
   printSpinLoad(list, 32);
   const history = await getCache("investHistory", []);
   if (!history.length) {
@@ -412,11 +412,11 @@ async function investHistoryShow() {
 }
 
 async function portfolioAllShow() {
-  $get("#portfolio__btn-section")
+  $("#portfolio__btn-section")
     .querySelectorAll(".btn-small")
     .forEach((btn) => btn.classList.remove("btn-small--active"));
-  $get("#portfolio-all__open").classList.add("btn-small--active");
-  const list = $get("#portfolio__list");
+  $("#portfolio-all__open").classList.add("btn-small--active");
+  const list = $("#portfolio__list");
   printSpinLoad(list, 32);
   const allCompays = await fetchChunks("https://jetlend.ru/invest/api/portfolio/loans?");
   const closed = allCompays.data.data.filter((elem) => elem.status === "closed");
@@ -466,11 +466,11 @@ async function portfolioAllShow() {
 }
 
 async function nplShow(nplNum) {
-  $get("#portfolio__btn-section")
+  $("#portfolio__btn-section")
     .querySelectorAll(".btn-small")
     .forEach((btn) => btn.classList.remove("btn-small--active"));
-  $get(`#npl${nplNum}__open`).classList.add("btn-small--active");
-  const list = $get("#portfolio__list");
+  $(`#npl${nplNum}__open`).classList.add("btn-small--active");
+  const list = $("#portfolio__list");
   printSpinLoad(list, 32);
   const url = "https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22delayed%22%5D%2C%22field%22%3A%22status%22%7D%5D&sort_dir=asc&sort_field=company";
   const res = await fetchChunks(url);
@@ -518,11 +518,11 @@ async function nplShow(nplNum) {
 }
 
 async function restructsShow() {
-  $get("#portfolio__btn-section")
+  $("#portfolio__btn-section")
     .querySelectorAll(".btn-small")
     .forEach((btn) => btn.classList.remove("btn-small--active"));
-  $get("#restructs__open").classList.add("btn-small--active");
-  const list = $get("#portfolio__list");
+  $("#restructs__open").classList.add("btn-small--active");
+  const list = $("#portfolio__list");
   printSpinLoad(list, 32);
   const url = "https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22restructured%22%5D%2C%22field%22%3A%22status%22%7D%5D&sort_dir=desc&sort_field=principal_debt";
   const res = await fetchChunks(url);
@@ -557,11 +557,11 @@ async function restructsShow() {
 }
 
 async function defaultsShow() {
-  $get("#portfolio__btn-section")
+  $("#portfolio__btn-section")
     .querySelectorAll(".btn-small")
     .forEach((btn) => btn.classList.remove("btn-small--active"));
-  $get("#defaults__open").classList.add("btn-small--active");
-  const list = $get("#portfolio__list");
+  $("#defaults__open").classList.add("btn-small--active");
+  const list = $("#portfolio__list");
   printSpinLoad(list, 32);
   const cache = await getCache("defaults", []);
   const url = "https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22default%22%5D%2C%22field%22%3A%22status%22%7D%5D";
@@ -594,7 +594,7 @@ async function defaultsShow() {
       await memoDefaultsDate(company);
     }
 
-    chrome.storage.local.set({ defaults: cache });
+    await setCache("defaults", cache);
 
     companysArr.sort((a, b) => new Date(b.default_date) - new Date(a.default_date));
     const nplArr = companysArr.map((elem) => elem.npl);
@@ -637,11 +637,11 @@ async function defaultsShow() {
 }
 
 async function problemLoansShow() {
-  $get("#portfolio__btn-section")
+  $("#portfolio__btn-section")
     .querySelectorAll(".btn-small")
     .forEach((btn) => btn.classList.remove("btn-small--active"));
-  $get("#problemLoans__open").classList.add("btn-small--active");
-  const list = $get("#portfolio__list");
+  $("#problemLoans__open").classList.add("btn-small--active");
+  const list = $("#portfolio__list");
   printSpinLoad(list, 32);
 
   const url = "https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22active%22%5D%2C%22field%22%3A%22status%22%7D%5D";
@@ -669,7 +669,7 @@ async function problemLoansShow() {
 // async function revenueShow() {
 //   btnsSwapActive("#analytics__btn-section", "#revenue__open");
 
-//   const list = $get("#analytics__list");
+//   const list = $("#analytics__list");
 //   printSpinLoad(list, 32);
 //   const cache = await getCache("defaults", []);
 //   const url = "https://jetlend.ru/invest/api/portfolio/loans?aggregate=purchased_amount%2Cpaid_interest%2Cpaid_fine%2Cprincipal_debt%2Cnkd&filter=%5B%7B%22values%22%3A%5B%22default%22%5D%2C%22field%22%3A%22status%22%7D%5D";
@@ -755,17 +755,17 @@ async function checkCompany() {
   if (!checkCompany__input.value) {
     return;
   }
-  $get("#checkCompany__list").innerHTML = "";
-  printSpinLoad($get("#checkCompany__spin"), 32);
+  $("#checkCompany__list").innerHTML = "";
+  printSpinLoad($("#checkCompany__spin"), 32);
   const companysArr = checkCompany__input.value.split(" ");
   checkCompany__input.value = null;
   const fm = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
   const sm = await fetchChunks("https://jetlend.ru/invest/api/exchange/loans?");
   for (const company of companysArr) {
     const res = await checkingCompany(parseInt(company.replace(/\D/g, "")), fm, sm);
-    $get("#checkCompany__list").innerHTML += res;
+    $("#checkCompany__list").innerHTML += res;
   }
-  $get("#checkCompany__spin").innerHTML = "";
+  $("#checkCompany__spin").innerHTML = "";
 }
 
 async function addBlackList(type) {
@@ -786,7 +786,7 @@ async function addBlackList(type) {
 
 function fmCompanyShow(arr, blockId) {
   const removeElement = (index) => arr.splice(index, 1);
-  const list = $get(blockId);
+  const list = $(blockId);
   list.innerHTML = "";
   arr.forEach((company, index) => {
     const listItem = $create("div", ["list-element", "contrast-bg"]);
@@ -818,22 +818,22 @@ function fmCompanyShow(arr, blockId) {
 }
 
 function updateFmArrayText() {
-  $get("#fm-numOfSortedCompany").textContent = `Найдено: ${fmInvestCompanyArray.length} ${getZaimEnding(fmInvestCompanyArray.length)} `;
-  $get("#fm-btn-update").classList.remove("display-none");
-  fmInvestCompanyArray.length > 0 ? $get("#fm-btn-show").classList.remove("display-none") : $get("#fm-btn-show").classList.add("display-none");
-  $get("#fm-btn-stop").classList.add("display-none");
+  $("#fm-numOfSortedCompany").textContent = `Найдено: ${fmInvestCompanyArray.length} ${getZaimEnding(fmInvestCompanyArray.length)} `;
+  $("#fm-btn-update").classList.remove("display-none");
+  fmInvestCompanyArray.length > 0 ? $("#fm-btn-show").classList.remove("display-none") : $("#fm-btn-show").classList.add("display-none");
+  $("#fm-btn-stop").classList.add("display-none");
 }
 
 function updateSmArrayText() {
-  $get("#sm-numOfSortedCompany").textContent = `Найдено: ${smInvestCompanyArray.length} ${getZaimEnding(smInvestCompanyArray.length)} `;
-  $get("#sm-btn-update").classList.remove("display-none");
-  smInvestCompanyArray.length > 0 ? $get("#sm-btn-show").classList.remove("display-none") : $get("#sm-btn-show").classList.add("display-none");
-  $get("#sm-btn-stop").classList.add("display-none");
+  $("#sm-numOfSortedCompany").textContent = `Найдено: ${smInvestCompanyArray.length} ${getZaimEnding(smInvestCompanyArray.length)} `;
+  $("#sm-btn-update").classList.remove("display-none");
+  smInvestCompanyArray.length > 0 ? $("#sm-btn-show").classList.remove("display-none") : $("#sm-btn-show").classList.add("display-none");
+  $("#sm-btn-stop").classList.add("display-none");
 }
 
 function smCompanyShow(arr, blockId) {
   const removeElement = (index) => arr.splice(index, 1);
-  const list = $get(blockId);
+  const list = $(blockId);
   list.innerHTML = "";
   arr.forEach((company, index) => {
     const listItem = $create("div", ["list-element", "contrast-bg"]);
@@ -867,7 +867,7 @@ async function blackListShow(blockId, arr = []) {
     arr.splice(index, 1);
     await setCache("blackList", arr);
   };
-  const list = $get(blockId);
+  const list = $(blockId);
   async function processCompanies(arr) {
     printSpinLoad(list, 32);
     let wasUpdate = false;
@@ -925,7 +925,7 @@ async function blackListShow(blockId, arr = []) {
 
 async function mainUpdateFunction() {
   printSpinLoad(".lastUpdateDate", 16);
-  for (let span of $getAll(".invest-section__title-sum")) {
+  for (let span of $$(".invest-section__title-sum")) {
     span.textContent = `(Загрузка...)`;
   }
   const userStatsUrl = "https://jetlend.ru/invest/api/account/details";
@@ -994,7 +994,7 @@ async function mainUpdateFunction() {
       return days + text;
     }
 
-    for (let span of $getAll(".invest-section__title-sum")) {
+    for (let span of $$(".invest-section__title-sum")) {
       span.textContent = `(Свободно: ${toCurrencyFormat(balanceStats.free)})`;
     }
     fmInvestSumAll.value = balanceStats.free;
@@ -1102,14 +1102,14 @@ async function mainUpdateFunction() {
       const cleanProfit = time_setting.value === "year" && investDays() >= DAYS_IN_YEAR ? yearTime.cleanProfit : allTime.cleanProfit;
       const percent = time_setting.value === "year" && investDays() >= DAYS_IN_YEAR ? yearTime.percentProfit : allTime.percentProfit;
 
-      $get(".income__title").innerHTML = `<span>${title}</span> <span>Доходность</span>`;
-      $get(".income__currency").innerHTML = `<span id="income">${toCurrencyFormat(profit)}</span><span style="opacity: .5;"> | </span><span id="income--clean">${toCurrencyFormat(cleanProfit)}</span>`;
-      $get(".income__percent").innerHTML = `<span><img src="/img/income.svg">${toPercentFormat(percent)}</span>`;
+      $(".income__title").innerHTML = `<span>${title}</span> <span>Доходность</span>`;
+      $(".income__currency").innerHTML = `<span id="income">${toCurrencyFormat(profit)}</span><span style="opacity: .5;"> | </span><span id="income--clean">${toCurrencyFormat(cleanProfit)}</span>`;
+      $(".income__percent").innerHTML = `<span><img src="/img/income.svg">${toPercentFormat(percent)}</span>`;
     }
 
-    $get(".lastUpdateDate").innerHTML = `Все активы <span>(${getUpdateTime(new Date().getTime())})</span>`;
-    $get(".balance__title").innerHTML = `<span>Активы | Активы без НПД</span> <span>Ставка на сборе</span>`;
-    $get(".balance__value").innerHTML = `<span style="text-wrap: nowrap"><span id="balance">${toCurrencyFormat(user.balance)}</span><span style="opacity: .5;"> | </span><span id="balance--clean">${toCurrencyFormat(user.cleanBalance)}</span></span><span style="text-wrap: nowrap">${toPercentFormat(platformObj.data.average_interest_rate_30days)}</span>`;
+    $(".lastUpdateDate").innerHTML = `Все активы <span>(${getUpdateTime(new Date().getTime())})</span>`;
+    $(".balance__title").innerHTML = `<span>Активы | Активы без НПД</span> <span>Ставка на сборе</span>`;
+    $(".balance__value").innerHTML = `<span style="text-wrap: nowrap"><span id="balance">${toCurrencyFormat(user.balance)}</span><span style="opacity: .5;"> | </span><span id="balance--clean">${toCurrencyFormat(user.cleanBalance)}</span></span><span style="text-wrap: nowrap">${toPercentFormat(platformObj.data.average_interest_rate_30days)}</span>`;
     currencyAnimation("balance", currencyToFloat(cache.balance ?? 0), currencyToFloat(user.balance), "hideArrow");
     currencyAnimation("balance--clean", currencyToFloat(cache.cleanBalance ?? 0), currencyToFloat(user.cleanBalance));
     cache.balance = user.balance;
@@ -1117,91 +1117,84 @@ async function mainUpdateFunction() {
     updateProfit();
 
     if (time_setting.value === "year" && investDays() >= DAYS_IN_YEAR) {
-      $get(".stats-section").innerHTML = await dataTextYearTime();
+      $(".stats-section").innerHTML = await dataTextYearTime();
     } else if (time_setting.value === "all") {
-      $get(".stats-section").innerHTML = await dataTextAllTime();
+      $(".stats-section").innerHTML = await dataTextAllTime();
     }
 
     if (investDays() < DAYS_IN_YEAR) {
-      $get(".stats-section").innerHTML = await dataTextAllTime();
-      $get(".swap").textContent = getInvestDays();
-      $get(".swap").style.textDecoration = "none";
-      $get(".swap").style.userSelect = "auto";
-      $get(".swap").style.cursor = "text";
+      $(".stats-section").innerHTML = await dataTextAllTime();
+      $(".swap").textContent = getInvestDays();
+      $(".swap").style.textDecoration = "none";
+      $(".swap").style.userSelect = "auto";
+      $(".swap").style.cursor = "text";
     }
 
     async function handleSwapClick(event) {
       if (event.target.classList.contains("swap")) {
         if (event.target.textContent === "всё время") {
-          $get(".stats-section").innerHTML = await dataTextYearTime();
+          $(".stats-section").innerHTML = await dataTextYearTime();
         } else if (event.target.textContent === "год") {
-          $get(".stats-section").innerHTML = await dataTextAllTime();
+          $(".stats-section").innerHTML = await dataTextAllTime();
         }
       }
     }
 
-    $get(".stats-section").removeEventListener("click", handleSwapClick); // Удаление слушателя
-    $get(".stats-section").addEventListener("click", handleSwapClick); // Повторное добавление слушателя
+    $off("click", ".stats-section", handleSwapClick);
+    $on("click", ".stats-section", handleSwapClick);
 
     // Сохранение данных
     const cacheData = {
-      balanceTitle: $get(".balance__title").querySelectorAll("span")[0].textContent, // Текст заголовка активов (согласно настройкам)
-      balanceText: $get(".balance__value").querySelectorAll("span")[0].textContent, // Текст активов (согласно настройкам)
+      balanceTitle: $(".balance__title").querySelectorAll("span")[0].textContent, // Текст заголовка активов (согласно настройкам)
+      balanceText: $(".balance__value").querySelectorAll("span")[0].textContent, // Текст активов (согласно настройкам)
 
       balance: toCurrencyFormat(user.balance),
       cleanBalance: toCurrencyFormat(user.cleanBalance),
 
-      income: $get("#income").textContent,
-      cleanIncome: $get("#income--clean").textContent,
+      income: $("#income").textContent,
+      cleanIncome: $("#income--clean").textContent,
 
-      collectionIncomeTitle: $get(".balance__title").querySelectorAll("span")[1].textContent, // Текст заголовка ставки на сборе
-      collectionIncomeText: $get(".balance__value").querySelectorAll("span")[4].textContent, // Текст ставки на сборе
+      collectionIncomeTitle: $(".balance__title").querySelectorAll("span")[1].textContent, // Текст заголовка ставки на сборе
+      collectionIncomeText: $(".balance__value").querySelectorAll("span")[4].textContent, // Текст ставки на сборе
 
-      incomeTitle: $get(".income__title").querySelectorAll("span")[0].textContent, // Текст заголовка дохода (согласно настройкам)
-      incomeText: $get(".income__currency").textContent, // Текст дохода (согласно настройкам)
+      incomeTitle: $(".income__title").querySelectorAll("span")[0].textContent, // Текст заголовка дохода (согласно настройкам)
+      incomeText: $(".income__currency").textContent, // Текст дохода (согласно настройкам)
 
-      incomePercent: $get(".income__title").querySelectorAll("span")[1].textContent, // Текст заголовка процентного дохода
-      percentIncomeNum: $get(".income__percent").textContent, // Процентный доход
+      incomePercent: $(".income__title").querySelectorAll("span")[1].textContent, // Текст заголовка процентного дохода
+      percentIncomeNum: $(".income__percent").textContent, // Процентный доход
 
       updateTime: new Date().getTime(), // Текущее время
 
       qualification: user.qualification, // Статус квала
     };
-    chrome.storage.local.set({ cacheJetlend: cacheData });
+    await setCache("cacheJetlend", cacheData);
     return;
   } catch (e) {
-    $get(".lastUpdateDate").textContent = "Нет авторизации";
-    $get(".main-section__stats").innerHTML = `<div style="margin: 64px 0px; position: relative; transform: translate(25%, 0%);">Авторизуйтесь на сайте</div>`;
+    $(".lastUpdateDate").textContent = "Нет авторизации";
+    $(".main-section__stats").innerHTML = `<div style="margin: 64px 0px; position: relative; transform: translate(25%, 0%);">Авторизуйтесь на сайте</div>`;
     console.log(e);
     return;
   }
-  // 1433-1102
 }
 
 // Обновление списка компаний (первичка)
 async function updateFirstMarket() {
   fmCompanyUpdate = true;
   fmInvestCompanyArray = [];
-  $get("#fm-numOfSortedCompany").textContent = `Загрузка...`;
-  $get("#fm-btn-update").classList.add("display-none");
-  $get("#fm-btn-show").classList.add("display-none");
-  $get("#fm-btn-stop").classList.remove("display-none");
-  // $get("#market-companyAnaliz").classList.add("load-block-animation");
+  $("#fm-numOfSortedCompany").textContent = `Загрузка...`;
+  $("#fm-btn-update").classList.add("display-none");
+  $("#fm-btn-show").classList.add("display-none");
+  $("#fm-btn-stop").classList.remove("display-none");
+  // $("#market-companyAnaliz").classList.add("load-block-animation");
 
   await fmLoadLoans();
 
-  $get("#fm-numOfSortedCompany").textContent = `Найдено: ${fmInvestCompanyArray.length} ${getZaimEnding(fmInvestCompanyArray.length)} `;
-  $get("#fm-btn-update").classList.remove("display-none");
+  $("#fm-numOfSortedCompany").textContent = `Найдено: ${fmInvestCompanyArray.length} ${getZaimEnding(fmInvestCompanyArray.length)} `;
+  $("#fm-btn-update").classList.remove("display-none");
   if (fmInvestCompanyArray.length >= 1) {
-    $get("#fm-btn-show").classList.remove("display-none");
+    $("#fm-btn-show").classList.remove("display-none");
   }
-  $get("#fm-btn-stop").classList.add("display-none");
-
-  // const updateTotal = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
-  // if (updateTotal.data) {
-  //   $get("#market-numOfAllCompany").textContent = updateTotal.data.requests.length;
-  //   $get("#market-companyAnaliz").classList.remove("load-block-animation");
-  // }
+  $("#fm-btn-stop").classList.add("display-none");
 }
 
 // Обновление списка компаний (первичка, резерв)
@@ -1209,26 +1202,26 @@ async function updateFirstMarketReserv() {
   fmrCompanyUpdate = true;
   fmCompanyUpdate = false;
   fmrInvestCompanyArray = [];
-  $get("#fmr-numOfSortedCompany").textContent = `Загрузка...`;
-  $get("#fmr-btn-update").classList.add("display-none");
-  $get("#fmr-btn-show").classList.add("display-none");
-  $get("#fmr-btn-stop").classList.remove("display-none");
+  $("#fmr-numOfSortedCompany").textContent = `Загрузка...`;
+  $("#fmr-btn-update").classList.add("display-none");
+  $("#fmr-btn-show").classList.add("display-none");
+  $("#fmr-btn-stop").classList.remove("display-none");
   const res = await fetchData("https://jetlend.ru/invest/api/requests/waiting");
 
   if (res.data) {
     fmrInvestCompanyArray = res.data.requests.filter((obj) => obj.collected_percentage !== 100 /* Полоска сбора не заполнена (меньше 100%) */ && obj.investing_amount !== null /* Резервация */);
-    $get("#fmr-numOfSortedCompany").textContent = `Загрузка... ()`;
+    $("#fmr-numOfSortedCompany").textContent = `Загрузка... ()`;
     if (!fmrCompanyUpdate) {
       fmrCompanyUpdate = true;
       return;
     }
-    $get("#fmr-numOfSortedCompany").textContent = `Загружено: ${fmrInvestCompanyArray.length} ${getZaimEnding(fmrInvestCompanyArray.length)}`;
-    $get("#fmr-btn-update").classList.remove("display-none");
-    $get("#fmr-btn-update").textContent = "Обновить";
+    $("#fmr-numOfSortedCompany").textContent = `Загружено: ${fmrInvestCompanyArray.length} ${getZaimEnding(fmrInvestCompanyArray.length)}`;
+    $("#fmr-btn-update").classList.remove("display-none");
+    $("#fmr-btn-update").textContent = "Обновить";
     if (fmrInvestCompanyArray.length >= 1) {
-      $get("#fmr-btn-show").classList.remove("display-none");
+      $("#fmr-btn-show").classList.remove("display-none");
     }
-    $get("#fmr-btn-stop").classList.add("display-none");
+    $("#fmr-btn-stop").classList.add("display-none");
   }
 }
 
@@ -1236,73 +1229,61 @@ async function updateFirstMarketReserv() {
 async function updateSecondMarket() {
   smCompanyUpdate = true;
   smInvestCompanyArray = [];
-  $get("#sm-numOfSortedCompany").textContent = `Загрузка...`;
-  $get("#sm-btn-update").classList.add("display-none");
-  $get("#sm-btn-show").classList.add("display-none");
-  $get("#sm-btn-stop").classList.remove("display-none");
-  // $get("#market-companyAnaliz").classList.add("load-block-animation");
+  $("#sm-numOfSortedCompany").textContent = `Загрузка...`;
+  $("#sm-btn-update").classList.add("display-none");
+  $("#sm-btn-show").classList.add("display-none");
+  $("#sm-btn-stop").classList.remove("display-none");
+  // $("#market-companyAnaliz").classList.add("load-block-animation");
 
   await smLoadLoans("popup", 0, 100);
-  $get("#sm-numOfSortedCompany").textContent = `Найдено: ${smInvestCompanyArray.length} ${getZaimEnding(smInvestCompanyArray.length)}`;
-  $get("#sm-btn-update").classList.remove("display-none");
+  $("#sm-numOfSortedCompany").textContent = `Найдено: ${smInvestCompanyArray.length} ${getZaimEnding(smInvestCompanyArray.length)}`;
+  $("#sm-btn-update").classList.remove("display-none");
   if (smInvestCompanyArray.length >= 1) {
-    $get("#sm-btn-show").classList.remove("display-none");
+    $("#sm-btn-show").classList.remove("display-none");
   }
-  $get("#sm-btn-stop").classList.add("display-none");
-
-  // const updateTotal = await fetchData("https://jetlend.ru/invest/api/exchange/loans?limit=1&offset=0");
-  // if (updateTotal.data) {
-  //   $get("#market-numOfAllCompany").textContent = updateTotal.data.total;
-  //   $get("#market-companyAnaliz").classList.remove("load-block-animation");
-  // }
+  $("#sm-btn-stop").classList.add("display-none");
 }
 
 // Распределение средств (первичка)
-$get("#firstMarketSubmit").addEventListener("click", function () {
-  if ($get("#fmInvestAgree").checked && valueToInt(fmInvestSum.value) <= user.freeBalance && valueToInt(fmInvestSum.value) >= 100 && !$get("#fm-numOfSortedCompany").textContent.includes("Загрузка...") && user.freeBalance >= 100 && fmInvestCompanyArray.length >= 1) {
-    chrome.storage.local.set({
-      fmInvest: {
-        array: fmInvestCompanyArray,
-        sum: valueToInt(fmInvestSum.value),
-        sumAll: currencyToFloat(fmInvestSumAll.value),
-        loanMaxSum: currencyToFloat(fmStopLoanSum.value),
-        companyMaxSum: currencyToFloat(fmStopCompanySum.value),
-        mode: "manual",
-      },
+$on("click", "#firstMarketSubmit", async () => {
+  if ($("#fmInvestAgree").checked && valueToInt(fmInvestSum.value) <= user.freeBalance && valueToInt(fmInvestSum.value) >= 100 && !$("#fm-numOfSortedCompany").textContent.includes("Загрузка...") && user.freeBalance >= 100 && fmInvestCompanyArray.length >= 1) {
+    await setCache("fmInvest", {
+      array: fmInvestCompanyArray,
+      sum: valueToInt(fmInvestSum.value),
+      sumAll: currencyToFloat(fmInvestSumAll.value),
+      loanMaxSum: currencyToFloat(fmStopLoanSum.value),
+      companyMaxSum: currencyToFloat(fmStopCompanySum.value),
+      mode: "manual",
     });
-    // chrome.tabs.create({ url: "https://jetlend.ru/invest/v3/?state=login" });
     chrome.windows.create({ url: "https://jetlend.ru/invest/v3/?state=login", type: "popup", focused: true });
   }
 });
 
 // Распределение средств (вторичка)
-$get("#secondMarketSubmit").addEventListener("click", function () {
-  if ($get("#smInvestAgree").checked && valueToInt(smInvestSum.value) <= user.freeBalance && valueToInt(smInvestSum.value) >= 100 && !$get("#sm-numOfSortedCompany").textContent.includes("Загрузка...") && user.freeBalance >= 100 && smInvestCompanyArray.length >= 1) {
-    chrome.storage.local.set({
-      smInvest: {
-        array: smInvestCompanyArray,
-        sum: valueToInt(smInvestSum.value),
-        sumAll: currencyToFloat(smInvestSumAll.value),
-        minPrice: valueToPercent(smPriceFrom.value),
-        maxPrice: valueToPercent(smPriceTo.value),
-        ytmMin: valueToPercent(smRateFrom.value),
-        ytmMax: valueToPercent(smRateTo.value),
-        loanMaxSum: currencyToFloat(smStopLoanSum.value),
-        companyMaxSum: currencyToFloat(smStopCompanySum.value),
-        mode: "manual",
-      },
+$on("click", "#secondMarketSubmit", async () => {
+  if ($("#smInvestAgree").checked && valueToInt(smInvestSum.value) <= user.freeBalance && valueToInt(smInvestSum.value) >= 100 && !$("#sm-numOfSortedCompany").textContent.includes("Загрузка...") && user.freeBalance >= 100 && smInvestCompanyArray.length >= 1) {
+    await setCache("smInvest", {
+      array: smInvestCompanyArray,
+      sum: valueToInt(smInvestSum.value),
+      sumAll: currencyToFloat(smInvestSumAll.value),
+      minPrice: valueToPercent(smPriceFrom.value),
+      maxPrice: valueToPercent(smPriceTo.value),
+      ytmMin: valueToPercent(smRateFrom.value),
+      ytmMax: valueToPercent(smRateTo.value),
+      loanMaxSum: currencyToFloat(smStopLoanSum.value),
+      companyMaxSum: currencyToFloat(smStopCompanySum.value),
+      mode: "manual",
     });
-    // chrome.tabs.create({ url: "https://jetlend.ru/invest/v3/?state=login", active: true });
     chrome.windows.create({ url: "https://jetlend.ru/invest/v3/?state=login", type: "popup", focused: true });
   }
 });
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   if (message.data === "Распределение средств заверешено") {
-    $get("#fm-numOfSortedCompany").textContent = "";
-    $get("#fm-btn-show").classList.add("display-none");
-    $get("#sm-numOfSortedCompany").textContent = "";
-    $get("#sm-btn-show").classList.add("display-none");
+    $("#fm-numOfSortedCompany").textContent = "";
+    $("#fm-btn-show").classList.add("display-none");
+    $("#sm-numOfSortedCompany").textContent = "";
+    $("#sm-btn-show").classList.add("display-none");
     fmInvestCompanyArray = [];
     smInvestCompanyArray = [];
     closeInvestPage();

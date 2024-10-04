@@ -1,7 +1,7 @@
 const normalizedURL = window.location.href.replace(/(https?:\/\/)?(www\.)?/i, "").replace(/\/$/, "");
 // Распределение средств (первичка)
 async function fmInvest() {
-  if (normalizedURL !== "jetlend.ru/invest/v3/?state=login") return;
+  if (normalizedURL !== "jetlend.ru/invest/v3") return;
   const cache = await getCache("fmInvest", null);
   if (!cache) return;
   chrome.storage.local.remove("fmInvest");
@@ -80,7 +80,7 @@ fmInvest();
 // Распределение средств (вторичка)
 //https://jetlend.ru/invest/api/exchange/loans/12026/buy/preview
 async function smInvest() {
-  if (normalizedURL !== "jetlend.ru/invest/v3/?state=login") return;
+  if (normalizedURL !== "jetlend.ru/invest/v3") return;
   const cache = await getCache("smInvest", null);
   if (!cache) return;
   chrome.storage.local.remove("smInvest");
@@ -106,7 +106,9 @@ async function smInvest() {
         },
         credentials: "include",
         body: JSON.stringify(user),
-      }).then((response) => response.json());
+      })
+        .then((response) => response.json())
+        .catch((error) => error);
 
       const timeoutPromise = new Promise((resolve, reject) => {
         setTimeout(() => {
@@ -217,7 +219,7 @@ async function updateBadge() {
       const statsData = await fetchData(statsUrl);
       if (statsData.data) {
         const freeBalance = statsData.data.data.balance.free;
-        await updateCache("JLE_content", "lastUpdate", Date.now());
+        await updateCache("JLE_content", { lastUpdate: Date.now() });
         let filters = await getCache(`investPreset_${settings.autoInvestPreset}`, 0);
         if (filters === 0) filters = await getCache("investSettings");
         if (badgeMode === "loans") {
@@ -252,18 +254,14 @@ async function updateBadge() {
               if (!fmInvestCompanyArray.length) return;
             }
             const currentTime = Date.now();
-            chrome.storage.local.set({
-              JLE_content: { lastUpdate: currentTime, lastAutoInvest: currentTime },
-            });
-            chrome.storage.local.set({
-              fmInvest: {
-                array: fmInvestCompanyArray,
-                sum: valueToInt(filters.fmInvestSum),
-                sumAll: currencyToFloat(freeBalance - safe),
-                loanMaxSum: currencyToFloat(filters.fmStopLoanSum),
-                companyMaxSum: currencyToFloat(filters.fmStopCompanySum),
-                mode: "auto",
-              },
+            await setCache("JLE_content", { lastUpdate: currentTime, lastAutoInvest: currentTime });
+            await setCache("fmInvest", {
+              array: fmInvestCompanyArray,
+              sum: valueToInt(filters.fmInvestSum),
+              sumAll: currencyToFloat(freeBalance - safe),
+              loanMaxSum: currencyToFloat(filters.fmStopLoanSum),
+              companyMaxSum: currencyToFloat(filters.fmStopCompanySum),
+              mode: "auto",
             });
             fmInvestCompanyArray = [];
             chrome.runtime.sendMessage({ action: "createTab", url: "https://jetlend.ru/invest/v3/?state=login" });
@@ -273,22 +271,18 @@ async function updateBadge() {
               if (!smInvestCompanyArray.length) return;
             }
             const currentTime = Date.now();
-            chrome.storage.local.set({
-              JLE_content: { lastUpdate: currentTime, lastAutoInvest: currentTime },
-            });
-            chrome.storage.local.set({
-              smInvest: {
-                array: smInvestCompanyArray,
-                sum: valueToInt(filters.smInvestSum),
-                sumAll: currencyToFloat(freeBalance - safe),
-                minPrice: valueToPercent(filters.smPriceFrom),
-                maxPrice: valueToPercent(filters.smPriceTo),
-                ytmMin: valueToPercent(filters.smRateFrom),
-                ytmMax: valueToPercent(filters.smRateTo),
-                loanMaxSum: currencyToFloat(filters.smStopLoanSum),
-                companyMaxSum: currencyToFloat(filters.smStopCompanySum),
-                mode: "auto",
-              },
+            await setCache("JLE_content", { lastUpdate: currentTime, lastAutoInvest: currentTime });
+            await setCache("smInvest", {
+              array: smInvestCompanyArray,
+              sum: valueToInt(filters.smInvestSum),
+              sumAll: currencyToFloat(freeBalance - safe),
+              minPrice: valueToPercent(filters.smPriceFrom),
+              maxPrice: valueToPercent(filters.smPriceTo),
+              ytmMin: valueToPercent(filters.smRateFrom),
+              ytmMax: valueToPercent(filters.smRateTo),
+              loanMaxSum: currencyToFloat(filters.smStopLoanSum),
+              companyMaxSum: currencyToFloat(filters.smStopCompanySum),
+              mode: "auto",
             });
             smInvestCompanyArray = [];
             chrome.runtime.sendMessage({ action: "createTab", url: "https://jetlend.ru/invest/v3/?state=login" });

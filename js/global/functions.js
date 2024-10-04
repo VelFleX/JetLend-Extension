@@ -58,10 +58,10 @@ async function setCache(cacheName, value) {
   chrome.storage.local.set({ [cacheName]: value });
 }
 
-async function updateCache(cacheName, cacheKey, newValue) {
+async function updateCache(cacheName, obj) {
   const cache = await getCache(cacheName);
-  cache[cacheKey] = newValue;
-  chrome.storage.local.set({ [cacheName]: cache });
+  const newCache = { ...cache, ...obj };
+  chrome.storage.local.set({ [cacheName]: newCache });
 }
 
 function daysEnding(days) {
@@ -100,17 +100,17 @@ function toSuperShortPercentFormat(num) {
 }
 
 function openModal(modalId) {
-  $get(modalId).classList.remove("display-none");
+  $(modalId).classList.remove("display-none");
   setTimeout(() => {
-    $get(modalId).style.opacity = "1";
+    $(modalId).style.opacity = "1";
   }, 0);
   document.body.style.overflow = "hidden";
 }
 
 function closeModal(modalId) {
-  $get(modalId).style.opacity = "0";
+  $(modalId).style.opacity = "0";
   setTimeout(() => {
-    $get(modalId).classList.add("display-none");
+    $(modalId).classList.add("display-none");
   }, 300);
   document.body.style.overflow = "auto";
 }
@@ -120,7 +120,7 @@ function openPage(pageId) {
     openModal(pageId);
     return;
   }
-  $get("#page").innerHTML = $get(pageId).innerHTML;
+  $("#page").innerHTML = $(pageId).innerHTML;
 }
 
 // Функция изменения текста на значке расширения
@@ -152,8 +152,8 @@ async function getBadge() {
 function openInvestPage() {
   document.querySelector("#invest-section").style.top = "0";
   document.body.style.height = "600px";
-  $get("#stats__open").style.transform = "scaleY(-1)";
-  $get(".stats-section").style.maxHeight = "0px";
+  $("#stats__open").style.transform = "scaleY(-1)";
+  $(".stats-section").style.maxHeight = "0px";
 }
 
 // Функция закрытия инвест страницы
@@ -240,7 +240,7 @@ function getCookie(name) {
 
 // Функция отправки уведомлений
 function sendNotification(title, content) {
-  if (!document.body.contains($get("#notificationContainer"))) {
+  if (!document.body.contains($("#notificationContainer"))) {
     const notificationContainer = document.createElement("div");
     notificationContainer.id = "notificationContainer";
     Object.assign(notificationContainer.style, {
@@ -258,7 +258,7 @@ function sendNotification(title, content) {
     });
     document.body.appendChild(notificationContainer);
   }
-  const notificationContainer = $get("#notificationContainer");
+  const notificationContainer = $("#notificationContainer");
   let color = "#1e2021";
   let bgColor = "#fff";
   if (darkTheme) {
@@ -300,21 +300,21 @@ function sendNotification(title, content) {
 
 // Функция свапа рынков в распределении средств
 async function marketSwap() {
-  if ($get("#marketMode").textContent === "Первичный рынок") {
-    $get("#marketMode").textContent = "Вторичный рынок";
-    $get("#firstMarket").classList.add("display-none");
-    $get("#secondMarket").classList.remove("display-none");
+  if ($("#marketMode").textContent === "Первичный рынок") {
+    $("#marketMode").textContent = "Вторичный рынок";
+    $("#firstMarket").classList.add("display-none");
+    $("#secondMarket").classList.remove("display-none");
     fmCompanyUpdate = false;
     smCompanyUpdate = true;
-    await updateCache("settings", "marketMode", "sm");
+    await updateCache("settings", { marketMode: "sm" });
     updateSecondMarket();
   } else {
-    $get("#marketMode").textContent = "Первичный рынок";
-    $get("#secondMarket").classList.add("display-none");
-    $get("#firstMarket").classList.remove("display-none");
+    $("#marketMode").textContent = "Первичный рынок";
+    $("#secondMarket").classList.add("display-none");
+    $("#firstMarket").classList.remove("display-none");
     fmCompanyUpdate = true;
     smCompanyUpdate = false;
-    await updateCache("settings", "marketMode", "fm");
+    await updateCache("settings", { marketMode: "fm" });
     updateFirstMarket();
   }
 }
@@ -525,9 +525,13 @@ async function smLoadLoans(mode, offset = 0, limit = 100, total = 0, badComps = 
   };
   if (!smCompanyUpdate && mode === "popup") {
     smCompanyUpdate = true;
+    console.log("Bad companies: ", badComps);
     return;
   }
-  if (offset > total) return;
+  if (offset > total) {
+    console.log("Bad companies: ", badComps);
+    return;
+  }
 
   const filters = await getCache("investSettings");
   const blackList = await getCache("blackList", []);
@@ -570,10 +574,13 @@ async function smLoadLoans(mode, offset = 0, limit = 100, total = 0, badComps = 
     // Удаление дубликатов
     smInvestCompanyArray = smInvestCompanyArray.filter((obj, index, self) => index === self.findIndex((t) => t.loan_id === obj.loan_id));
 
-    if (sortSettings[filters.smSortFilter] && sortSettings[filters.smSortFilter].compare(res.data.data.at(-1))) return;
+    if (sortSettings[filters.smSortFilter] && sortSettings[filters.smSortFilter].compare(res.data.data.at(-1))) {
+      console.log("Bad companies: ", badComps);
+      return;
+    }
 
     offset += limit;
-    if (mode === "popup") $get("#sm-numOfSortedCompany").textContent = `Загрузка... (${toPercentFormat(offset / res.data.total)})`;
+    if (mode === "popup") $("#sm-numOfSortedCompany").textContent = `Загрузка... (${toPercentFormat(offset / res.data.total)})`;
     if (mode === "badge") setBadge(((offset / res.data.total) * 100).toFixed(0) + "%");
     await smLoadLoans(mode, offset, limit, res.data.total, badComps);
   }
@@ -630,6 +637,7 @@ async function checkingCompany(companyId, fm, sm) {
 
   if (fmCompany) {
     company = fmCompany;
+    console.log("Company: ", company);
     if (blackList.find((e) => e.id === company.id && e.type === "loan")) errors.push("Займ в ЧС.");
     if (blackList.find((e) => e.company === company.company && e.type === "comp")) errors.push("Компания в ЧС.");
     if (company.investing_amount !== null) {
@@ -665,6 +673,7 @@ async function checkingCompany(companyId, fm, sm) {
     return errorsHtml();
   } else if (smCompany) {
     company = smCompany;
+    console.log(company.company, company);
     if (blackList.find((e) => e.id === company.id && e.type === "loan")) errors.push("Займ в ЧС.");
     if (blackList.find((e) => e.company === company.company && e.type === "comp")) errors.push("Компания в ЧС.");
     if (company.term_left < parseFloat(filters.smDaysFrom) || company.term_left > parseFloat(filters.smDaysTo)) {
@@ -753,9 +762,9 @@ function setTheme(theme) {
 (async function () {
   const cache = await getCache("settings");
   if (cache.timePeriod === "всё время") {
-    await updateCache("settings", "timePeriod", "all");
+    await updateCache("settings", { timePeriod: "all" });
   } else if (cache.timePeriod === "год") {
-    await updateCache("settings", "timePeriod", "year");
+    await updateCache("settings", { timePeriod: "year" });
   }
   return;
 })();
@@ -782,15 +791,15 @@ async function getXirrAll() {
   if (user.xirrData) {
     return res();
   }
-  $get("#xirr-all").classList.remove("btn-small");
-  $get("#xirr-all").textContent = "Загрузка...";
+  $("#xirr-all").classList.remove("btn-small");
+  $("#xirr-all").textContent = "Загрузка...";
   const xirr = await fetchChunks(xirrUrl);
   user.xirrData = xirr.data.data;
   if (!user.xirrData) {
-    $get("#xirr-all").classList.add("btn-small");
-    $get("#xirr-all").textContent = `Ошибка расчета XIRR. Кликните для повторного запроса.`;
+    $("#xirr-all").classList.add("btn-small");
+    $("#xirr-all").textContent = `Ошибка расчета XIRR. Кликните для повторного запроса.`;
   }
-  return ($get("#xirr-all").innerHTML = res());
+  return ($("#xirr-all").innerHTML = res());
 }
 
 async function getXirrYear() {
@@ -800,21 +809,21 @@ async function getXirrYear() {
   if (user.xirrData) {
     return res();
   }
-  $get("#xirr-year").classList.remove("btn-small");
-  $get("#xirr-year").textContent = "Загрузка...";
+  $("#xirr-year").classList.remove("btn-small");
+  $("#xirr-year").textContent = "Загрузка...";
   const xirr = await fetchChunks(xirrUrl);
   user.xirrData = xirr.data.data;
   if (!user.xirrData) {
-    $get("#xirr-year").classList.add("btn-small");
-    $get("#xirr-year").textContent = `Ошибка расчета XIRR. Кликните для повторного запроса.`;
+    $("#xirr-year").classList.add("btn-small");
+    $("#xirr-year").textContent = `Ошибка расчета XIRR. Кликните для повторного запроса.`;
   }
-  return ($get("#xirr-year").innerHTML = res());
+  return ($("#xirr-year").innerHTML = res());
 }
 
 async function printXIrr(mode) {
   const xirrUrl = "https://jetlend.ru/invest/api/account/notifications/v3?filter=%5B%7B%22values%22%3A%5B%22110%22%2C%22120%22%5D%2C%22field%22%3A%22event_type%22%7D%5D&sort_dir=asc&sort_field=date";
   let tag;
-  mode === "all" ? (tag = $get("#xirr-all")) : (tag = $get("#xirr-year"));
+  mode === "all" ? (tag = $("#xirr-all")) : (tag = $("#xirr-year"));
   const res = () =>
     mode === "all"
       ? `<p>Сумма пополнений: <b>${toCurrencyFormat(allTime.incomeSum)}</b></p>
@@ -838,10 +847,10 @@ async function printXIrr(mode) {
 }
 
 function btnsSwapActive(section, setActive) {
-  $get(section)
+  $(section)
     .querySelectorAll(".btn-small")
     .forEach((btn) => btn.classList.remove("btn-small--active"));
-  $get(setActive).classList.add("btn-small--active");
+  $(setActive).classList.add("btn-small--active");
 }
 
 function createListElement(company, sett, details, other = {}) {
